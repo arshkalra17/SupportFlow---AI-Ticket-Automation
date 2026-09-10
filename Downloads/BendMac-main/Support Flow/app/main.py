@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 # pyrefly: ignore [missing-import]
-from app.llm import classify_ticket
+from app.queue import enqueue_ticket_processing
 from app.database import engine, Base, get_db
 from app.models import Ticket
 
@@ -43,7 +43,7 @@ class TicketDetail(BaseModel):
 
 @app.post("/tickets", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
-    # 1. Create and save ticket with status PENDING
+    # 1. Create and commit ticket with status PENDING
     ticket = Ticket(
         customer_message=ticket_data.message,
         status="PENDING"
@@ -52,23 +52,21 @@ def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(ticket)
 
-    # 2. Synchronously classify ticket with Groq LLM
+    # 2. Enqueue ticket processing job into Redis asynchronously
     try:
-        classification = classify_ticket(ticket.customer_message)
-        ticket.category = classification.get("category")
-        ticket.priority = classification.get("priority")
-        ticket.status = "PROCESSED"
-        db.commit()
-        db.refresh(ticket)
-        return ticket
+        enqueue_ticket_processing(ticket.id)
     except Exception as err:
-        ticket.status = "CLASSIFICATION_FAILED"
+        ticket.status = "QUEUE_FAILED"
         db.commit()
         db.refresh(ticket)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ticket created but classification failed: {err}"
+            detail=f"Ticket created (ID: {ticket.id}) but queue enqueueing failed: {err}"
         )
+
+    # 3. Return ticket immediately with status PENDING
+    return ticket
+
 
 
 @app.get("/tickets/{ticket_id}", response_model=TicketDetail)
