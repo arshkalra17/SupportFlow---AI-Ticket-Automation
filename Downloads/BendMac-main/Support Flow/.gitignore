@@ -1,0 +1,28 @@
+# Environment variables and secrets
+.env
+.env.*
+!.env.example
+
+# Python bytecode and cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# IDE and OS metadata
+.vscode/
+.idea/
+.DS_Store
+
+# Database and docker volumes
+postgres_data/
+
+# Testing and coverage caches
+.pytest_cache/
+.coverage
+htmlcov/
