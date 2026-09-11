@@ -1,0 +1,102 @@
+[
+  {
+    "id": "cls-001",
+    "message": "My order arrived completely broken. I need a replacement immediately.",
+    "gold": {"category": "Order Issue", "priority": "HIGH", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-002",
+    "message": "I would like to request a refund for my recent purchase of $250.",
+    "gold": {"category": "Refund Request", "priority": "MEDIUM", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-003",
+    "message": "How long does express shipping take to arrive?",
+    "gold": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-004",
+    "message": "I was charged twice for the same order. This is completely unacceptable!",
+    "gold": {"category": "Billing", "priority": "URGENT", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-005",
+    "message": "My app keeps crashing every time I try to view my order history.",
+    "gold": {"category": "Technical Support", "priority": "HIGH", "sentiment": "NEGATIVE"}
+  },
+  {
+    "id": "cls-006",
+    "message": "What is your return policy for damaged items?",
+    "gold": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-007",
+    "message": "Order #1003 has been stuck in processing for two weeks. What is going on?",
+    "gold": {"category": "Order Issue", "priority": "HIGH", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-008",
+    "message": "I accidentally placed a duplicate order. Can I cancel one of them?",
+    "gold": {"category": "Order Issue", "priority": "MEDIUM", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-009",
+    "message": "I need a full refund of $1500 for order #1006. The item was defective.",
+    "gold": {"category": "Refund Request", "priority": "HIGH", "sentiment": "NEGATIVE"}
+  },
+  {
+    "id": "cls-010",
+    "message": "Thank you so much! My replacement arrived quickly and everything looks great.",
+    "gold": {"category": "General Inquiry", "priority": "LOW", "sentiment": "POSITIVE"}
+  },
+  {
+    "id": "cls-011",
+    "message": "I cannot log in to my account. The password reset email never arrives.",
+    "gold": {"category": "Technical Support", "priority": "HIGH", "sentiment": "NEGATIVE"}
+  },
+  {
+    "id": "cls-012",
+    "message": "Can you confirm the tracking number for order #1001? It shows shipped.",
+    "gold": {"category": "Order Issue", "priority": "LOW", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-013",
+    "message": "I was billed for a subscription I never signed up for. Please fix this.",
+    "gold": {"category": "Billing", "priority": "HIGH", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-014",
+    "message": "How do I cancel an order that is still processing?",
+    "gold": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-015",
+    "message": "The wrong item was delivered. I ordered blue but received red.",
+    "gold": {"category": "Order Issue", "priority": "MEDIUM", "sentiment": "NEGATIVE"}
+  },
+  {
+    "id": "cls-016",
+    "message": "I want a $50 refund because my order arrived three days late.",
+    "gold": {"category": "Refund Request", "priority": "MEDIUM", "sentiment": "NEGATIVE"}
+  },
+  {
+    "id": "cls-017",
+    "message": "My payment method was declined even though my card is valid.",
+    "gold": {"category": "Billing", "priority": "HIGH", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-018",
+    "message": "The website is showing a 500 error when I try to check out.",
+    "gold": {"category": "Technical Support", "priority": "URGENT", "sentiment": "FRUSTRATED"}
+  },
+  {
+    "id": "cls-019",
+    "message": "Do you ship internationally to Canada?",
+    "gold": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"}
+  },
+  {
+    "id": "cls-020",
+    "message": "I want to return my order. It arrived damaged and the packaging was torn.",
+    "gold": {"category": "Order Issue", "priority": "HIGH", "sentiment": "NEGATIVE"}
+  }
+]

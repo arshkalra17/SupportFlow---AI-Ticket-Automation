@@ -1,0 +1,162 @@
+[
+  {
+    "id": "auth-001",
+    "description": "Owner accesses own SHIPPED order",
+    "authenticated_customer_id": 1,
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-002",
+    "description": "Owner accesses own DELIVERED order",
+    "authenticated_customer_id": 1,
+    "order_id": 5002,
+    "order_owner_id": 1,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-003",
+    "description": "Owner accesses own PROCESSING order",
+    "authenticated_customer_id": 1,
+    "order_id": 5003,
+    "order_owner_id": 1,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-004",
+    "description": "Owner accesses own CANCELLED order",
+    "authenticated_customer_id": 1,
+    "order_id": 5004,
+    "order_owner_id": 1,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-005",
+    "description": "Customer 2 accesses own DELIVERED order",
+    "authenticated_customer_id": 2,
+    "order_id": 5011,
+    "order_owner_id": 2,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-006",
+    "description": "Customer 2 accesses own PROCESSING order",
+    "authenticated_customer_id": 2,
+    "order_id": 5012,
+    "order_owner_id": 2,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-007",
+    "description": "Customer 3 accesses own SHIPPED order",
+    "authenticated_customer_id": 3,
+    "order_id": 5021,
+    "order_owner_id": 3,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-008",
+    "description": "Customer 3 accesses own DELIVERED order",
+    "authenticated_customer_id": 3,
+    "order_id": 5022,
+    "order_owner_id": 3,
+    "expected": "ALLOW"
+  },
+  {
+    "id": "auth-009",
+    "description": "Customer 1 tries to access customer 2's order",
+    "authenticated_customer_id": 1,
+    "order_id": 5011,
+    "order_owner_id": 2,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-010",
+    "description": "Customer 1 tries to access customer 3's order",
+    "authenticated_customer_id": 1,
+    "order_id": 5021,
+    "order_owner_id": 3,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-011",
+    "description": "Customer 2 tries to access customer 1's order",
+    "authenticated_customer_id": 2,
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-012",
+    "description": "Customer 2 tries to access customer 3's order",
+    "authenticated_customer_id": 2,
+    "order_id": 5021,
+    "order_owner_id": 3,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-013",
+    "description": "Customer 3 tries to access customer 1's order",
+    "authenticated_customer_id": 3,
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-014",
+    "description": "Customer 3 tries to access customer 2's order",
+    "authenticated_customer_id": 3,
+    "order_id": 5011,
+    "order_owner_id": 2,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-015",
+    "description": "Customer 1 tries to access customer 2's second order",
+    "authenticated_customer_id": 1,
+    "order_id": 5012,
+    "order_owner_id": 2,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-016",
+    "description": "Customer 2 tries to access customer 1's CANCELLED order",
+    "authenticated_customer_id": 2,
+    "order_id": 5004,
+    "order_owner_id": 1,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-017",
+    "description": "Access to nonexistent order — not a block, returns not-found error",
+    "authenticated_customer_id": 1,
+    "order_id": 9999,
+    "order_owner_id": null,
+    "expected": "NOT_FOUND"
+  },
+  {
+    "id": "auth-018",
+    "description": "Customer 3 tries to access customer 2's second order",
+    "authenticated_customer_id": 3,
+    "order_id": 5012,
+    "order_owner_id": 2,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-019",
+    "description": "Customer 1 tries to access customer 3's second order",
+    "authenticated_customer_id": 1,
+    "order_id": 5022,
+    "order_owner_id": 3,
+    "expected": "BLOCK"
+  },
+  {
+    "id": "auth-020",
+    "description": "Customer 2 tries to access customer 3's second order",
+    "authenticated_customer_id": 2,
+    "order_id": 5022,
+    "order_owner_id": 3,
+    "expected": "BLOCK"
+  }
+]

@@ -1,0 +1,152 @@
+[
+  {
+    "id": "rag-001",
+    "query": "my package arrived damaged and I need a replacement",
+    "gold_title": "Item Replacement Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-002",
+    "query": "the item I received is defective, can I request a replacement",
+    "gold_title": "Item Replacement Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-003",
+    "query": "wrong item was delivered, is it eligible for replacement",
+    "gold_title": "Item Replacement Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-004",
+    "query": "which order statuses are eligible for replacement requests",
+    "gold_title": "Item Replacement Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-005",
+    "query": "my order arrived broken can I get a new one sent out",
+    "gold_title": "Item Replacement Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-006",
+    "query": "I want to get a refund for my recent purchase",
+    "gold_title": "Return and Refund Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-007",
+    "query": "how do I request a refund within 30 days of delivery",
+    "gold_title": "Return and Refund Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-008",
+    "query": "are refunds over $1000 automatically approved",
+    "gold_title": "Return and Refund Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-009",
+    "query": "what is the maximum refund amount that gets processed automatically",
+    "gold_title": "Return and Refund Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-010",
+    "query": "does a large refund require human approval",
+    "gold_title": "Return and Refund Policy",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-011",
+    "query": "how long does express shipping take to arrive",
+    "gold_title": "Shipping & Delivery Guidelines",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-012",
+    "query": "what is the estimated delivery time for standard shipping",
+    "gold_title": "Shipping & Delivery Guidelines",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-013",
+    "query": "when does my tracking number get generated after ordering",
+    "gold_title": "Shipping & Delivery Guidelines",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-014",
+    "query": "how many business days does standard delivery take",
+    "gold_title": "Shipping & Delivery Guidelines",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-015",
+    "query": "my order shows shipped but I don't have a tracking number yet",
+    "gold_title": "Shipping & Delivery Guidelines",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-016",
+    "query": "can I cancel an order that is still processing",
+    "gold_title": "Order Cancellation Rules",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-017",
+    "query": "how do I cancel my order before it ships",
+    "gold_title": "Order Cancellation Rules",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-018",
+    "query": "what happens if I try to cancel an already shipped order",
+    "gold_title": "Order Cancellation Rules",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-019",
+    "query": "is it possible to cancel a delivered order",
+    "gold_title": "Order Cancellation Rules",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-020",
+    "query": "what order status allows me to cancel without a return",
+    "gold_title": "Order Cancellation Rules",
+    "out_of_domain": false
+  },
+  {
+    "id": "rag-ood-001",
+    "query": "what is the capital of France",
+    "gold_title": null,
+    "out_of_domain": true
+  },
+  {
+    "id": "rag-ood-002",
+    "query": "who won the FIFA World Cup in 2022",
+    "gold_title": null,
+    "out_of_domain": true
+  },
+  {
+    "id": "rag-ood-003",
+    "query": "give me a recipe for chocolate cake",
+    "gold_title": null,
+    "out_of_domain": true
+  },
+  {
+    "id": "rag-ood-004",
+    "query": "what is the speed of light in a vacuum",
+    "gold_title": null,
+    "out_of_domain": true
+  },
+  {
+    "id": "rag-ood-005",
+    "query": "how do I write a Python function to sort a list",
+    "gold_title": null,
+    "out_of_domain": true
+  }
+]

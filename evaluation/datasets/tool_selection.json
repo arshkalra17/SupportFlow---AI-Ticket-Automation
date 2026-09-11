@@ -1,0 +1,92 @@
+[
+  {
+    "id": "tool-001",
+    "message": "What is the status of order 5001?",
+    "gold_tools": ["get_order_status"],
+    "note": "single order status lookup"
+  },
+  {
+    "id": "tool-002",
+    "message": "Can you check on order number 5002 for me?",
+    "gold_tools": ["get_order_status"],
+    "note": "order status lookup phrased as question"
+  },
+  {
+    "id": "tool-003",
+    "message": "Where is my order 5003? Has it shipped yet?",
+    "gold_tools": ["get_order_status"],
+    "note": "shipping status inquiry"
+  },
+  {
+    "id": "tool-004",
+    "message": "I need to know the current status of order 5001.",
+    "gold_tools": ["get_order_status"],
+    "note": "direct status request"
+  },
+  {
+    "id": "tool-005",
+    "message": "My order 5001 arrived damaged. Can I get a replacement?",
+    "gold_tools": ["get_order_status", "create_replacement_request"],
+    "note": "damaged order — check status then request replacement"
+  },
+  {
+    "id": "tool-006",
+    "message": "Order 5002 came with the wrong item inside. I need a replacement.",
+    "gold_tools": ["get_order_status", "create_replacement_request"],
+    "note": "wrong item — check status then replacement"
+  },
+  {
+    "id": "tool-007",
+    "message": "The item in order 5003 is defective and does not work. Please replace it.",
+    "gold_tools": ["get_order_status", "create_replacement_request"],
+    "note": "defective item replacement"
+  },
+  {
+    "id": "tool-008",
+    "message": "Order 5001 was delivered but completely broken. I want a new one sent out.",
+    "gold_tools": ["get_order_status", "create_replacement_request"],
+    "note": "broken delivery — replacement"
+  },
+  {
+    "id": "tool-009",
+    "message": "I would like a refund of $200 for order 5002.",
+    "gold_tools": ["issue_refund"],
+    "note": "low-value refund request"
+  },
+  {
+    "id": "tool-010",
+    "message": "Please refund $800 for order 5001.",
+    "gold_tools": ["issue_refund"],
+    "note": "refund below threshold"
+  },
+  {
+    "id": "tool-011",
+    "message": "I want a full refund of $5000 for order 5002.",
+    "gold_tools": ["issue_refund"],
+    "note": "high-value refund — triggers approval"
+  },
+  {
+    "id": "tool-012",
+    "message": "How long does standard shipping take?",
+    "gold_tools": [],
+    "note": "policy question — no tool needed"
+  },
+  {
+    "id": "tool-013",
+    "message": "What is your return and refund policy?",
+    "gold_tools": [],
+    "note": "policy question — no tool needed"
+  },
+  {
+    "id": "tool-014",
+    "message": "Can I cancel an order that is still in processing?",
+    "gold_tools": [],
+    "note": "policy question — no tool needed"
+  },
+  {
+    "id": "tool-015",
+    "message": "What items are eligible for a replacement request?",
+    "gold_tools": [],
+    "note": "policy question — no tool needed"
+  }
+]

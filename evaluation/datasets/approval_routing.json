@@ -1,0 +1,182 @@
+[
+  {
+    "id": "appr-001",
+    "description": "Amount $1 — well below threshold, auto-execute",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 1.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-002",
+    "description": "Amount $999 — below threshold, auto-execute",
+    "order_id": 5002,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 999.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-003",
+    "description": "Amount $1000 — exactly at threshold, auto-execute (rule: <= 1000)",
+    "order_id": 5003,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 1000.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-004",
+    "description": "Amount $1001 — just above threshold, human approval required",
+    "order_id": 5004,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 1001.0,
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "id": "appr-005",
+    "description": "Amount $5000 — high value, human approval required",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 5000.0,
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "id": "appr-006",
+    "description": "Amount $500 — mid range, auto-execute",
+    "order_id": 5002,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 500.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-007",
+    "description": "Amount $0.01 — tiny amount, auto-execute",
+    "order_id": 5003,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 0.01,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-008",
+    "description": "Amount $10000 — very high value, human approval required",
+    "order_id": 5004,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 10000.0,
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "id": "appr-009",
+    "description": "Amount $1000.01 — fractionally above threshold, human approval",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 1000.01,
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "id": "appr-010",
+    "description": "Amount $999.99 — fractionally below threshold, auto-execute",
+    "order_id": 5002,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 999.99,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-011",
+    "description": "Unauthorized customer — customer 2 requests refund on customer 1 order",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 2,
+    "amount": 100.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-012",
+    "description": "Unauthorized customer — customer 3 requests refund on customer 1 order",
+    "order_id": 5003,
+    "order_owner_id": 1,
+    "requesting_customer_id": 3,
+    "amount": 500.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-013",
+    "description": "Unauthorized customer — customer 1 requests refund on customer 2 order",
+    "order_id": 5011,
+    "order_owner_id": 2,
+    "requesting_customer_id": 1,
+    "amount": 200.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-014",
+    "description": "Invalid amount zero — rejected by validation",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": 0.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-015",
+    "description": "Invalid amount negative — rejected by validation",
+    "order_id": 5001,
+    "order_owner_id": 1,
+    "requesting_customer_id": 1,
+    "amount": -50.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-016",
+    "description": "Nonexistent order — rejected (not found)",
+    "order_id": 9999,
+    "order_owner_id": null,
+    "requesting_customer_id": 1,
+    "amount": 100.0,
+    "expected": "REJECT"
+  },
+  {
+    "id": "appr-017",
+    "description": "Customer 2 own order, low value, auto-execute",
+    "order_id": 5011,
+    "order_owner_id": 2,
+    "requesting_customer_id": 2,
+    "amount": 250.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-018",
+    "description": "Customer 2 own order, high value, human approval",
+    "order_id": 5012,
+    "order_owner_id": 2,
+    "requesting_customer_id": 2,
+    "amount": 2500.0,
+    "expected": "HUMAN_APPROVAL"
+  },
+  {
+    "id": "appr-019",
+    "description": "Customer 3 own order, exactly at threshold, auto-execute",
+    "order_id": 5021,
+    "order_owner_id": 3,
+    "requesting_customer_id": 3,
+    "amount": 1000.0,
+    "expected": "AUTO_EXECUTE"
+  },
+  {
+    "id": "appr-020",
+    "description": "Customer 3 own order, above threshold, human approval",
+    "order_id": 5022,
+    "order_owner_id": 3,
+    "requesting_customer_id": 3,
+    "amount": 1500.0,
+    "expected": "HUMAN_APPROVAL"
+  }
+]

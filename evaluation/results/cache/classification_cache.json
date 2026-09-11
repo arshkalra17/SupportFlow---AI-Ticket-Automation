@@ -1,0 +1,282 @@
+{
+  "cls-001__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-001__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "URGENT",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "URGENT",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:33.649284+00:00"
+  },
+  "cls-002__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-002__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:35.069168+00:00"
+  },
+  "cls-003__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-003__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:36.823908+00:00"
+  },
+  "cls-004__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-004__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:38.556802+00:00"
+  },
+  "cls-005__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-005__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:40.165531+00:00"
+  },
+  "cls-006__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-006__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:42.783585+00:00"
+  },
+  "cls-007__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-007__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:44.557230+00:00"
+  },
+  "cls-008__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-008__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:46.163333+00:00"
+  },
+  "cls-009__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-009__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:48.032218+00:00"
+  },
+  "cls-010__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-010__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "LOW",
+      "sentiment": "POSITIVE"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "LOW",
+      "sentiment": "POSITIVE"
+    },
+    "timestamp": "2026-09-11T22:26:49.674654+00:00"
+  },
+  "cls-011__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-011__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:51.177797+00:00"
+  },
+  "cls-012__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-012__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:52.915898+00:00"
+  },
+  "cls-013__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-013__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:54.632862+00:00"
+  },
+  "cls-014__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-014__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:26:56.145561+00:00"
+  },
+  "cls-015__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-015__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:57.606066+00:00"
+  },
+  "cls-016__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-016__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:26:59.375603+00:00"
+  },
+  "cls-017__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-017__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-11T22:27:01.157638+00:00"
+  },
+  "cls-018__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-018__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-11T22:27:02.788425+00:00"
+  },
+  "cls-019__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-019__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-11T22:27:06.366616+00:00"
+  },
+  "cls-020__openai/gpt-oss-120b__v1-447b72ca": {
+    "key": "cls-020__openai/gpt-oss-120b__v1-447b72ca",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-11T22:27:07.768356+00:00"
+  }
+}
