@@ -1,19 +1,66 @@
 # pyrefly: ignore [missing-import]
 from fastapi import FastAPI, Depends, HTTPException, status
 # pyrefly: ignore [missing-import]
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, EmailStr
 # pyrefly: ignore [missing-import]
 from sqlalchemy.orm import Session
 
 # pyrefly: ignore [missing-import]
 from app.queue import enqueue_ticket_processing
 from app.database import engine, Base, get_db
-from app.models import Ticket
+from app.models import Ticket, Customer
+from app.auth import (
+    hash_password,
+    verify_password,
+    create_access_token,
+    get_current_customer,
+)
+from app.tools import authorize_and_get_order_status
+from app.graph import run_supportflow
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Support Flow API")
+
+
+# ── Pydantic Schemas ───────────────────────────────────────────────────
+
+class UserRegister(BaseModel):
+    email: str
+    password: str
+
+
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+
+
+class CustomerResponse(BaseModel):
+    id: int
+    email: str
+
+    class Config:
+        from_attributes = True
+
+
+class SupportProcessRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    message: str
+
+
+class SupportProcessResponse(BaseModel):
+    final_response: str
+    classification: dict | None = None
+    tool_calls: list[dict] = []
+    approval_status: str | None = None
+    retrieved_documents: list[dict] | None = None
+    error: str | None = None
 
 
 class TicketCreate(BaseModel):
@@ -41,9 +88,102 @@ class TicketDetail(BaseModel):
         from_attributes = True
 
 
+# ── Authentication Endpoints ───────────────────────────────────────────
+
+@app.post("/auth/register", response_model=CustomerResponse, status_code=status.HTTP_201_CREATED)
+def register_customer(data: UserRegister, db: Session = Depends(get_db)):
+    """Registers a new customer with hashed password storage."""
+    existing = db.query(Customer).filter(Customer.email == data.email).first()
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email is already registered",
+        )
+
+    pwd_hash = hash_password(data.password)
+    customer = Customer(
+        email=data.email,
+        password_hash=pwd_hash,
+    )
+    db.add(customer)
+    db.commit()
+    db.refresh(customer)
+    return customer
+
+
+@app.post("/auth/login", response_model=TokenResponse)
+def login_customer(data: UserLogin, db: Session = Depends(get_db)):
+    """Authenticates credentials and issues a signed JWT access token."""
+    customer = db.query(Customer).filter(Customer.email == data.email).first()
+    if not customer or not verify_password(data.password, customer.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid email or password",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    token = create_access_token(customer_id=customer.id)
+    return TokenResponse(access_token=token)
+
+
+# ── LangGraph Workflow Endpoint (JWT Authenticated) ────────────────────
+
+@app.post("/support/process", response_model=SupportProcessResponse)
+def process_support_message(
+    data: SupportProcessRequest,
+    current_customer: Customer = Depends(get_current_customer),
+):
+    """Processes a customer message through the LangGraph AI workflow.
+
+    Identity is derived strictly from the verified JWT token via `get_current_customer()`.
+    Any client attempt to supply extra body fields (e.g. `authenticated_customer_id`)
+    triggers an immediate 422 validation rejection.
+    """
+    state = run_supportflow(
+        customer_message=data.message,
+        authenticated_customer_id=current_customer.id,
+    )
+    return SupportProcessResponse(
+        final_response=state.get("final_response", ""),
+        classification=state.get("classification"),
+        tool_calls=state.get("tool_calls", []),
+        approval_status=state.get("approval_status"),
+        retrieved_documents=state.get("retrieved_documents"),
+        error=state.get("error"),
+    )
+
+
+# ── Protected Order Endpoint (JWT -> Existing Auth Layer Boundary) ────
+
+@app.get("/orders/{order_id}")
+def get_order(
+    order_id: int,
+    current_customer: Customer = Depends(get_current_customer),
+):
+    """Protected order status endpoint.
+
+    Extracts identity strictly from verified JWT via `get_current_customer()`
+    and passes it to `app.tools.authorize_and_get_order_status()`, which enforces
+    existing resource ownership authorization rules.
+    """
+    authorized, err_msg, result = authorize_and_get_order_status(
+        authenticated_customer_id=current_customer.id,
+        order_id=order_id,
+    )
+
+    if not authorized:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=err_msg,
+        )
+
+    return result
+
+
+# ── Ticket Endpoints ───────────────────────────────────────────────────
+
 @app.post("/tickets", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
 def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
-    # 1. Create and commit ticket with status PENDING
     ticket = Ticket(
         customer_message=ticket_data.message,
         status="PENDING"
@@ -52,7 +192,6 @@ def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(ticket)
 
-    # 2. Enqueue ticket processing job into Redis asynchronously
     try:
         enqueue_ticket_processing(ticket.id)
     except Exception as err:
@@ -64,9 +203,7 @@ def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
             detail=f"Ticket created (ID: {ticket.id}) but queue enqueueing failed: {err}"
         )
 
-    # 3. Return ticket immediately with status PENDING
     return ticket
-
 
 
 @app.get("/tickets/{ticket_id}", response_model=TicketDetail)
@@ -78,5 +215,3 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
             detail=f"Ticket with id {ticket_id} not found"
         )
     return ticket
-
-
