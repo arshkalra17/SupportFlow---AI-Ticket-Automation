@@ -33,7 +33,10 @@ import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+from dotenv import load_dotenv
 
+load_dotenv()
+groq_api_key = os.getenv("GROQ_API_KEY")
 # ── Make sure the project root is on sys.path when invoked as a module ─
 _PROJECT_ROOT = Path(__file__).parent.parent
 if str(_PROJECT_ROOT) not in sys.path:
