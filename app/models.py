@@ -2,7 +2,7 @@ from datetime import datetime
 # pyrefly: ignore [missing-import]
 from pgvector.sqlalchemy import Vector
 # pyrefly: ignore [missing-import]
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, JSON
 from app.database import Base
 
 
@@ -78,6 +78,30 @@ class Customer(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class IdempotencyRecord(Base):
+    __tablename__ = "idempotency_records"
+
+    id = Column(Integer, primary_key=True, index=True)
+    idempotency_key = Column(String, nullable=False, index=True)
+    customer_id = Column(Integer, nullable=False, index=True)
+    operation_type = Column(String, nullable=False)        # e.g. "REFUND", "REPLACEMENT_REQUEST", "SUPPORT_PROCESS"
+    request_hash = Column(String, nullable=False)           # SHA-256 fingerprint of request parameters
+    status = Column(String, nullable=False, default="COMPLETED")
+    response_data = Column(JSON, nullable=True)            # Stored JSON dictionary of execution outcome
+    retry_count = Column(Integer, nullable=False, default=0)
+    max_retries = Column(Integer, nullable=False, default=3)
+    last_error = Column(Text, nullable=True)
+    next_retry_at = Column(DateTime, nullable=True)
+    action_id = Column(Integer, ForeignKey("actions.id"), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("customer_id", "idempotency_key", name="uix_customer_idempotency_key"),
+    )
+
 
 
 

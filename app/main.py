@@ -1,5 +1,5 @@
 # pyrefly: ignore [missing-import]
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, Header, HTTPException, status
 # pyrefly: ignore [missing-import]
 from pydantic import BaseModel, ConfigDict, EmailStr
 # pyrefly: ignore [missing-import]
@@ -17,6 +17,7 @@ from app.auth import (
 )
 from app.tools import authorize_and_get_order_status
 from app.graph import run_supportflow
+from app.idempotency import execute_with_idempotency
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
@@ -27,12 +28,12 @@ app = FastAPI(title="Support Flow API")
 # ── Pydantic Schemas ───────────────────────────────────────────────────
 
 class UserRegister(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
@@ -61,6 +62,7 @@ class SupportProcessResponse(BaseModel):
     approval_status: str | None = None
     retrieved_documents: list[dict] | None = None
     error: str | None = None
+    idempotency_replayed: bool = False
 
 
 class TicketCreate(BaseModel):
@@ -126,23 +128,33 @@ def login_customer(data: UserLogin, db: Session = Depends(get_db)):
     return TokenResponse(access_token=token)
 
 
-# ── LangGraph Workflow Endpoint (JWT Authenticated) ────────────────────
+# ── LangGraph Workflow Endpoint (JWT Authenticated & Idempotent) ────────
 
 @app.post("/support/process", response_model=SupportProcessResponse)
 def process_support_message(
     data: SupportProcessRequest,
+    idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     current_customer: Customer = Depends(get_current_customer),
 ):
-    """Processes a customer message through the LangGraph AI workflow.
+    """Processes a customer message through the LangGraph AI workflow with idempotency support.
 
     Identity is derived strictly from the verified JWT token via `get_current_customer()`.
-    Any client attempt to supply extra body fields (e.g. `authenticated_customer_id`)
-    triggers an immediate 422 validation rejection.
+    Supports optional `Idempotency-Key` header for safe request retries.
     """
-    state = run_supportflow(
-        customer_message=data.message,
-        authenticated_customer_id=current_customer.id,
+    def action():
+        return run_supportflow(
+            customer_message=data.message,
+            authenticated_customer_id=current_customer.id,
+        )
+
+    state, is_replayed = execute_with_idempotency(
+        customer_id=current_customer.id,
+        idempotency_key=idempotency_key,
+        operation_type="SUPPORT_PROCESS",
+        request_params={"message": data.message},
+        action_fn=action,
     )
+
     return SupportProcessResponse(
         final_response=state.get("final_response", ""),
         classification=state.get("classification"),
@@ -150,6 +162,7 @@ def process_support_message(
         approval_status=state.get("approval_status"),
         retrieved_documents=state.get("retrieved_documents"),
         error=state.get("error"),
+        idempotency_replayed=is_replayed,
     )
 
 

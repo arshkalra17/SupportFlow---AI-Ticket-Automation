@@ -2,13 +2,13 @@ import json
 import logging
 import os
 import time
-# pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 
 from app.database import SessionLocal
 from app.models import Ticket
 from app.llm import classify_ticket
 from app.queue import redis_client, QUEUE_NAME
+from app.idempotency import is_transient_error
 
 load_dotenv()
 
@@ -18,15 +18,18 @@ logging.basicConfig(
 )
 logger = logging.getLogger("supportflow.worker")
 
+MAX_JOB_RETRIES = 3
 
-def process_single_job(payload_json: str) -> bool:
-    """Processes a single ticket classification job from Redis.
+
+def process_single_job(payload_json: str, classify_fn=None) -> bool:
+    """Processes a single ticket classification job from Redis with bounded retries.
 
     Args:
         payload_json (str): Raw JSON string from Redis queue.
+        classify_fn (Callable, optional): Override for testing classification callback.
 
     Returns:
-        bool: True if job was processed or safely handled, False if DB/unrecoverable error occurred.
+        bool: True if job was processed or safely handled/re-enqueued, False if unrecoverable payload error.
     """
     try:
         data = json.loads(payload_json)
@@ -39,7 +42,8 @@ def process_single_job(payload_json: str) -> bool:
         logger.error(f"Job payload missing 'ticket_id': {data}")
         return False
 
-    logger.info(f"Processing ticket_id={ticket_id}...")
+    retry_count = data.get("retry_count", 0)
+    logger.info(f"Processing ticket_id={ticket_id} (retry_count={retry_count}/{MAX_JOB_RETRIES})...")
 
     db = SessionLocal()
     try:
@@ -48,9 +52,10 @@ def process_single_job(payload_json: str) -> bool:
             logger.warning(f"Ticket id={ticket_id} not found in database. Discarding job.")
             return True
 
-        # Synchronously call classify_ticket
+        # Synchronously call classify_ticket or mock override
         try:
-            classification = classify_ticket(ticket.customer_message)
+            fn = classify_fn or classify_ticket
+            classification = fn(ticket.customer_message)
             ticket.category = classification.get("category")
             ticket.priority = classification.get("priority")
             ticket.status = "PROCESSED"
@@ -59,12 +64,25 @@ def process_single_job(payload_json: str) -> bool:
                 f"Successfully processed ticket_id={ticket_id}: "
                 f"category='{ticket.category}', priority='{ticket.priority}'"
             )
+            return True
         except Exception as classification_err:
-            logger.error(f"Classification failed for ticket_id={ticket_id}: {classification_err}")
-            ticket.status = "CLASSIFICATION_FAILED"
-            db.commit()
+            if is_transient_error(classification_err) and retry_count < MAX_JOB_RETRIES:
+                data["retry_count"] = retry_count + 1
+                new_payload = json.dumps(data)
+                redis_client.rpush(QUEUE_NAME, new_payload)
+                logger.warning(
+                    f"Transient failure for ticket_id={ticket_id} (attempt {retry_count + 1}/{MAX_JOB_RETRIES}): "
+                    f"{classification_err}. Re-enqueued job."
+                )
+                return True
+            else:
+                logger.error(
+                    f"Permanent failure for ticket_id={ticket_id} (retry_count={retry_count}): {classification_err}"
+                )
+                ticket.status = "CLASSIFICATION_FAILED"
+                db.commit()
+                return True
 
-        return True
     except Exception as db_err:
         logger.error(f"Database error while processing ticket_id={ticket_id}: {db_err}")
         db.rollback()
