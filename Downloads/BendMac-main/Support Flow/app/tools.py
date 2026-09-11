@@ -3,9 +3,10 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, Base, engine
-from app.models import Order, ReplacementRequest
+from app.models import Order, ReplacementRequest, Action, Approval
+from app.approval import create_approval_request
 
-# Ensure orders table is created
+# Ensure tables are created
 Base.metadata.create_all(bind=engine)
 
 
@@ -244,3 +245,166 @@ def create_replacement_request(
     finally:
         if close_db:
             db.close()
+
+
+# ── Risky Action: Issue Refund ────────────────────────────────────────
+
+REFUND_AUTO_APPROVAL_THRESHOLD = 1000.0
+
+
+class IssueRefundArgs(BaseModel):
+    order_id: int = Field(gt=0, description="Unique positive integer ID of the order to refund")
+    amount: float = Field(gt=0, description="Refund amount in USD, must be greater than 0")
+
+
+def validate_issue_refund_args(args: dict) -> tuple[bool, IssueRefundArgs | None, str | None]:
+    """Validates raw arguments for issue_refund.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, IssueRefundArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "order_id" in args and isinstance(args["order_id"], bool):
+        return False, None, "Validation Error: order_id cannot be a boolean value"
+
+    if "amount" in args and isinstance(args["amount"], bool):
+        return False, None, "Validation Error: amount cannot be a boolean value"
+
+    try:
+        validated_args = IssueRefundArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["amount"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def issue_refund(
+    order_id: int,
+    amount: float,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Issues a refund or creates a pending approval request based on backend risk policy.
+
+    Order of checks:
+    1. Validate parameters (handled via validate_issue_refund_args or inline check).
+    2. Verify order exists.
+    3. Verify ownership (authenticated_customer_id owns order).
+    4. Duplicate check (no active or completed refund for order_id).
+    5. Deterministic risk check:
+       - amount <= 1000: execute synthetic refund automatically (Action COMPLETED).
+       - amount > 1000: create Action & Approval records (PENDING_APPROVAL), return approval required.
+
+    Args:
+        order_id (int): Order ID to refund.
+        amount (float): Monetary refund amount.
+        authenticated_customer_id (int): Trusted customer identity.
+        db (Session, optional): DB session.
+
+    Returns:
+        dict: Refund outcome or approval required details.
+    """
+    if not isinstance(order_id, int) or isinstance(order_id, bool) or order_id <= 0:
+        return {"error": f"Validation Error: order_id must be a positive integer, got {order_id}"}
+
+    if not isinstance(amount, (int, float)) or isinstance(amount, bool) or amount <= 0:
+        return {"error": f"Validation Error: amount must be a positive number, got {amount}"}
+
+    close_db = False
+    if db is None:
+        db = SessionLocal()
+        close_db = True
+
+    try:
+        # 1. Verify order exists
+        order = db.query(Order).filter(Order.id == order_id).first()
+        if not order:
+            return {"error": f"Order #{order_id} not found"}
+
+        # 2. Authorization: verify ownership
+        if order.customer_id != authenticated_customer_id:
+            return {
+                "error": (
+                    f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                    f"have permission to access Order #{order_id}"
+                )
+            }
+
+        # 3. Duplicate prevention check
+        existing_action = (
+            db.query(Action)
+            .filter(
+                Action.action_type == "REFUND",
+                Action.reference_id == order_id,
+                Action.status.in_(["COMPLETED", "PENDING"])
+            )
+            .first()
+        )
+        if existing_action:
+            return {
+                "error": f"A refund request or completed refund already exists for Order #{order_id}",
+                "existing_action_id": existing_action.id,
+                "existing_status": existing_action.status,
+                "existing_amount": existing_action.amount,
+            }
+
+        # 4. Deterministic Risk Check
+        if amount <= REFUND_AUTO_APPROVAL_THRESHOLD:
+            # Low-value refund -> Execute automatically
+            action = Action(
+                action_type="REFUND",
+                reference_id=order_id,
+                customer_id=authenticated_customer_id,
+                amount=amount,
+                status="COMPLETED",
+            )
+            db.add(action)
+            db.commit()
+            db.refresh(action)
+
+            return {
+                "status": "COMPLETED",
+                "message": f"Refund of ${amount:.2f} issued successfully for Order #{order_id}.",
+                "order_id": order_id,
+                "customer_id": authenticated_customer_id,
+                "amount": amount,
+                "action_id": action.id,
+                "approval_required": False,
+            }
+        else:
+            # High-value refund -> Trapped by risk rule, create PENDING Approval
+            app_res = create_approval_request(
+                action_type="REFUND",
+                reference_id=order_id,
+                customer_id=authenticated_customer_id,
+                amount=amount,
+                db=db,
+            )
+
+            return {
+                "status": "PENDING_APPROVAL",
+                "message": (
+                    f"Refund request of ${amount:.2f} for Order #{order_id} exceeds auto-approval "
+                    f"threshold (${REFUND_AUTO_APPROVAL_THRESHOLD:.2f}). Human approval is required."
+                ),
+                "order_id": order_id,
+                "customer_id": authenticated_customer_id,
+                "amount": amount,
+                "action_id": app_res["action_id"],
+                "approval_id": app_res["approval_id"],
+                "approval_required": True,
+            }
+    finally:
+        if close_db:
+            db.close()
+

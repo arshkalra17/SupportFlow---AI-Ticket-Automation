@@ -1,6 +1,6 @@
 from datetime import datetime
 # pyrefly: ignore [missing-import]
-from sqlalchemy import Column, DateTime, Integer, String, Text
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from app.database import Base
 
 
@@ -32,4 +32,28 @@ class ReplacementRequest(Base):
     customer_id = Column(Integer, nullable=False)
     status = Column(String, nullable=False, default="PENDING")
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Action(Base):
+    __tablename__ = "actions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    action_type = Column(String, nullable=False)        # e.g. "REPLACEMENT_REQUEST", "REFUND"
+    reference_id = Column(Integer, nullable=False)       # ID of the related entity (order_id)
+    customer_id = Column(Integer, nullable=False)
+    amount = Column(Float, nullable=True)               # e.g. refund amount
+    status = Column(String, nullable=False, default="PENDING")   # PENDING / COMPLETED / REJECTED
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class Approval(Base):
+    __tablename__ = "approvals"
+
+    id = Column(Integer, primary_key=True, index=True)
+    action_id = Column(Integer, ForeignKey("actions.id"), nullable=False)
+    status = Column(String, nullable=False, default="PENDING")   # PENDING / APPROVED / REJECTED
+    reason = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    resolved_at = Column(DateTime, nullable=True)
+    resolved_by = Column(String, nullable=True)
 

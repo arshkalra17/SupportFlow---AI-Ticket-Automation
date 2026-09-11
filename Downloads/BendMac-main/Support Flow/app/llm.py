@@ -11,6 +11,8 @@ from app.tools import (
     authorize_and_get_order_status,
     validate_create_replacement_request_args,
     create_replacement_request,
+    validate_issue_refund_args,
+    issue_refund,
 )
 
 load_dotenv()
@@ -117,7 +119,37 @@ CREATE_REPLACEMENT_TOOL_SCHEMA = {
     }
 }
 
-AVAILABLE_TOOLS = [ORDER_STATUS_TOOL_SCHEMA, CREATE_REPLACEMENT_TOOL_SCHEMA]
+ISSUE_REFUND_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "issue_refund",
+        "description": (
+            "Issues a refund for an order. Requires order_id and monetary amount in USD. "
+            "The backend will validate order ownership and enforce risk approval rules."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the order to refund."
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "The refund amount in USD (must be greater than 0)."
+                }
+            },
+            "required": ["order_id", "amount"]
+        }
+    }
+}
+
+AVAILABLE_TOOLS = [
+    ORDER_STATUS_TOOL_SCHEMA,
+    CREATE_REPLACEMENT_TOOL_SCHEMA,
+    ISSUE_REFUND_TOOL_SCHEMA,
+]
+
 MAX_TOOL_ITERATIONS = 5
 
 
@@ -210,6 +242,47 @@ def _execute_tool_call(
             "tool_result": result,
         }
 
+    elif tool_name == "issue_refund":
+        # Step 1: Validate
+        is_valid, validated, val_err = validate_issue_refund_args(tool_args or {})
+        if not is_valid:
+            return {
+                "validation_passed": False,
+                "authorization_passed": None,
+                "backend_executed": False,
+                "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+            }
+
+        # Step 2: Execute (auth + duplicate + risk rules handled internally)
+        result = issue_refund(
+            order_id=validated.order_id,
+            amount=validated.amount,
+            authenticated_customer_id=authenticated_customer_id,
+        )
+
+        if "error" in result:
+            if "Unauthorized" in result["error"]:
+                return {
+                    "validation_passed": True,
+                    "authorization_passed": False,
+                    "backend_executed": False,
+                    "tool_result": result,
+                }
+            return {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": False,
+                "tool_result": result,
+            }
+
+        executed = (result.get("status") == "COMPLETED")
+        return {
+            "validation_passed": True,
+            "authorization_passed": True,
+            "backend_executed": executed,
+            "tool_result": result,
+        }
+
     else:
         return {
             "validation_passed": False,
@@ -256,12 +329,19 @@ def process_customer_message_with_tools(
         "If the customer wants a replacement for a damaged or defective order, "
         "first check the order status with 'get_order_status', then ALWAYS use "
         "'create_replacement_request' to attempt the replacement. "
-        "You must NOT decide whether an order is eligible for replacement — "
+        "If the customer requests a refund for an order, use the 'issue_refund' tool "
+        "with the order_id and requested amount. "
+        "If the 'issue_refund' tool returns status 'PENDING_APPROVAL', inform the "
+        "customer clearly that their refund request has been submitted for human "
+        "approval and has NOT been issued yet. Never claim a refund was completed "
+        "if approval is pending. "
+        "You must NOT decide whether an order is eligible or whether approval is required — "
         "the backend will make that determination. Always call the tool and "
-        "relay the result to the customer. "
+        "relay the backend result to the customer. "
         "Do not invent or guess order details. "
         "Do not fabricate tool results."
     )
+
 
     messages = [
         {"role": "system", "content": system_prompt},
