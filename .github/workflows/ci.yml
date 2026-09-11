@@ -1,0 +1,98 @@
+name: SupportFlow CI
+
+# ── Triggers ──────────────────────────────────────────────────────────
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+    branches: ["main", "master"]
+
+# ── Jobs ──────────────────────────────────────────────────────────────
+jobs:
+  test:
+    name: Deterministic test suite
+    runs-on: ubuntu-latest
+
+    # ── Service containers ─────────────────────────────────────────
+    # PostgreSQL with the pgvector extension, and Redis 7.
+    # These match the versions in docker-compose.yml used for local dev.
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: supportflow_user
+          POSTGRES_PASSWORD: supportflow_password
+          POSTGRES_DB: supportflow_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U supportflow_user -d supportflow_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # ── Environment ────────────────────────────────────────────────
+    env:
+      # Test database — separate from the development database.
+      # No GROQ_API_KEY: the default test suite is fully deterministic.
+      DATABASE_URL: postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_test
+      REDIS_HOST: localhost
+      REDIS_PORT: "6379"
+      JWT_SECRET: ci_test_secret_supportflow_stage8
+
+    steps:
+      # ── 1. Checkout ──────────────────────────────────────────────
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # ── 2. Python setup ──────────────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      # ── 3. Install dependencies ──────────────────────────────────
+      - name: Install production dependencies
+        run: pip install -r requirements.txt
+
+      - name: Install test dependencies
+        run: pip install -r requirements-test.txt
+
+      # ── 4. Enable pgvector on the test database ───────────────────
+      # The pgvector/pgvector:pg16 image ships the extension but it must
+      # be enabled per-database before SQLAlchemy creates the tables.
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=supportflow_password psql \
+            -h localhost -U supportflow_user -d supportflow_test \
+            -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      # ── 5. Run deterministic test suite ──────────────────────────
+      # `pytest` uses addopts = -m "not llm" from pytest.ini, so no
+      # live Groq calls are made.  GROQ_API_KEY is intentionally absent.
+      - name: Run deterministic tests
+        run: |
+          pytest --tb=short -q
+
+      # ── 6. Optional: live-LLM tests (skipped unless secret present) ──
+      # These are only executed when GROQ_API_KEY is configured as a
+      # repository secret.  They are never required for CI to pass.
+      # To enable: add GROQ_API_KEY to GitHub repository secrets.
+      - name: Run live-LLM tests (optional)
+        if: ${{ secrets.GROQ_API_KEY != '' }}
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: |
+          pytest -m llm --tb=short -q
+        continue-on-error: true

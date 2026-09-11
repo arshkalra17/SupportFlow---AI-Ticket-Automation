@@ -172,8 +172,26 @@ def execute_with_idempotency(
                 }, db)
                 return res_data, True
 
-            # If existing is RETRYABLE_FAILED: trigger retry logic!
-            if existing.status in ("RETRYABLE_FAILED", "PENDING"):
+            # If existing is PENDING: another request is actively executing.
+            # Wait for it to reach a terminal state, then replay its result.
+            # Do NOT call retry_idempotent_operation — that would re-execute
+            # action_fn, defeating the exactly-once guarantee.
+            if existing.status == "PENDING":
+                for _ in range(50):
+                    if existing.status != "PENDING":
+                        break
+                    time.sleep(0.1)
+                    db.refresh(existing)
+                logger.info(
+                    f"Concurrent PENDING wait complete for key='{idempotency_key}': "
+                    f"resolved to status='{existing.status}'"
+                )
+                res_data = get_updated_response_data(existing.response_data or {}, db)
+                return res_data, True
+
+            # If existing is RETRYABLE_FAILED: a previous attempt failed transiently.
+            # Retry is appropriate here — the original request has already ended.
+            if existing.status == "RETRYABLE_FAILED":
                 return retry_idempotent_operation(
                     customer_id=customer_id,
                     idempotency_key=idempotency_key,
@@ -271,7 +289,7 @@ def execute_with_idempotency(
                 logger.info(f"Operation key='{idempotency_key}' transitioned to PENDING_APPROVAL")
                 return result, False
 
-            if "error" in result:
+            if result.get("error"):
                 err_msg = str(result["error"])
                 if is_permanent_error(ValueError(err_msg)) or "Unauthorized" in err_msg or "Permission" in err_msg:
                     pending_record.status = "FAILED"
@@ -457,7 +475,7 @@ def retry_idempotent_operation(
                     db.commit()
                     return result, True
 
-                if "error" in result:
+                if result.get("error"):
                     err_msg = str(result["error"])
                     if is_permanent_error(ValueError(err_msg)) or "Unauthorized" in err_msg or "Permission" in err_msg:
                         existing.status = "FAILED"
