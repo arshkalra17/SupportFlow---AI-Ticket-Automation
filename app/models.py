@@ -1,5 +1,7 @@
 from datetime import datetime
 # pyrefly: ignore [missing-import]
+from pgvector.sqlalchemy import Vector
+# pyrefly: ignore [missing-import]
 from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
 from app.database import Base
 
@@ -56,4 +58,17 @@ class Approval(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
     resolved_by = Column(String, nullable=True)
+
+
+class KnowledgeDocument(Base):
+    __tablename__ = "knowledge_documents"
+
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
+    source = Column(String, nullable=True)
+    embedding = Column(Vector(384), nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 
