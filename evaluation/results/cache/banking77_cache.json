@@ -1,0 +1,2158 @@
+{
+  "banking77-001__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-001__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:36.585292+00:00"
+  },
+  "banking77-002__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-002__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:20:38.419277+00:00"
+  },
+  "banking77-003__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-003__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:40.312421+00:00"
+  },
+  "banking77-004__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-004__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:43.000910+00:00"
+  },
+  "banking77-005__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-005__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:44.711981+00:00"
+  },
+  "banking77-006__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-006__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:46.552279+00:00"
+  },
+  "banking77-007__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-007__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:20:48.703576+00:00"
+  },
+  "banking77-008__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-008__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:50.469770+00:00"
+  },
+  "banking77-009__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-009__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:52.388458+00:00"
+  },
+  "banking77-010__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-010__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:54.228818+00:00"
+  },
+  "banking77-011__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-011__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:56.325320+00:00"
+  },
+  "banking77-012__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-012__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:20:58.042522+00:00"
+  },
+  "banking77-013__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-013__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:21:18.624165+00:00"
+  },
+  "banking77-014__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-014__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:20.408274+00:00"
+  },
+  "banking77-015__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-015__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:23.323768+00:00"
+  },
+  "banking77-016__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-016__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:21:25.439945+00:00"
+  },
+  "banking77-017__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-017__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:27.844979+00:00"
+  },
+  "banking77-018__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-018__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:21:29.957206+00:00"
+  },
+  "banking77-019__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-019__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:31.721784+00:00"
+  },
+  "banking77-020__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-020__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:21:33.820407+00:00"
+  },
+  "banking77-021__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-021__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:35.497752+00:00"
+  },
+  "banking77-022__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-022__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:38.471799+00:00"
+  },
+  "banking77-023__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-023__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:40.982184+00:00"
+  },
+  "banking77-024__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-024__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:43.806933+00:00"
+  },
+  "banking77-025__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-025__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:45.625782+00:00"
+  },
+  "banking77-026__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-026__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:47.175051+00:00"
+  },
+  "banking77-027__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-027__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:49.167720+00:00"
+  },
+  "banking77-028__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-028__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:21:51.860795+00:00"
+  },
+  "banking77-029__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-029__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:54.520652+00:00"
+  },
+  "banking77-030__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-030__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:56.261686+00:00"
+  },
+  "banking77-031__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-031__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:21:58.130698+00:00"
+  },
+  "banking77-032__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-032__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:22:00.697529+00:00"
+  },
+  "banking77-033__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-033__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:22:02.444851+00:00"
+  },
+  "banking77-034__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-034__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:05.545901+00:00"
+  },
+  "banking77-035__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-035__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:07.761166+00:00"
+  },
+  "banking77-036__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-036__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:10.193113+00:00"
+  },
+  "banking77-037__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-037__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:12.166812+00:00"
+  },
+  "banking77-038__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-038__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:14.666303+00:00"
+  },
+  "banking77-039__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-039__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:16.588497+00:00"
+  },
+  "banking77-040__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-040__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:19.214192+00:00"
+  },
+  "banking77-041__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-041__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:21.180545+00:00"
+  },
+  "banking77-042__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-042__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:23.100528+00:00"
+  },
+  "banking77-043__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-043__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:25.212186+00:00"
+  },
+  "banking77-044__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-044__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:27.456943+00:00"
+  },
+  "banking77-045__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-045__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:29.233365+00:00"
+  },
+  "banking77-046__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-046__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:31.213454+00:00"
+  },
+  "banking77-047__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-047__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:33.670935+00:00"
+  },
+  "banking77-048__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-048__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:36.245468+00:00"
+  },
+  "banking77-049__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-049__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:38.561542+00:00"
+  },
+  "banking77-050__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-050__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:40.022162+00:00"
+  },
+  "banking77-051__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-051__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:41.760802+00:00"
+  },
+  "banking77-052__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-052__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:23:45.250665+00:00"
+  },
+  "banking77-053__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-053__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:23:47.747647+00:00"
+  },
+  "banking77-054__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-054__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:04.920286+00:00"
+  },
+  "banking77-055__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-055__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:07.023568+00:00"
+  },
+  "banking77-056__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-056__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:09.493549+00:00"
+  },
+  "banking77-057__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-057__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:24:11.422196+00:00"
+  },
+  "banking77-058__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-058__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:13.358396+00:00"
+  },
+  "banking77-059__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-059__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:15.452800+00:00"
+  },
+  "banking77-060__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-060__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "URGENT",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "URGENT",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-12T12:24:18.113740+00:00"
+  },
+  "banking77-061__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-061__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:20.014508+00:00"
+  },
+  "banking77-062__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-062__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:21.799530+00:00"
+  },
+  "banking77-063__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-063__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:23.948509+00:00"
+  },
+  "banking77-064__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-064__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:25.973372+00:00"
+  },
+  "banking77-065__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-065__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:27.896690+00:00"
+  },
+  "banking77-066__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-066__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:30.225577+00:00"
+  },
+  "banking77-067__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-067__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:31.976797+00:00"
+  },
+  "banking77-068__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-068__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:33.880930+00:00"
+  },
+  "banking77-069__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-069__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:36.033463+00:00"
+  },
+  "banking77-070__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-070__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:38.694944+00:00"
+  },
+  "banking77-071__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-071__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:40.765475+00:00"
+  },
+  "banking77-072__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-072__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:24:43.508871+00:00"
+  },
+  "banking77-073__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-073__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:45.453021+00:00"
+  },
+  "banking77-074__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-074__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:48.219040+00:00"
+  },
+  "banking77-075__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-075__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:49.959441+00:00"
+  },
+  "banking77-076__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-076__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:51.701309+00:00"
+  },
+  "banking77-077__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-077__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:53.749464+00:00"
+  },
+  "banking77-078__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-078__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:55.591960+00:00"
+  },
+  "banking77-079__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-079__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:24:59.310671+00:00"
+  },
+  "banking77-080__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-080__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:01.197322+00:00"
+  },
+  "banking77-081__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-081__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:03.172860+00:00"
+  },
+  "banking77-082__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-082__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:04.970033+00:00"
+  },
+  "banking77-083__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-083__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:06.549012+00:00"
+  },
+  "banking77-084__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-084__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:08.272730+00:00"
+  },
+  "banking77-085__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-085__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Order Issue",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Order Issue",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:10.322209+00:00"
+  },
+  "banking77-086__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-086__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:12.742350+00:00"
+  },
+  "banking77-087__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-087__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:14.729139+00:00"
+  },
+  "banking77-088__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-088__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:16.934257+00:00"
+  },
+  "banking77-089__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-089__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:18.758602+00:00"
+  },
+  "banking77-090__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-090__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:20.878068+00:00"
+  },
+  "banking77-091__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-091__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:22.907381+00:00"
+  },
+  "banking77-092__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-092__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:25.826145+00:00"
+  },
+  "banking77-093__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-093__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:27.511797+00:00"
+  },
+  "banking77-094__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-094__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:29.383670+00:00"
+  },
+  "banking77-095__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-095__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:31.818516+00:00"
+  },
+  "banking77-096__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-096__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:33.901015+00:00"
+  },
+  "banking77-097__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-097__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:35.843184+00:00"
+  },
+  "banking77-098__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-098__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:37.852452+00:00"
+  },
+  "banking77-099__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-099__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:39.589370+00:00"
+  },
+  "banking77-100__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-100__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:41.779355+00:00"
+  },
+  "banking77-101__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-101__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:43.874366+00:00"
+  },
+  "banking77-102__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-102__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:46.179995+00:00"
+  },
+  "banking77-103__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-103__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:47.816526+00:00"
+  },
+  "banking77-104__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-104__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:49.661232+00:00"
+  },
+  "banking77-105__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-105__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:52.089948+00:00"
+  },
+  "banking77-106__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-106__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:54.165352+00:00"
+  },
+  "banking77-107__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-107__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:56.071800+00:00"
+  },
+  "banking77-108__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-108__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:25:57.968069+00:00"
+  },
+  "banking77-109__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-109__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:25:59.797844+00:00"
+  },
+  "banking77-110__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-110__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:03.919055+00:00"
+  },
+  "banking77-111__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-111__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:26:06.269668+00:00"
+  },
+  "banking77-112__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-112__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-12T12:26:08.304291+00:00"
+  },
+  "banking77-113__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-113__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:10.122304+00:00"
+  },
+  "banking77-114__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-114__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:13.826550+00:00"
+  },
+  "banking77-115__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-115__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:17.958126+00:00"
+  },
+  "banking77-116__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-116__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:19.811374+00:00"
+  },
+  "banking77-117__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-117__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:23.860015+00:00"
+  },
+  "banking77-118__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-118__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:25.667440+00:00"
+  },
+  "banking77-119__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-119__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:26:29.697084+00:00"
+  },
+  "banking77-120__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-120__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:31.602245+00:00"
+  },
+  "banking77-121__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-121__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:35.740789+00:00"
+  },
+  "banking77-122__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-122__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:38.166026+00:00"
+  },
+  "banking77-123__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-123__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:40.247419+00:00"
+  },
+  "banking77-124__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-124__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:26:42.806739+00:00"
+  },
+  "banking77-125__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-125__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:44.571099+00:00"
+  },
+  "banking77-126__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-126__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:48.438319+00:00"
+  },
+  "banking77-127__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-127__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "URGENT",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:52.453035+00:00"
+  },
+  "banking77-128__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-128__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:26:54.991371+00:00"
+  },
+  "banking77-129__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-129__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:26:56.628328+00:00"
+  },
+  "banking77-130__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-130__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "FRUSTRATED"
+    },
+    "timestamp": "2026-09-12T12:27:00.969063+00:00"
+  },
+  "banking77-131__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-131__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:02.877691+00:00"
+  },
+  "banking77-132__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-132__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:06.664573+00:00"
+  },
+  "banking77-133__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-133__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:27:11.578416+00:00"
+  },
+  "banking77-134__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-134__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:14.299802+00:00"
+  },
+  "banking77-135__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-135__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:16.085475+00:00"
+  },
+  "banking77-136__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-136__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:20.389925+00:00"
+  },
+  "banking77-137__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-137__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "URGENT",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:27:22.437167+00:00"
+  },
+  "banking77-138__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-138__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:27:24.430632+00:00"
+  },
+  "banking77-139__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-139__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:28.105897+00:00"
+  },
+  "banking77-140__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-140__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:32.266280+00:00"
+  },
+  "banking77-141__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-141__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:34.210982+00:00"
+  },
+  "banking77-142__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-142__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:38.001071+00:00"
+  },
+  "banking77-143__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-143__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:41.892921+00:00"
+  },
+  "banking77-144__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-144__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:46.090583+00:00"
+  },
+  "banking77-145__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-145__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "Technical Support",
+      "priority": "MEDIUM",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:48.547566+00:00"
+  },
+  "banking77-146__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-146__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:27:50.526691+00:00"
+  },
+  "banking77-147__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-147__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:54.690972+00:00"
+  },
+  "banking77-148__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-148__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:27:56.980826+00:00"
+  },
+  "banking77-149__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-149__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:28:01.560182+00:00"
+  },
+  "banking77-150__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-150__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "parsed": {
+      "category": "General Inquiry",
+      "priority": "LOW",
+      "sentiment": "NEUTRAL"
+    },
+    "timestamp": "2026-09-12T12:28:03.249241+00:00"
+  },
+  "banking77-151__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-151__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "HIGH",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:28:05.124263+00:00"
+  },
+  "banking77-152__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-152__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Refund Request",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:28:09.541294+00:00"
+  },
+  "banking77-153__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-153__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:28:11.691898+00:00"
+  },
+  "banking77-154__openai/gpt-oss-120b__v1-a0ce2844": {
+    "key": "banking77-154__openai/gpt-oss-120b__v1-a0ce2844",
+    "raw_response": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "parsed": {
+      "category": "Billing",
+      "priority": "MEDIUM",
+      "sentiment": "NEGATIVE"
+    },
+    "timestamp": "2026-09-12T12:28:13.863544+00:00"
+  }
+}

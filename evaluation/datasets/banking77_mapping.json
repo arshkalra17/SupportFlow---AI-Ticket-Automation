@@ -1,0 +1,402 @@
+{
+  "metadata": {
+    "source": "mteb/banking77",
+    "license": "CC-BY-4.0",
+    "total_intents": 77,
+    "supportflow_categories": [
+      "Technical Support",
+      "Billing",
+      "Order Issue",
+      "General Inquiry",
+      "Refund Request"
+    ],
+    "mapping_rationale": "Semantic interpretation layer mapping BANKING77 fine-grained banking intents to SupportFlow's 5 broad e-commerce categories"
+  },
+  "mappings": {
+    "Refund_not_showing_up": {
+      "supportflow_category": "Refund Request",
+      "rationale": "Customer reporting refund has not appeared",
+      "ambiguous": false
+    },
+    "activate_my_card": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account/card access and setup issue",
+      "ambiguous": false
+    },
+    "age_limit": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Policy question about account eligibility",
+      "ambiguous": false
+    },
+    "apple_pay_or_google_pay": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about supported payment methods",
+      "ambiguous": false
+    },
+    "atm_support": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Information about ATM availability/locations",
+      "ambiguous": false
+    },
+    "automatic_top_up": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about account feature",
+      "ambiguous": false
+    },
+    "balance_not_updated_after_bank_transfer": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Problem with specific transaction not reflecting correctly",
+      "ambiguous": false
+    },
+    "balance_not_updated_after_cheque_or_cash_deposit": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Problem with specific transaction not reflecting correctly",
+      "ambiguous": false
+    },
+    "beneficiary_not_allowed": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transfer blocked/failed",
+      "ambiguous": false
+    },
+    "cancel_transfer": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Action needed on specific transaction",
+      "ambiguous": false
+    },
+    "card_about_to_expire": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Information request about card status",
+      "ambiguous": false
+    },
+    "card_acceptance": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about where card works",
+      "ambiguous": false
+    },
+    "card_arrival": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Problem/inquiry about physical item delivery",
+      "ambiguous": false
+    },
+    "card_delivery_estimate": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Information request about delivery timing",
+      "ambiguous": false
+    },
+    "card_linking": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Setup/configuration issue",
+      "ambiguous": false
+    },
+    "card_not_working": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Technical problem with card functionality",
+      "ambiguous": false
+    },
+    "card_payment_fee_charged": {
+      "supportflow_category": "Billing",
+      "rationale": "Unexpected charge on account",
+      "ambiguous": false
+    },
+    "card_payment_not_recognised": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction discrepancy",
+      "ambiguous": false
+    },
+    "card_payment_wrong_exchange_rate": {
+      "supportflow_category": "Billing",
+      "rationale": "Charge amount incorrect",
+      "ambiguous": false
+    },
+    "card_swallowed": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Physical item problem/lost",
+      "ambiguous": false
+    },
+    "cash_withdrawal_charge": {
+      "supportflow_category": "Billing",
+      "rationale": "Unexpected fee charged",
+      "ambiguous": false
+    },
+    "cash_withdrawal_not_recognised": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction discrepancy",
+      "ambiguous": false
+    },
+    "change_pin": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account security/access modification",
+      "ambiguous": false
+    },
+    "compromised_card": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Security issue requiring immediate action",
+      "ambiguous": false
+    },
+    "contactless_not_working": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Technical functionality problem",
+      "ambiguous": false
+    },
+    "country_support": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about service availability",
+      "ambiguous": false
+    },
+    "declined_card_payment": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
+      "ambiguous": false
+    },
+    "declined_cash_withdrawal": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
+      "ambiguous": false
+    },
+    "declined_transfer": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
+      "ambiguous": false
+    },
+    "direct_debit_payment_not_recognised": {
+      "supportflow_category": "Billing",
+      "rationale": "Unrecognized charge on account",
+      "ambiguous": false
+    },
+    "disposable_card_limits": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about account feature limits",
+      "ambiguous": false
+    },
+    "edit_personal_details": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account management/modification",
+      "ambiguous": false
+    },
+    "exchange_charge": {
+      "supportflow_category": "Billing",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false
+    },
+    "exchange_rate": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Information about pricing/rates",
+      "ambiguous": false
+    },
+    "exchange_via_app": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about feature availability",
+      "ambiguous": false
+    },
+    "extra_charge_on_statement": {
+      "supportflow_category": "Billing",
+      "rationale": "Unexpected charge on account",
+      "ambiguous": false
+    },
+    "failed_transfer": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
+      "ambiguous": false
+    },
+    "fiat_currency_support": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about supported currencies",
+      "ambiguous": false
+    },
+    "get_disposable_virtual_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about obtaining a feature/item",
+      "ambiguous": false
+    },
+    "get_physical_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about obtaining physical item",
+      "ambiguous": false
+    },
+    "getting_spare_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about obtaining replacement item",
+      "ambiguous": false
+    },
+    "getting_virtual_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about obtaining feature/item",
+      "ambiguous": false
+    },
+    "lost_or_stolen_card": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Security issue requiring immediate action",
+      "ambiguous": false
+    },
+    "lost_or_stolen_phone": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Security/access issue",
+      "ambiguous": false
+    },
+    "order_physical_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about requesting physical item",
+      "ambiguous": false
+    },
+    "passcode_forgotten": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account access issue",
+      "ambiguous": false
+    },
+    "pending_card_payment": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
+      "ambiguous": false
+    },
+    "pending_cash_withdrawal": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
+      "ambiguous": false
+    },
+    "pending_top_up": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
+      "ambiguous": false
+    },
+    "pending_transfer": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
+      "ambiguous": false
+    },
+    "pin_blocked": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account access blocked",
+      "ambiguous": false
+    },
+    "receiving_money": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about how feature works",
+      "ambiguous": false
+    },
+    "request_refund": {
+      "supportflow_category": "Refund Request",
+      "rationale": "Explicit request for money back",
+      "ambiguous": false
+    },
+    "reverted_card_payment?": {
+      "supportflow_category": "Refund Request",
+      "rationale": "Payment reversal is functionally a refund",
+      "ambiguous": false
+    },
+    "supported_cards_and_currencies": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about what is supported",
+      "ambiguous": false
+    },
+    "terminate_account": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about account closure process",
+      "ambiguous": false
+    },
+    "top_up_by_bank_transfer_charge": {
+      "supportflow_category": "Billing",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false
+    },
+    "top_up_by_card_charge": {
+      "supportflow_category": "Billing",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false
+    },
+    "top_up_by_cash_or_cheque": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about how to use feature",
+      "ambiguous": false
+    },
+    "top_up_failed": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
+      "ambiguous": false
+    },
+    "top_up_limits": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about feature limits/policy",
+      "ambiguous": false
+    },
+    "top_up_reverted": {
+      "supportflow_category": "Refund Request",
+      "rationale": "Transaction reversal/refund",
+      "ambiguous": false
+    },
+    "topping_up_by_card": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about how to use feature",
+      "ambiguous": false
+    },
+    "transaction_charged_twice": {
+      "supportflow_category": "Billing",
+      "rationale": "Duplicate charge on account",
+      "ambiguous": false
+    },
+    "transfer_fee_charged": {
+      "supportflow_category": "Billing",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false
+    },
+    "transfer_into_account": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about how feature works",
+      "ambiguous": false
+    },
+    "transfer_not_received_by_recipient": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction delivery problem",
+      "ambiguous": false
+    },
+    "transfer_timing": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about timing/speed of feature",
+      "ambiguous": false
+    },
+    "unable_to_verify_identity": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account access/verification problem",
+      "ambiguous": false
+    },
+    "verify_my_identity": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account verification/access process",
+      "ambiguous": false
+    },
+    "verify_source_of_funds": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Account verification requirement",
+      "ambiguous": false
+    },
+    "verify_top_up": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Transaction verification needed",
+      "ambiguous": false
+    },
+    "virtual_card_not_working": {
+      "supportflow_category": "Technical Support",
+      "rationale": "Technical functionality problem",
+      "ambiguous": false
+    },
+    "visa_or_mastercard": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about supported card types",
+      "ambiguous": false
+    },
+    "why_verify_identity": {
+      "supportflow_category": "General Inquiry",
+      "rationale": "Question about policy/why requirement exists",
+      "ambiguous": false
+    },
+    "wrong_amount_of_cash_received": {
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction amount discrepancy",
+      "ambiguous": false
+    },
+    "wrong_exchange_rate_for_cash_withdrawal": {
+      "supportflow_category": "Billing",
+      "rationale": "Charge amount incorrect due to rate",
+      "ambiguous": false
+    }
+  }
+}

@@ -332,3 +332,136 @@ def approval_routing_accuracy(results: list[dict]) -> dict:
         "correct":         correct,
         "by_expected":     by_expected,
     }
+
+
+# ══════════════════════════════════════════════════════════════════════
+# BANKING77 External Benchmark — Category-only accuracy
+# ══════════════════════════════════════════════════════════════════════
+
+def banking77_category_accuracy(results: list[dict]) -> dict:
+    """
+    Computes category-only accuracy for BANKING77 external benchmark.
+
+    This is a CROSS-DOMAIN EXTERNAL CATEGORY BENCHMARK.
+    It measures ONLY category classification.
+
+    Each result dict must have:
+        original_intent:          str         — BANKING77 intent
+        gold_supportflow_category: str | None — mapped SupportFlow category
+        mapping_ambiguous:        bool        — whether mapping is ambiguous
+        predicted_category:       str | None  — predicted SupportFlow category
+        error:                    str | None  — LLM error if any
+
+    Ambiguous mappings are excluded from the primary accuracy metric.
+
+    Returns:
+        {
+          "n_total": int,
+          "n_mapped": int,              # non-ambiguous cases
+          "n_ambiguous": int,
+          "n_evaluated": int,           # non-ambiguous cases with prediction
+          "n_failed": int,              # non-ambiguous cases with error
+          "mapped_category_accuracy": float,
+          "category_correct": int,
+          "by_supportflow_category": {  # per-category breakdown
+              "Technical Support": {"n": int, "correct": int, "accuracy": float},
+              ...
+          },
+          "by_original_intent": {       # per-intent breakdown
+              "activate_my_card": {"n": int, "correct": int, "accuracy": float},
+              ...
+          },
+          "confusion_matrix": {         # predicted → gold
+              "Technical Support": {
+                  "Technical Support": int,
+                  "Billing": int,
+                  ...
+              },
+              ...
+          }
+        }
+    """
+    n_total = len(results)
+    
+    # Filter to non-ambiguous mappings only
+    mapped = [r for r in results if not r.get("mapping_ambiguous", False)]
+    n_mapped = len(mapped)
+    n_ambiguous = n_total - n_mapped
+    
+    # Filter to evaluated (non-ambiguous with prediction)
+    evaluated = [r for r in mapped if r.get("predicted_category") is not None and r.get("error") is None]
+    n_evaluated = len(evaluated)
+    n_failed = n_mapped - n_evaluated
+    
+    # Primary metric: category accuracy on non-ambiguous cases
+    category_correct = sum(
+        1 for r in evaluated
+        if (r.get("predicted_category") or "").strip().lower()
+        == (r.get("gold_supportflow_category") or "").strip().lower()
+    )
+    
+    def _pct(correct: int, total: int) -> float:
+        return round(correct / total, 4) if total > 0 else 0.0
+    
+    # Per-category breakdown
+    categories = ["Technical Support", "Billing", "Order Issue", "General Inquiry", "Refund Request"]
+    by_category: dict[str, dict] = {}
+    
+    for cat in categories:
+        cat_cases = [r for r in evaluated if r.get("gold_supportflow_category") == cat]
+        cat_correct = sum(
+            1 for r in cat_cases
+            if r.get("predicted_category") == cat
+        )
+        by_category[cat] = {
+            "n": len(cat_cases),
+            "correct": cat_correct,
+            "accuracy": _pct(cat_correct, len(cat_cases))
+        }
+    
+    # Per-intent breakdown
+    from collections import defaultdict
+    by_intent: dict[str, dict] = {}
+    intent_groups = defaultdict(list)
+    
+    for r in evaluated:
+        intent_groups[r["original_intent"]].append(r)
+    
+    for intent, cases in intent_groups.items():
+        intent_correct = sum(
+            1 for r in cases
+            if (r.get("predicted_category") or "").strip().lower()
+            == (r.get("gold_supportflow_category") or "").strip().lower()
+        )
+        by_intent[intent] = {
+            "n": len(cases),
+            "correct": intent_correct,
+            "accuracy": _pct(intent_correct, len(cases))
+        }
+    
+    # Confusion matrix
+    confusion: dict[str, dict[str, int]] = {}
+    for pred_cat in categories + ["Other"]:
+        confusion[pred_cat] = {gold_cat: 0 for gold_cat in categories}
+    
+    for r in evaluated:
+        pred = r.get("predicted_category") or "Other"
+        gold = r.get("gold_supportflow_category")
+        
+        if pred not in categories:
+            pred = "Other"
+        if gold in categories:
+            confusion[pred][gold] += 1
+    
+    return {
+        "n_total": n_total,
+        "n_mapped": n_mapped,
+        "n_ambiguous": n_ambiguous,
+        "n_evaluated": n_evaluated,
+        "n_failed": n_failed,
+        "mapped_category_accuracy": _pct(category_correct, n_evaluated),
+        "category_correct": category_correct,
+        "by_supportflow_category": by_category,
+        "by_original_intent": by_intent,
+        "confusion_matrix": confusion,
+    }

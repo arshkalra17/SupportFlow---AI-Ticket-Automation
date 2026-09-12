@@ -215,6 +215,16 @@ def run_approval() -> dict:
     return approval_routing_accuracy(results)
 
 
+def run_banking77(no_cache: bool) -> tuple[dict, int]:
+    from evaluation.runners.banking77 import run
+    from evaluation.metrics.compute import banking77_category_accuracy
+    print("\n[BANKING77] Cross-domain external category benchmark")
+    results = run(no_cache=no_cache)
+    metrics = banking77_category_accuracy(results)
+    calls = sum(1 for r in results if not r["from_cache"])
+    return metrics, calls
+
+
 # ══════════════════════════════════════════════════════════════════════
 # DB lifecycle
 # ══════════════════════════════════════════════════════════════════════
@@ -237,7 +247,7 @@ def teardown_db(session: object) -> None:
 # Main
 # ══════════════════════════════════════════════════════════════════════
 
-VALID_METRICS = {"classification", "tools", "rag", "authorization", "approval"}
+VALID_METRICS = {"classification", "tools", "rag", "authorization", "approval", "banking77"}
 
 
 def main() -> None:
@@ -275,17 +285,19 @@ def main() -> None:
     want_rag   = (args.metric in (None, "rag"))
     want_auth  = (args.metric in (None, "authorization"))
     want_appr  = (args.metric in (None, "approval"))
+    want_b77   = (args.metric == "banking77")              and not args.no_llm
 
     # LLM metrics require GROQ_API_KEY.
     groq_key = os.getenv("GROQ_API_KEY")
-    if (want_cls or want_tools) and not groq_key:
+    if (want_cls or want_tools or want_b77) and not groq_key:
         print(
             "\n[WARNING] GROQ_API_KEY is not set.\n"
-            "  LLM-dependent metrics (classification, tools) will be skipped.\n"
+            "  LLM-dependent metrics (classification, tools, banking77) will be skipped.\n"
             "  Set GROQ_API_KEY or use --no-llm to suppress this warning.\n"
         )
         want_cls   = False
         want_tools = False
+        want_b77   = False
 
     print("=" * 56)
     print("  SupportFlow AI Evaluation Benchmark — Stage 9")
@@ -307,6 +319,7 @@ def main() -> None:
         "rag":             0,
         "authorization":   0,
         "approval_routing": 0,
+        "banking77":       0,
     }
 
     try:
@@ -330,6 +343,11 @@ def main() -> None:
             m, calls = run_tool_selection(no_cache=args.no_cache)
             all_metrics["tool_selection"] = m
             groq_calls["tool_selection"]  = calls
+
+        if want_b77:
+            m, calls = run_banking77(no_cache=args.no_cache)
+            all_metrics["banking77"] = m
+            groq_calls["banking77"]  = calls
 
     finally:
         # ── Always clean up eval DB ───────────────────────────────────
@@ -376,6 +394,12 @@ def main() -> None:
         ap = all_metrics["approval_routing"]
         print(f"\nApproval Routing  (n={ap['n']})")
         print(f"  Routing      : {_pct(ap['routing_accuracy'])}")
+
+    if "banking77" in all_metrics:
+        b = all_metrics["banking77"]
+        print(f"\nBANKING77 External (sampled={b['n_mapped']}, evaluated={b['n_evaluated']})")
+        print(f"  Category     : {_pct(b['mapped_category_accuracy'])}")
+        print(f"  [CROSS-DOMAIN EXTERNAL CATEGORY BENCHMARK]")
 
     total_calls = sum(groq_calls.values())
     print(f"\nTotal Groq calls: {total_calls}")
