@@ -14,6 +14,8 @@ from app.tools import (
     validate_issue_refund_args,
     issue_refund,
 )
+# pyrefly: ignore [missing-import]
+from evaluation.config import _CLASSIFICATION_SYSTEM_PROMPT
 
 load_dotenv()
 
@@ -38,15 +40,7 @@ def classify_ticket(message: str) -> dict:
 
     client = Groq(api_key=api_key)
 
-    system_prompt = (
-        "You are an AI customer support ticket classifier. "
-        "Analyze the customer message and classify it into:\n"
-        "- category (e.g., Technical Support, Billing, Order Issue, General Inquiry, Refund Request)\n"
-        "- priority (e.g., LOW, MEDIUM, HIGH, URGENT)\n"
-        "- sentiment (e.g., POSITIVE, NEUTRAL, NEGATIVE, FRUSTRATED)\n\n"
-        "You MUST respond ONLY with a valid JSON object with no markdown formatting, preambles, or explanations. "
-        "The JSON object MUST contain exactly these three keys: \"category\", \"priority\", and \"sentiment\"."
-    )
+    system_prompt = _CLASSIFICATION_SYSTEM_PROMPT
 
     try:
         response = client.chat.completions.create(
