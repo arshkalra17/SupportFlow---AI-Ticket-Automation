@@ -1,0 +1,694 @@
+{
+  "metadata": {
+    "experiment_name": "Banking Transaction Taxonomy Correction",
+    "experiment_date": "2026-09-13",
+    "baseline_accuracy": "50.0% (77/154)",
+    "hypothesis": "Current low Order Issue accuracy (2.6%, 1/38) is caused by mapping banking transaction-state problems to Order Issue instead of Billing",
+    "changes_proposed": 16,
+    "cases_affected": 34,
+    "semantic_principle": "Banking transactions (payments, transfers, withdrawals, top-ups) with status/authorization/posting problems should map to Billing, not Order Issue. Order Issue should only include physical delivery problems.",
+    "source": "mteb/banking77",
+    "license": "CC-BY-4.0",
+    "total_intents": 77,
+    "supportflow_categories": [
+      "Technical Support",
+      "Billing",
+      "Order Issue",
+      "General Inquiry",
+      "Refund Request"
+    ]
+  },
+  "mappings": {
+    "Refund_not_showing_up": {
+      "original_mapping": "Refund Request",
+      "proposed_mapping": "Refund Request",
+      "assessment": "clearly_correct",
+      "rationale": "Customer reports refund has not appeared",
+      "ambiguous": false,
+      "changed": false
+    },
+    "activate_my_card": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account/card access and setup issue",
+      "ambiguous": false,
+      "changed": false
+    },
+    "age_limit": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Policy question about account eligibility",
+      "ambiguous": false,
+      "changed": false
+    },
+    "apple_pay_or_google_pay": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about supported payment methods",
+      "ambiguous": false,
+      "changed": false
+    },
+    "atm_support": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Information about ATM availability/locations",
+      "ambiguous": false,
+      "changed": false
+    },
+    "automatic_top_up": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about account feature",
+      "ambiguous": false,
+      "changed": false
+    },
+    "balance_not_updated_after_bank_transfer": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Transaction posted but amount not reflecting = billing/payment posting problem, not order fulfillment. In e-commerce, this would be a payment/billing issue.",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "balance_not_updated_after_cheque_or_cash_deposit": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Deposit not reflecting in account = payment/transaction posting problem, not order delivery issue",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "beneficiary_not_allowed": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Technical Support",
+      "assessment": "ambiguous",
+      "rationale": "Transfer blocked due to system restriction/configuration = technical issue, not transaction delivery problem",
+      "ambiguous": true,
+      "changed": true,
+      "impact": "medium"
+    },
+    "cancel_transfer": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Order Issue",
+      "assessment": "clearly_correct",
+      "rationale": "Action needed on specific transaction - defensible as order-like action",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_about_to_expire": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Information request about card status",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_acceptance": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about where card works",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_arrival": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Order Issue",
+      "assessment": "clearly_correct",
+      "rationale": "Problem/inquiry about physical item delivery - genuine order fulfillment issue",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_delivery_estimate": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Information request about delivery timing",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_linking": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Setup/configuration issue",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_not_working": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Technical problem with card functionality",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_payment_fee_charged": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Unexpected charge on account",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_payment_not_recognised": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Unrecognized charge on statement = billing dispute, not order fulfillment issue",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "card_payment_wrong_exchange_rate": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Charge amount incorrect",
+      "ambiguous": false,
+      "changed": false
+    },
+    "card_swallowed": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Technical Support",
+      "assessment": "ambiguous",
+      "rationale": "Card stuck in ATM = technical/access issue (ATM malfunction) more than order/delivery problem",
+      "ambiguous": true,
+      "changed": true,
+      "impact": "medium"
+    },
+    "cash_withdrawal_charge": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Unexpected fee charged",
+      "ambiguous": false,
+      "changed": false
+    },
+    "cash_withdrawal_not_recognised": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Unrecognized withdrawal on statement = billing dispute/fraud concern, not order issue",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "change_pin": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account security/access modification",
+      "ambiguous": false,
+      "changed": false
+    },
+    "compromised_card": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Security issue requiring immediate action",
+      "ambiguous": false,
+      "changed": false
+    },
+    "contactless_not_working": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Technical functionality problem",
+      "ambiguous": false,
+      "changed": false
+    },
+    "country_support": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about service availability",
+      "ambiguous": false,
+      "changed": false
+    },
+    "declined_card_payment": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Payment authorization failure = billing/payment problem, not order fulfillment issue",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "declined_cash_withdrawal": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Withdrawal authorization failure = billing/payment problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "declined_transfer": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Transfer authorization failure = billing/payment problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "direct_debit_payment_not_recognised": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Unrecognized charge on account",
+      "ambiguous": false,
+      "changed": false
+    },
+    "disposable_card_limits": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about account feature limits",
+      "ambiguous": false,
+      "changed": false
+    },
+    "edit_personal_details": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account management/modification",
+      "ambiguous": false,
+      "changed": false
+    },
+    "exchange_charge": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false,
+      "changed": false
+    },
+    "exchange_rate": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Information about pricing/rates",
+      "ambiguous": false,
+      "changed": false
+    },
+    "exchange_via_app": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about feature availability",
+      "ambiguous": false,
+      "changed": false
+    },
+    "extra_charge_on_statement": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Unexpected charge on account",
+      "ambiguous": false,
+      "changed": false
+    },
+    "failed_transfer": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Transfer transaction failure = billing/payment problem, not order delivery failure",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "fiat_currency_support": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about supported currencies",
+      "ambiguous": false,
+      "changed": false
+    },
+    "get_disposable_virtual_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about obtaining a feature/item",
+      "ambiguous": false,
+      "changed": false
+    },
+    "get_physical_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about obtaining physical item",
+      "ambiguous": false,
+      "changed": false
+    },
+    "getting_spare_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about obtaining replacement item",
+      "ambiguous": false,
+      "changed": false
+    },
+    "getting_virtual_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about obtaining feature/item",
+      "ambiguous": false,
+      "changed": false
+    },
+    "lost_or_stolen_card": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Security issue requiring immediate action",
+      "ambiguous": false,
+      "changed": false
+    },
+    "lost_or_stolen_phone": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Security/access issue",
+      "ambiguous": false,
+      "changed": false
+    },
+    "order_physical_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about requesting physical item",
+      "ambiguous": false,
+      "changed": false
+    },
+    "passcode_forgotten": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account access issue",
+      "ambiguous": false,
+      "changed": false
+    },
+    "pending_card_payment": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Payment processing status = billing/payment system problem, not order delivery problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "pending_cash_withdrawal": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Withdrawal processing status = billing/payment system problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "pending_top_up": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Top-up processing status = billing/payment system problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "pending_transfer": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Transfer processing status = billing/payment system problem, not order delivery problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "pin_blocked": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account access blocked",
+      "ambiguous": false,
+      "changed": false
+    },
+    "receiving_money": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about how feature works",
+      "ambiguous": false,
+      "changed": false
+    },
+    "request_refund": {
+      "original_mapping": "Refund Request",
+      "proposed_mapping": "Refund Request",
+      "assessment": "clearly_correct",
+      "rationale": "Explicit request for money back",
+      "ambiguous": false,
+      "changed": false
+    },
+    "reverted_card_payment?": {
+      "original_mapping": "Refund Request",
+      "proposed_mapping": "Refund Request",
+      "assessment": "clearly_correct",
+      "rationale": "Payment reversal is functionally a refund",
+      "ambiguous": false,
+      "changed": false
+    },
+    "supported_cards_and_currencies": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about what is supported",
+      "ambiguous": false,
+      "changed": false
+    },
+    "terminate_account": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "ambiguous",
+      "rationale": "Account closure could be inquiry (how-to) or technical action. Keeping as inquiry since users typically ask how first.",
+      "ambiguous": true,
+      "changed": false
+    },
+    "top_up_by_bank_transfer_charge": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false,
+      "changed": false
+    },
+    "top_up_by_card_charge": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false,
+      "changed": false
+    },
+    "top_up_by_cash_or_cheque": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about how to use feature",
+      "ambiguous": false,
+      "changed": false
+    },
+    "top_up_failed": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "likely_incorrect",
+      "rationale": "Top-up transaction failure = billing/payment problem",
+      "ambiguous": false,
+      "changed": true,
+      "impact": "high"
+    },
+    "top_up_limits": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about feature limits/policy",
+      "ambiguous": false,
+      "changed": false
+    },
+    "top_up_reverted": {
+      "original_mapping": "Refund Request",
+      "proposed_mapping": "Refund Request",
+      "assessment": "clearly_correct",
+      "rationale": "Transaction reversal/refund",
+      "ambiguous": false,
+      "changed": false
+    },
+    "topping_up_by_card": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about how to use feature",
+      "ambiguous": false,
+      "changed": false
+    },
+    "transaction_charged_twice": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Duplicate charge on account",
+      "ambiguous": false,
+      "changed": false
+    },
+    "transfer_fee_charged": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Fee charged for transaction",
+      "ambiguous": false,
+      "changed": false
+    },
+    "transfer_into_account": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about how feature works",
+      "ambiguous": false,
+      "changed": false
+    },
+    "transfer_not_received_by_recipient": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Order Issue",
+      "assessment": "ambiguous",
+      "rationale": "Transfer delivery problem - defensible as order-like delivery failure",
+      "ambiguous": true,
+      "changed": false
+    },
+    "transfer_timing": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about timing/speed of feature",
+      "ambiguous": false,
+      "changed": false
+    },
+    "unable_to_verify_identity": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account access/verification problem",
+      "ambiguous": false,
+      "changed": false
+    },
+    "verify_my_identity": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account verification/access process",
+      "ambiguous": false,
+      "changed": false
+    },
+    "verify_source_of_funds": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Account verification requirement",
+      "ambiguous": false,
+      "changed": false
+    },
+    "verify_top_up": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Transaction verification needed",
+      "ambiguous": false,
+      "changed": false
+    },
+    "virtual_card_not_working": {
+      "original_mapping": "Technical Support",
+      "proposed_mapping": "Technical Support",
+      "assessment": "clearly_correct",
+      "rationale": "Technical functionality problem",
+      "ambiguous": false,
+      "changed": false
+    },
+    "visa_or_mastercard": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about supported card types",
+      "ambiguous": false,
+      "changed": false
+    },
+    "why_verify_identity": {
+      "original_mapping": "General Inquiry",
+      "proposed_mapping": "General Inquiry",
+      "assessment": "clearly_correct",
+      "rationale": "Question about policy/why requirement exists",
+      "ambiguous": false,
+      "changed": false
+    },
+    "wrong_amount_of_cash_received": {
+      "original_mapping": "Order Issue",
+      "proposed_mapping": "Billing",
+      "assessment": "ambiguous",
+      "rationale": "Transaction amount discrepancy = billing/payment accuracy problem more than order delivery issue",
+      "ambiguous": true,
+      "changed": true,
+      "impact": "medium"
+    },
+    "wrong_exchange_rate_for_cash_withdrawal": {
+      "original_mapping": "Billing",
+      "proposed_mapping": "Billing",
+      "assessment": "clearly_correct",
+      "rationale": "Charge amount incorrect due to rate",
+      "ambiguous": false,
+      "changed": false
+    }
+  },
+  "change_summary": {
+    "total_changes": 16,
+    "high_impact_changes": 13,
+    "medium_impact_changes": 3,
+    "changed_intents": [
+      "balance_not_updated_after_bank_transfer",
+      "balance_not_updated_after_cheque_or_cash_deposit",
+      "beneficiary_not_allowed",
+      "card_payment_not_recognised",
+      "card_swallowed",
+      "cash_withdrawal_not_recognised",
+      "declined_card_payment",
+      "declined_cash_withdrawal",
+      "declined_transfer",
+      "failed_transfer",
+      "pending_card_payment",
+      "pending_cash_withdrawal",
+      "pending_top_up",
+      "pending_transfer",
+      "top_up_failed",
+      "wrong_amount_of_cash_received"
+    ],
+    "original_distribution": {
+      "General Inquiry": 27,
+      "Order Issue": 21,
+      "Billing": 16,
+      "Technical Support": 10,
+      "Refund Request": 3
+    },
+    "proposed_distribution": {
+      "General Inquiry": 27,
+      "Order Issue": 4,
+      "Billing": 30,
+      "Technical Support": 13,
+      "Refund Request": 3
+    },
+    "cases_affected": 34,
+    "expected_impact": "If classifier correctly identifies banking transaction problems as Billing (rather than Order Issue), accuracy should increase significantly."
+  }
+}

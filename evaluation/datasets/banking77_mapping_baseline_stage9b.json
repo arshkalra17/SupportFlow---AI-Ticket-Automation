@@ -10,16 +10,12 @@
       "General Inquiry",
       "Refund Request"
     ],
-    "mapping_rationale": "Semantic interpretation layer mapping BANKING77 fine-grained banking intents to SupportFlow's 5 broad e-commerce categories",
-    "version": "audited-2026-09-13",
-    "baseline_version": "stage9b",
-    "changes_from_baseline": 16,
-    "audit_note": "Banking transaction authorization, processing, and posting problems remapped from Order Issue to Billing to align with e-commerce support semantics"
+    "mapping_rationale": "Semantic interpretation layer mapping BANKING77 fine-grained banking intents to SupportFlow's 5 broad e-commerce categories"
   },
   "mappings": {
     "Refund_not_showing_up": {
       "supportflow_category": "Refund Request",
-      "rationale": "Customer reports refund has not appeared",
+      "rationale": "Customer reporting refund has not appeared",
       "ambiguous": false
     },
     "activate_my_card": {
@@ -48,23 +44,23 @@
       "ambiguous": false
     },
     "balance_not_updated_after_bank_transfer": {
-      "supportflow_category": "Billing",
-      "rationale": "Transaction posted but amount not reflecting = billing/payment posting problem, not order fulfillment. In e-commerce, this would be a payment/billing issue.",
+      "supportflow_category": "Order Issue",
+      "rationale": "Problem with specific transaction not reflecting correctly",
       "ambiguous": false
     },
     "balance_not_updated_after_cheque_or_cash_deposit": {
-      "supportflow_category": "Billing",
-      "rationale": "Deposit not reflecting in account = payment/transaction posting problem, not order delivery issue",
+      "supportflow_category": "Order Issue",
+      "rationale": "Problem with specific transaction not reflecting correctly",
       "ambiguous": false
     },
     "beneficiary_not_allowed": {
-      "supportflow_category": "Technical Support",
-      "rationale": "Transfer blocked due to system restriction/configuration = technical issue, not transaction delivery problem",
-      "ambiguous": true
+      "supportflow_category": "Order Issue",
+      "rationale": "Transfer blocked/failed",
+      "ambiguous": false
     },
     "cancel_transfer": {
       "supportflow_category": "Order Issue",
-      "rationale": "Action needed on specific transaction - defensible as order-like action",
+      "rationale": "Action needed on specific transaction",
       "ambiguous": false
     },
     "card_about_to_expire": {
@@ -79,7 +75,7 @@
     },
     "card_arrival": {
       "supportflow_category": "Order Issue",
-      "rationale": "Problem/inquiry about physical item delivery - genuine order fulfillment issue",
+      "rationale": "Problem/inquiry about physical item delivery",
       "ambiguous": false
     },
     "card_delivery_estimate": {
@@ -103,8 +99,8 @@
       "ambiguous": false
     },
     "card_payment_not_recognised": {
-      "supportflow_category": "Billing",
-      "rationale": "Unrecognized charge on statement = billing dispute, not order fulfillment issue",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction discrepancy",
       "ambiguous": false
     },
     "card_payment_wrong_exchange_rate": {
@@ -113,9 +109,9 @@
       "ambiguous": false
     },
     "card_swallowed": {
-      "supportflow_category": "Technical Support",
-      "rationale": "Card stuck in ATM = technical/access issue (ATM malfunction) more than order/delivery problem",
-      "ambiguous": true
+      "supportflow_category": "Order Issue",
+      "rationale": "Physical item problem/lost",
+      "ambiguous": false
     },
     "cash_withdrawal_charge": {
       "supportflow_category": "Billing",
@@ -123,8 +119,8 @@
       "ambiguous": false
     },
     "cash_withdrawal_not_recognised": {
-      "supportflow_category": "Billing",
-      "rationale": "Unrecognized withdrawal on statement = billing dispute/fraud concern, not order issue",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction discrepancy",
       "ambiguous": false
     },
     "change_pin": {
@@ -148,18 +144,18 @@
       "ambiguous": false
     },
     "declined_card_payment": {
-      "supportflow_category": "Billing",
-      "rationale": "Payment authorization failure = billing/payment problem, not order fulfillment issue",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
       "ambiguous": false
     },
     "declined_cash_withdrawal": {
-      "supportflow_category": "Billing",
-      "rationale": "Withdrawal authorization failure = billing/payment problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
       "ambiguous": false
     },
     "declined_transfer": {
-      "supportflow_category": "Billing",
-      "rationale": "Transfer authorization failure = billing/payment problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
       "ambiguous": false
     },
     "direct_debit_payment_not_recognised": {
@@ -198,8 +194,8 @@
       "ambiguous": false
     },
     "failed_transfer": {
-      "supportflow_category": "Billing",
-      "rationale": "Transfer transaction failure = billing/payment problem, not order delivery failure",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
       "ambiguous": false
     },
     "fiat_currency_support": {
@@ -248,23 +244,23 @@
       "ambiguous": false
     },
     "pending_card_payment": {
-      "supportflow_category": "Billing",
-      "rationale": "Payment processing status = billing/payment system problem, not order delivery problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
       "ambiguous": false
     },
     "pending_cash_withdrawal": {
-      "supportflow_category": "Billing",
-      "rationale": "Withdrawal processing status = billing/payment system problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
       "ambiguous": false
     },
     "pending_top_up": {
-      "supportflow_category": "Billing",
-      "rationale": "Top-up processing status = billing/payment system problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
       "ambiguous": false
     },
     "pending_transfer": {
-      "supportflow_category": "Billing",
-      "rationale": "Transfer processing status = billing/payment system problem, not order delivery problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction status problem",
       "ambiguous": false
     },
     "pin_blocked": {
@@ -294,8 +290,8 @@
     },
     "terminate_account": {
       "supportflow_category": "General Inquiry",
-      "rationale": "Account closure could be inquiry (how-to) or technical action. Keeping as inquiry since users typically ask how first.",
-      "ambiguous": true
+      "rationale": "Question about account closure process",
+      "ambiguous": false
     },
     "top_up_by_bank_transfer_charge": {
       "supportflow_category": "Billing",
@@ -313,8 +309,8 @@
       "ambiguous": false
     },
     "top_up_failed": {
-      "supportflow_category": "Billing",
-      "rationale": "Top-up transaction failure = billing/payment problem",
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction failed",
       "ambiguous": false
     },
     "top_up_limits": {
@@ -349,8 +345,8 @@
     },
     "transfer_not_received_by_recipient": {
       "supportflow_category": "Order Issue",
-      "rationale": "Transfer delivery problem - defensible as order-like delivery failure",
-      "ambiguous": true
+      "rationale": "Transaction delivery problem",
+      "ambiguous": false
     },
     "transfer_timing": {
       "supportflow_category": "General Inquiry",
@@ -393,9 +389,9 @@
       "ambiguous": false
     },
     "wrong_amount_of_cash_received": {
-      "supportflow_category": "Billing",
-      "rationale": "Transaction amount discrepancy = billing/payment accuracy problem more than order delivery issue",
-      "ambiguous": true
+      "supportflow_category": "Order Issue",
+      "rationale": "Transaction amount discrepancy",
+      "ambiguous": false
     },
     "wrong_exchange_rate_for_cash_withdrawal": {
       "supportflow_category": "Billing",

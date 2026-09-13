@@ -8,7 +8,10 @@
     "sampling_seed": 42,
     "sampling_method": "stratified random sampling, 2 examples per intent",
     "num_intents": 77,
-    "citation": "Casanueva et al., 'Efficient Intent Detection with Dual Sentence Encoders'"
+    "citation": "Casanueva et al., 'Efficient Intent Detection with Dual Sentence Encoders'",
+    "mapping_version": "audited-2026-09-13",
+    "mapping_changes": "16 intents remapped from baseline (Order Issue \u2192 Billing/Technical Support)",
+    "baseline_mapping_version": "stage9b"
   },
   "cases": [
     {
@@ -99,43 +102,43 @@
       "id": "banking77-013",
       "text": "the balance on my account didnt change when i transferred money",
       "original_intent": "balance_not_updated_after_bank_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-014",
       "text": "How long does it take for an international transfer into my account?",
       "original_intent": "balance_not_updated_after_bank_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-015",
       "text": "cash deposit to my account has shown a red flag.",
       "original_intent": "balance_not_updated_after_cheque_or_cash_deposit",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-016",
       "text": "I have paid money into my account but it doesn't show.",
       "original_intent": "balance_not_updated_after_cheque_or_cash_deposit",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-017",
       "text": "Why couldn't I do a transfer to a beneficiary?",
       "original_intent": "beneficiary_not_allowed",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Technical Support",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-018",
       "text": "i tried to make a transfer to a beneficiary and it didn't go through",
       "original_intent": "beneficiary_not_allowed",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Technical Support",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-019",
@@ -253,14 +256,14 @@
       "id": "banking77-035",
       "text": "I think my statement has a fraudulent charge",
       "original_intent": "card_payment_not_recognised",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-036",
       "text": "What should I do if I see a payment I didn't make?",
       "original_intent": "card_payment_not_recognised",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -281,15 +284,15 @@
       "id": "banking77-039",
       "text": "Is there a way I can get my ATM card back from the machine?",
       "original_intent": "card_swallowed",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Technical Support",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-040",
       "text": "I can't pull my card out of the ATM. Help me.",
       "original_intent": "card_swallowed",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Technical Support",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-041",
@@ -309,14 +312,14 @@
       "id": "banking77-043",
       "text": "I am seeing in the App a some cash withdrawal that its not mine",
       "original_intent": "cash_withdrawal_not_recognised",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-044",
       "text": "I just lost my wallet and I see that they are already withdrawing money from my account. How can I stop this?",
       "original_intent": "cash_withdrawal_not_recognised",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -379,42 +382,42 @@
       "id": "banking77-053",
       "text": "My card was not accepted.",
       "original_intent": "declined_card_payment",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-054",
       "text": "Card payment declined?",
       "original_intent": "declined_card_payment",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-055",
       "text": "I tried to make a cash withdrawal and it was declined. Why did this happen?",
       "original_intent": "declined_cash_withdrawal",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-056",
       "text": "Why was my ATM transaction cancelled?",
       "original_intent": "declined_cash_withdrawal",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-057",
       "text": "I am getting continuous failure for all my transfers. I have cross checked each recipient detail again and again and everything is correct.",
       "original_intent": "declined_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-058",
       "text": "How do I contact customer support about a transfer?",
       "original_intent": "declined_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -519,14 +522,14 @@
       "id": "banking77-073",
       "text": "Can you provide a reason as to why my transfer did not work?",
       "original_intent": "failed_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-074",
       "text": "I could not get my transfer to happen correctly and was wondering why?",
       "original_intent": "failed_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -659,56 +662,56 @@
       "id": "banking77-093",
       "text": "Why is a payment showing up on my card as pending?",
       "original_intent": "pending_card_payment",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-094",
       "text": "I bought some stuff this morning but the payment shows as pending",
       "original_intent": "pending_card_payment",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-095",
       "text": "I received cash from the ATM earlier, but this shows up as pending in the app.  I've got the cash already.  How can this be still pending?",
       "original_intent": "pending_cash_withdrawal",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-096",
       "text": "I made a cash withdrawal but the pending status is taking forever.",
       "original_intent": "pending_cash_withdrawal",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-097",
       "text": "What does it mean when my top up is saying  still pending?",
       "original_intent": "pending_top_up",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-098",
       "text": "I  do not see a top-up processed.",
       "original_intent": "pending_top_up",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-099",
       "text": "How long does a transfer stay pending?",
       "original_intent": "pending_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-100",
       "text": "I had made a transfer but its still pending.",
       "original_intent": "pending_transfer",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -786,14 +789,14 @@
       "text": "unhappy with you, how to delete account",
       "original_intent": "terminate_account",
       "gold_supportflow_category": "General Inquiry",
-      "mapping_ambiguous": false
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-112",
       "text": "This company sucks! Can you delete my account?",
       "original_intent": "terminate_account",
       "gold_supportflow_category": "General Inquiry",
-      "mapping_ambiguous": false
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-113",
@@ -841,14 +844,14 @@
       "id": "banking77-119",
       "text": "I tried to top up. Why was it denied?",
       "original_intent": "top_up_failed",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
       "id": "banking77-120",
       "text": "why isnt top up working",
       "original_intent": "top_up_failed",
-      "gold_supportflow_category": "Order Issue",
+      "gold_supportflow_category": "Billing",
       "mapping_ambiguous": false
     },
     {
@@ -940,14 +943,14 @@
       "text": "I'm having a problem with a money transfer.  I sent some money to a friend a couple of hours ago, and they haven't received it yet.  Why hasn't it gotten to them? How long do transfers need to go through?",
       "original_intent": "transfer_not_received_by_recipient",
       "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-134",
       "text": "I transferred money but the recipient says it has not arrived. Why would this be?",
       "original_intent": "transfer_not_received_by_recipient",
       "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-135",
@@ -1065,15 +1068,15 @@
       "id": "banking77-151",
       "text": "The wrong amount of cash came out of the ATM today when I went to withdraw. When I looked at the app, it was showing it was much more.",
       "original_intent": "wrong_amount_of_cash_received",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Billing",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-152",
       "text": "The right amount of cash was not sent to me.",
       "original_intent": "wrong_amount_of_cash_received",
-      "gold_supportflow_category": "Order Issue",
-      "mapping_ambiguous": false
+      "gold_supportflow_category": "Billing",
+      "mapping_ambiguous": true
     },
     {
       "id": "banking77-153",

@@ -1,0 +1,101 @@
+{
+  "experiment_name": "BANKING77 Mapping Audit - Official Adoption",
+  "date": "2026-09-13",
+  "mapping_version": "audited-2026-09-13",
+  "baseline_version": "stage9b",
+  "changes_from_baseline": 16,
+  "model": "openai/gpt-oss-120b",
+  "prompt_version": "v1-a0ce2844",
+  "results": {
+    "baseline": {
+      "accuracy": 0.5,
+      "correct": 77,
+      "evaluated": 154,
+      "note": "Original Stage 9B baseline mapping"
+    },
+    "audited": {
+      "accuracy": 0.6458,
+      "correct": 93,
+      "evaluated": 144,
+      "excluded_ambiguous": 10,
+      "note": "16 intents remapped (Order Issue \u2192 Billing/Technical Support)"
+    },
+    "improvement": {
+      "percentage_points": 14.6,
+      "correct_cases_gained": 16,
+      "groq_calls_made": 0,
+      "predictions_changed": 0
+    }
+  },
+  "per_category": {
+    "Technical Support": {
+      "n": 32,
+      "correct": 13,
+      "accuracy": 0.4062
+    },
+    "Billing": {
+      "n": 48,
+      "correct": 33,
+      "accuracy": 0.6875
+    },
+    "Order Issue": {
+      "n": 4,
+      "correct": 1,
+      "accuracy": 0.25
+    },
+    "General Inquiry": {
+      "n": 52,
+      "correct": 43,
+      "accuracy": 0.8269
+    },
+    "Refund Request": {
+      "n": 8,
+      "correct": 3,
+      "accuracy": 0.375
+    }
+  },
+  "confusion_matrix": {
+    "Technical Support": {
+      "Technical Support": 13,
+      "Billing": 5,
+      "Order Issue": 0,
+      "General Inquiry": 3,
+      "Refund Request": 0
+    },
+    "Billing": {
+      "Technical Support": 5,
+      "Billing": 33,
+      "Order Issue": 2,
+      "General Inquiry": 3,
+      "Refund Request": 4
+    },
+    "Order Issue": {
+      "Technical Support": 1,
+      "Billing": 0,
+      "Order Issue": 1,
+      "General Inquiry": 2,
+      "Refund Request": 0
+    },
+    "General Inquiry": {
+      "Technical Support": 13,
+      "Billing": 8,
+      "Order Issue": 1,
+      "General Inquiry": 43,
+      "Refund Request": 1
+    },
+    "Refund Request": {
+      "Technical Support": 0,
+      "Billing": 2,
+      "Order Issue": 0,
+      "General Inquiry": 1,
+      "Refund Request": 3
+    },
+    "Other": {
+      "Technical Support": 0,
+      "Billing": 0,
+      "Order Issue": 0,
+      "General Inquiry": 0,
+      "Refund Request": 0
+    }
+  }
+}
