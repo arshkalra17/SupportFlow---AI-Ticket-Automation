@@ -20,6 +20,7 @@ from app.graph import run_supportflow
 from app.idempotency import execute_with_idempotency
 from app.observability import init_observability, traced_span, get_customer_identifier
 from app.middleware import TraceMiddleware
+from app.health import router as health_router
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
@@ -29,11 +30,24 @@ app = FastAPI(title="Support Flow API")
 # Add trace middleware for W3C context extraction
 app.add_middleware(TraceMiddleware)
 
+# Include health check endpoints
+app.include_router(health_router)
+
 
 @app.on_event("startup")
 def startup_event():
     """Initialize observability on application startup."""
     init_observability()
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    """Cleanup on application shutdown."""
+    # Close database connections
+    engine.dispose()
+    # Close Redis connections
+    from app.queue import redis_client
+    redis_client.close()
 
 
 # ── Pydantic Schemas ───────────────────────────────────────────────────

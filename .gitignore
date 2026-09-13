@@ -3,6 +3,12 @@
 .env.*
 !.env.example
 
+# WARNING: If .env was ever committed to Git history, it MUST be:
+# 1. Removed from history using git-filter-repo or BFG Repo-Cleaner
+# 2. All secrets rotated immediately
+# 3. Repository re-pushed with force
+# Simply adding .env to .gitignore is NOT sufficient for security
+
 # Python bytecode and cache
 __pycache__/
 *.py[cod]

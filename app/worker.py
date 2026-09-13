@@ -1,15 +1,17 @@
 import json
 import logging
 import os
+import signal
 import time
+from typing import Any
 from dotenv import load_dotenv
 
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
 from app.models import Ticket
 from app.llm import classify_ticket
 from app.queue import redis_client, QUEUE_NAME
 from app.idempotency import is_transient_error
-from app.observability import traced_span, safe_set_attribute
+from app.observability import traced_span, safe_set_attribute, init_observability
 
 load_dotenv()
 
@@ -18,6 +20,20 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 )
 logger = logging.getLogger("supportflow.worker")
+
+# Graceful shutdown handling
+shutdown_requested = False
+
+
+def handle_shutdown_signal(signum: int, frame: Any) -> None:
+    """Handle SIGTERM/SIGINT for graceful shutdown."""
+    global shutdown_requested
+    logger.info(f"Received signal {signum}, initiating graceful shutdown...")
+    shutdown_requested = True
+
+
+signal.signal(signal.SIGTERM, handle_shutdown_signal)
+signal.signal(signal.SIGINT, handle_shutdown_signal)
 
 MAX_JOB_RETRIES = 3
 
@@ -128,32 +144,44 @@ def run_worker(stop_after_empty: bool = False):
     safe_set_attribute(span, "worker.queue_name", QUEUE_NAME)
     safe_set_attribute(span, "worker.stop_after_empty", stop_after_empty)
     logger.info(f"Worker started. Listening on queue '{QUEUE_NAME}'...")
+    
+    # Initialize observability
+    init_observability()
 
     jobs_processed = 0
-    while True:
-        try:
-            pop_result = redis_client.blpop(QUEUE_NAME, timeout=2)
-            if pop_result is None:
-                if stop_after_empty:
-                    safe_set_attribute(span, "worker.jobs_processed", jobs_processed)
-                    safe_set_attribute(span, "worker.stop_reason", "queue_empty")
-                    logger.info("No more jobs found in queue. Exiting worker loop.")
-                    break
-                continue
+    try:
+        while not shutdown_requested:
+            try:
+                pop_result = redis_client.blpop(QUEUE_NAME, timeout=2)
+                if pop_result is None:
+                    if stop_after_empty:
+                        safe_set_attribute(span, "worker.jobs_processed", jobs_processed)
+                        safe_set_attribute(span, "worker.stop_reason", "queue_empty")
+                        logger.info("No more jobs found in queue. Exiting worker loop.")
+                        break
+                    continue
 
-            queue_name, payload_json = pop_result
-            process_single_job(payload_json)
-            jobs_processed += 1
-        except KeyboardInterrupt:
-            safe_set_attribute(span, "worker.jobs_processed", jobs_processed)
-            safe_set_attribute(span, "worker.stop_reason", "keyboard_interrupt")
-            logger.info("Worker stopped by user.")
-            break
-        except Exception as err:
-            safe_set_attribute(span, "worker.loop_error", True)
-            safe_set_attribute(span, "error.type", type(err).__name__)
-            logger.error(f"Unexpected error in worker loop: {err}")
-            time.sleep(1)
+                queue_name, payload_json = pop_result
+                process_single_job(payload_json)
+                jobs_processed += 1
+            except KeyboardInterrupt:
+                safe_set_attribute(span, "worker.jobs_processed", jobs_processed)
+                safe_set_attribute(span, "worker.stop_reason", "keyboard_interrupt")
+                logger.info("Worker stopped by user.")
+                break
+            except Exception as err:
+                if shutdown_requested:
+                    break
+                safe_set_attribute(span, "worker.loop_error", True)
+                safe_set_attribute(span, "error.type", type(err).__name__)
+                logger.error(f"Unexpected error in worker loop: {err}")
+                time.sleep(1)
+    finally:
+        logger.info("Worker shutting down...")
+        # Cleanup resources
+        redis_client.close()
+        engine.dispose()
+        logger.info("Worker shutdown complete.")
 
 
 if __name__ == "__main__":

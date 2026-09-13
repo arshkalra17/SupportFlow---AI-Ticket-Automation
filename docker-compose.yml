@@ -9,11 +9,94 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U supportflow_user -d supportflow"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7
+    command: redis-server --appendonly yes --appendfsync everysec
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - .env
+    environment:
+      SERVICE_TYPE: migrate
+      # Override DATABASE_URL to use Docker service hostname
+      DATABASE_URL: postgresql://supportflow_user:supportflow_password@postgres:5432/supportflow
+    depends_on:
+      postgres:
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - .env
+    environment:
+      SERVICE_TYPE: api
+      # Override DATABASE_URL to use Docker service hostname
+      DATABASE_URL: postgresql://supportflow_user:supportflow_password@postgres:5432/supportflow
+      REDIS_HOST: redis
+    ports:
+      - "8001:8000"  # Use 8001 on host to avoid conflict with ai-data-analyst-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    env_file:
+      - .env
+    environment:
+      SERVICE_TYPE: worker
+      # Override DATABASE_URL to use Docker service hostname
+      DATABASE_URL: postgresql://supportflow_user:supportflow_password@postgres:5432/supportflow
+      REDIS_HOST: redis
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  redis_data:

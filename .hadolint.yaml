@@ -1,0 +1,6 @@
+# Hadolint configuration for Dockerfile linting
+ignored:
+  - DL3008  # Pin versions in apt-get install (handled by base image)
+  - DL3009  # Delete apt-get lists (we do this)
+  - DL3013  # Pin versions in pip install (we use requirements.txt)
+  - DL3059  # Multiple consecutive RUN commands (acceptable for clarity)
