@@ -124,3 +124,19 @@ def get_current_customer(
         )
 
     return customer
+
+
+def get_current_admin(
+    current_customer: Customer = Depends(get_current_customer),
+) -> Customer:
+    """FastAPI dependency to ensure the current user is an admin.
+
+    Returns the trusted `Customer` database object if they are an admin.
+    Raises HTTP 403 if the customer is not an admin.
+    """
+    if not current_customer.is_admin:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin privileges required",
+        )
+    return current_customer

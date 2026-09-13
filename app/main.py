@@ -14,6 +14,7 @@ from app.auth import (
     verify_password,
     create_access_token,
     get_current_customer,
+    get_current_admin,
 )
 from app.tools import authorize_and_get_order_status
 from app.graph import run_supportflow
@@ -21,6 +22,8 @@ from app.idempotency import execute_with_idempotency
 from app.observability import init_observability, traced_span, get_customer_identifier
 from app.middleware import TraceMiddleware
 from app.health import router as health_router
+from app.approval import approve_request, reject_request
+from app.models import Approval, Action
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure tables are created
@@ -269,3 +272,167 @@ def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
             detail=f"Ticket with id {ticket_id} not found"
         )
     return ticket
+
+
+# ── Approval Endpoints (Admin Only) ────────────────────────────────────
+
+class ApprovalReasonRequest(BaseModel):
+    reason: str | None = None
+
+
+class PendingApprovalResponse(BaseModel):
+    approval_id: int
+    action_id: int
+    action_type: str
+    reference_id: int
+    customer_id: int
+    amount: float | None
+    approval_status: str
+    created_at: str
+
+    class Config:
+        from_attributes = True
+
+
+class ApprovalActionResponse(BaseModel):
+    approval_id: int
+    action_id: int
+    approval_status: str
+    action_status: str | None
+    action_type: str | None
+    reference_id: int | None
+    customer_id: int | None
+    amount: float | None
+    resolved_by: str | None
+    resolved_at: str | None
+    reason: str | None
+    executed: bool
+
+
+@app.get("/approvals/pending", response_model=list[PendingApprovalResponse])
+def list_pending_approvals(
+    admin: Customer = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Lists all pending approval requests. Admin only."""
+    with traced_span(
+        "approvals.list_pending",
+        attributes={"admin_id": get_customer_identifier(admin.id)}
+    ):
+        results = (
+            db.query(Approval, Action)
+            .join(Action, Approval.action_id == Action.id)
+            .filter(Approval.status == "PENDING")
+            .order_by(Approval.created_at.desc())
+            .all()
+        )
+
+        return [
+            PendingApprovalResponse(
+                approval_id=approval.id,
+                action_id=action.id,
+                action_type=action.action_type,
+                reference_id=action.reference_id,
+                customer_id=action.customer_id,
+                amount=action.amount,
+                approval_status=approval.status,
+                created_at=approval.created_at.isoformat(),
+            )
+            for approval, action in results
+        ]
+
+
+@app.post("/approvals/{approval_id}/approve", response_model=ApprovalActionResponse)
+def approve_approval_request(
+    approval_id: int,
+    data: ApprovalReasonRequest,
+    admin: Customer = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Approves a pending approval request. Admin only."""
+    with traced_span(
+        "approvals.approve",
+        attributes={
+            "admin_id": get_customer_identifier(admin.id),
+            "approval_id": approval_id,
+        }
+    ):
+        # Check if approval exists first
+        approval = db.query(Approval).filter(Approval.id == approval_id).first()
+        if not approval:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Approval #{approval_id} not found",
+            )
+
+        # Check if already resolved
+        if approval.status != "PENDING":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Approval #{approval_id} is already {approval.status} and cannot be changed",
+            )
+
+        # Use admin's email as resolved_by
+        result = approve_request(
+            approval_id=approval_id,
+            resolved_by=admin.email,
+            reason=data.reason,
+            db=db,
+        )
+
+        # Check for errors from approval service
+        if "error" in result:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=result["error"],
+            )
+
+        return ApprovalActionResponse(**result)
+
+
+@app.post("/approvals/{approval_id}/reject", response_model=ApprovalActionResponse)
+def reject_approval_request(
+    approval_id: int,
+    data: ApprovalReasonRequest,
+    admin: Customer = Depends(get_current_admin),
+    db: Session = Depends(get_db),
+):
+    """Rejects a pending approval request. Admin only."""
+    with traced_span(
+        "approvals.reject",
+        attributes={
+            "admin_id": get_customer_identifier(admin.id),
+            "approval_id": approval_id,
+        }
+    ):
+        # Check if approval exists first
+        approval = db.query(Approval).filter(Approval.id == approval_id).first()
+        if not approval:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Approval #{approval_id} not found",
+            )
+
+        # Check if already resolved
+        if approval.status != "PENDING":
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Approval #{approval_id} is already {approval.status} and cannot be changed",
+            )
+
+        # Use admin's email as resolved_by
+        result = reject_request(
+            approval_id=approval_id,
+            resolved_by=admin.email,
+            reason=data.reason,
+            db=db,
+        )
+
+        # Check for errors from approval service
+        if "error" in result:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=result["error"],
+            )
+
+        return ApprovalActionResponse(**result)

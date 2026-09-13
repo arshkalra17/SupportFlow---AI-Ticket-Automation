@@ -77,6 +77,7 @@ class Customer(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     password_hash = Column(String, nullable=False)
+    is_admin = Column(Integer, nullable=False, default=0)  # 0 = customer, 1 = admin
     created_at = Column(DateTime, default=datetime.utcnow)
 
 
