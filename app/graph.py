@@ -158,17 +158,26 @@ def retrieve_knowledge_node(state: SupportFlowState) -> dict:
                     "execution_log": log,
                 }
             else:
-                log.append("  no relevant policy found — will generate generic response")
+                # No relevant documents found - use RAG's built-in refusal
+                log.append("  no relevant policy found — using RAG refusal")
                 return {
                     "retrieved_documents": retrieved_docs,
-                    "rag_answer": None,
+                    "rag_answer": rag_result["answer"],
                     "final_response": rag_result["answer"],
                     "execution_log": log,
                 }
 
         except Exception as err:
+            # RAG infrastructure failure - fail closed with deterministic refusal
             log.append(f"  ERROR in retrieve_knowledge_node: {err}")
+            log.append("  RAG infrastructure failed — returning refusal (fail closed)")
             return {
+                "retrieved_documents": [],
+                "rag_answer": None,
+                "final_response": (
+                    "I apologize, but I'm unable to access our knowledge base at this moment. "
+                    "Please contact a human support agent who can help you with your question."
+                ),
                 "error": f"RAG retrieval failed: {err}",
                 "execution_log": log,
             }
@@ -433,6 +442,17 @@ def error_node(state: SupportFlowState) -> dict:
 # CONDITIONAL EDGES (routing functions)
 # ═══════════════════════════════════════════════════════════════════════
 
+def route_after_knowledge(state: SupportFlowState) -> str:
+    """Routes after RAG retrieval.
+    
+    - If final_response is set (RAG succeeded or returned refusal) → END
+    - This prevents RAG failures from falling through to generic LLM
+    """
+    # RAG node always sets final_response (either grounded answer, refusal, or error message)
+    # No need to call generate_response_node for knowledge queries
+    return END
+
+
 def route_after_classify(state: SupportFlowState) -> str:
     """Routes after classification based on the detected category.
 
@@ -532,8 +552,8 @@ def build_supportflow_graph():
         },
     )
 
-    # knowledge retrieval → response
-    graph.add_edge("retrieve_knowledge_node", "generate_response_node")
+    # knowledge retrieval → END (no need for generate_response_node)
+    graph.add_edge("retrieve_knowledge_node", END)
 
     # tool execution → conditional routing
     graph.add_conditional_edges(

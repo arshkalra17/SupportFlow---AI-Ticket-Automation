@@ -41,6 +41,15 @@ RUN chmod +x /app/docker-entrypoint.sh
 # Change ownership to non-root user
 RUN chown -R appuser:appuser /app
 
+# Create home directory and cache directories for appuser
+RUN mkdir -p /home/appuser/.cache/huggingface && \
+    chown -R appuser:appuser /home/appuser
+
+# Set environment variables for model cache
+ENV HOME=/home/appuser
+ENV HF_HOME=/home/appuser/.cache/huggingface
+ENV TRANSFORMERS_CACHE=/home/appuser/.cache/huggingface
+
 # Switch to non-root user
 USER appuser
 

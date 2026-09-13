@@ -21,15 +21,21 @@ from app.idempotency import execute_with_idempotency
 from app.observability import init_observability, traced_span, get_customer_identifier
 from app.middleware import TraceMiddleware
 from app.health import router as health_router
+from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Support Flow API")
 
-# Add trace middleware for W3C context extraction
 app.add_middleware(TraceMiddleware)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Include health check endpoints
 app.include_router(health_router)
 
