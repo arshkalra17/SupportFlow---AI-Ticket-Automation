@@ -18,11 +18,22 @@ from app.auth import (
 from app.tools import authorize_and_get_order_status
 from app.graph import run_supportflow
 from app.idempotency import execute_with_idempotency
+from app.observability import init_observability, traced_span, get_customer_identifier
+from app.middleware import TraceMiddleware
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Support Flow API")
+
+# Add trace middleware for W3C context extraction
+app.add_middleware(TraceMiddleware)
+
+
+@app.on_event("startup")
+def startup_event():
+    """Initialize observability on application startup."""
+    init_observability()
 
 
 # ── Pydantic Schemas ───────────────────────────────────────────────────
@@ -141,29 +152,39 @@ def process_support_message(
     Identity is derived strictly from the verified JWT token via `get_current_customer()`.
     Supports optional `Idempotency-Key` header for safe request retries.
     """
-    def action():
-        return run_supportflow(
-            customer_message=data.message,
-            authenticated_customer_id=current_customer.id,
+    with traced_span(
+        "supportflow.process_request",
+        attributes={
+            "customer_id": get_customer_identifier(current_customer.id),
+            "has_idempotency_key": idempotency_key is not None,
+        }
+    ) as span:
+        def action():
+            return run_supportflow(
+                customer_message=data.message,
+                authenticated_customer_id=current_customer.id,
+            )
+
+        state, is_replayed = execute_with_idempotency(
+            customer_id=current_customer.id,
+            idempotency_key=idempotency_key,
+            operation_type="SUPPORT_PROCESS",
+            request_params={"message": data.message},
+            action_fn=action,
         )
 
-    state, is_replayed = execute_with_idempotency(
-        customer_id=current_customer.id,
-        idempotency_key=idempotency_key,
-        operation_type="SUPPORT_PROCESS",
-        request_params={"message": data.message},
-        action_fn=action,
-    )
+        if span:
+            span.set_attribute("idempotency_replayed", is_replayed)
 
-    return SupportProcessResponse(
-        final_response=state.get("final_response", ""),
-        classification=state.get("classification"),
-        tool_calls=state.get("tool_calls", []),
-        approval_status=state.get("approval_status"),
-        retrieved_documents=state.get("retrieved_documents"),
-        error=state.get("error"),
-        idempotency_replayed=is_replayed,
-    )
+        return SupportProcessResponse(
+            final_response=state.get("final_response", ""),
+            classification=state.get("classification"),
+            tool_calls=state.get("tool_calls", []),
+            approval_status=state.get("approval_status"),
+            retrieved_documents=state.get("retrieved_documents"),
+            error=state.get("error"),
+            idempotency_replayed=is_replayed,
+        )
 
 
 # ── Protected Order Endpoint (JWT -> Existing Auth Layer Boundary) ────

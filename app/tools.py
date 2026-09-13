@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.database import SessionLocal, Base, engine
 from app.models import Order, ReplacementRequest, Action, Approval
 from app.approval import create_approval_request
+from app.observability import traced_span, safe_set_attribute
 
 # Ensure tables are created
 Base.metadata.create_all(bind=engine)
@@ -59,29 +60,40 @@ def authorize_and_get_order_status(
         tuple[bool, str | None, dict | None]:
             (authorized, auth_error_message, order_status_dict)
     """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
+    with traced_span("tool.authorize_and_get_order_status") as span:
+        safe_set_attribute(span, "tool.name", "get_order_status")
+        safe_set_attribute(span, "tool.order_id", order_id)
 
-    try:
-        order = db.query(Order).filter(Order.id == order_id).first()
-        if not order:
-            # Order not found -> safe not-found error
-            return True, None, {"error": f"Order #{order_id} not found"}
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
 
-        if order.customer_id != authenticated_customer_id:
-            # Authorization failure -> do NOT expose order details
-            return False, f"Unauthorized: Customer #{authenticated_customer_id} does not have permission to access Order #{order_id}", None
+        try:
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                # Order not found -> safe not-found error
+                safe_set_attribute(span, "tool.authorized", True)
+                safe_set_attribute(span, "tool.order_found", False)
+                return True, None, {"error": f"Order #{order_id} not found"}
 
-        return True, None, {
-            "order_id": order.id,
-            "customer_id": order.customer_id,
-            "status": order.status,
-        }
-    finally:
-        if close_db:
-            db.close()
+            if order.customer_id != authenticated_customer_id:
+                # Authorization failure -> do NOT expose order details
+                safe_set_attribute(span, "tool.authorized", False)
+                safe_set_attribute(span, "tool.order_found", True)
+                return False, f"Unauthorized: Customer #{authenticated_customer_id} does not have permission to access Order #{order_id}", None
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_found", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+            return True, None, {
+                "order_id": order.id,
+                "customer_id": order.customer_id,
+                "status": order.status,
+            }
+        finally:
+            if close_db:
+                db.close()
 
 
 def seed_sample_orders():
@@ -191,60 +203,79 @@ def create_replacement_request(
     Returns:
         dict: Replacement request details on success, or a structured error.
     """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
+    with traced_span("tool.create_replacement_request") as span:
+        safe_set_attribute(span, "tool.name", "create_replacement_request")
+        safe_set_attribute(span, "tool.order_id", order_id)
 
-    try:
-        # 1. Fetch the order
-        order = db.query(Order).filter(Order.id == order_id).first()
-        if not order:
-            return {"error": f"Order #{order_id} not found"}
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
 
-        # 2. Authorization: verify ownership
-        if order.customer_id != authenticated_customer_id:
-            return {"error": f"Unauthorized: Customer #{authenticated_customer_id} does not have permission to access Order #{order_id}"}
+        try:
+            # 1. Fetch the order
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
 
-        # 3. Eligibility: deterministic backend rule
-        if order.status not in REPLACEMENT_ELIGIBLE_STATUSES:
-            return {"error": f"Order #{order_id} is not eligible for replacement (current status: {order.status})"}
+            safe_set_attribute(span, "tool.order_found", True)
 
-        # 4. Duplicate prevention: check for existing active replacement request
-        existing = (
-            db.query(ReplacementRequest)
-            .filter(
-                ReplacementRequest.order_id == order_id,
-                ReplacementRequest.status == "PENDING"
+            # 2. Authorization: verify ownership
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {"error": f"Unauthorized: Customer #{authenticated_customer_id} does not have permission to access Order #{order_id}"}
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+
+            # 3. Eligibility: deterministic backend rule
+            if order.status not in REPLACEMENT_ELIGIBLE_STATUSES:
+                safe_set_attribute(span, "tool.eligible", False)
+                return {"error": f"Order #{order_id} is not eligible for replacement (current status: {order.status})"}
+
+            safe_set_attribute(span, "tool.eligible", True)
+
+            # 4. Duplicate prevention: check for existing active replacement request
+            existing = (
+                db.query(ReplacementRequest)
+                .filter(
+                    ReplacementRequest.order_id == order_id,
+                    ReplacementRequest.status == "PENDING"
+                )
+                .first()
             )
-            .first()
-        )
-        if existing:
+            if existing:
+                safe_set_attribute(span, "tool.duplicate_found", True)
+                return {
+                    "error": f"A replacement request already exists for Order #{order_id}",
+                    "existing_replacement_id": existing.id,
+                    "existing_status": existing.status,
+                }
+
+            safe_set_attribute(span, "tool.duplicate_found", False)
+
+            # 5. Create the replacement request
+            replacement = ReplacementRequest(
+                order_id=order_id,
+                customer_id=authenticated_customer_id,
+                status="PENDING"
+            )
+            db.add(replacement)
+            db.commit()
+            db.refresh(replacement)
+
+            safe_set_attribute(span, "tool.replacement_id", replacement.id)
+            safe_set_attribute(span, "tool.status", "COMPLETED")
             return {
-                "error": f"A replacement request already exists for Order #{order_id}",
-                "existing_replacement_id": existing.id,
-                "existing_status": existing.status,
+                "replacement_id": replacement.id,
+                "order_id": replacement.order_id,
+                "customer_id": replacement.customer_id,
+                "status": replacement.status,
             }
-
-        # 5. Create the replacement request
-        replacement = ReplacementRequest(
-            order_id=order_id,
-            customer_id=authenticated_customer_id,
-            status="PENDING"
-        )
-        db.add(replacement)
-        db.commit()
-        db.refresh(replacement)
-
-        return {
-            "replacement_id": replacement.id,
-            "order_id": replacement.order_id,
-            "customer_id": replacement.customer_id,
-            "status": replacement.status,
-        }
-    finally:
-        if close_db:
-            db.close()
+        finally:
+            if close_db:
+                db.close()
 
 
 # ── Risky Action: Issue Refund ────────────────────────────────────────
@@ -314,97 +345,125 @@ def issue_refund(
     Returns:
         dict: Refund outcome or approval required details.
     """
-    if not isinstance(order_id, int) or isinstance(order_id, bool) or order_id <= 0:
-        return {"error": f"Validation Error: order_id must be a positive integer, got {order_id}"}
+    with traced_span("tool.issue_refund") as span:
+        safe_set_attribute(span, "tool.name", "issue_refund")
+        safe_set_attribute(span, "tool.order_id", order_id)
+        safe_set_attribute(span, "tool.amount", amount)
 
-    if not isinstance(amount, (int, float)) or isinstance(amount, bool) or amount <= 0:
-        return {"error": f"Validation Error: amount must be a positive number, got {amount}"}
+        if not isinstance(order_id, int) or isinstance(order_id, bool) or order_id <= 0:
+            safe_set_attribute(span, "tool.validation_error", True)
+            return {"error": f"Validation Error: order_id must be a positive integer, got {order_id}"}
 
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
+        if not isinstance(amount, (int, float)) or isinstance(amount, bool) or amount <= 0:
+            safe_set_attribute(span, "tool.validation_error", True)
+            return {"error": f"Validation Error: amount must be a positive number, got {amount}"}
 
-    try:
-        # 1. Verify order exists
-        order = db.query(Order).filter(Order.id == order_id).first()
-        if not order:
-            return {"error": f"Order #{order_id} not found"}
+        safe_set_attribute(span, "tool.validation_error", False)
 
-        # 2. Authorization: verify ownership
-        if order.customer_id != authenticated_customer_id:
-            return {
-                "error": (
-                    f"Unauthorized: Customer #{authenticated_customer_id} does not "
-                    f"have permission to access Order #{order_id}"
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            # 1. Verify order exists
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
+
+            safe_set_attribute(span, "tool.order_found", True)
+
+            # 2. Authorization: verify ownership
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Order #{order_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+
+            # 3. Duplicate prevention check
+            existing_action = (
+                db.query(Action)
+                .filter(
+                    Action.action_type == "REFUND",
+                    Action.reference_id == order_id,
+                    Action.status.in_(["COMPLETED", "PENDING"])
                 )
-            }
-
-        # 3. Duplicate prevention check
-        existing_action = (
-            db.query(Action)
-            .filter(
-                Action.action_type == "REFUND",
-                Action.reference_id == order_id,
-                Action.status.in_(["COMPLETED", "PENDING"])
+                .first()
             )
-            .first()
-        )
-        if existing_action:
-            return {
-                "error": f"A refund request or completed refund already exists for Order #{order_id}",
-                "existing_action_id": existing_action.id,
-                "existing_status": existing_action.status,
-                "existing_amount": existing_action.amount,
-            }
+            if existing_action:
+                safe_set_attribute(span, "tool.duplicate_found", True)
+                safe_set_attribute(span, "tool.existing_action_id", existing_action.id)
+                return {
+                    "error": f"A refund request or completed refund already exists for Order #{order_id}",
+                    "existing_action_id": existing_action.id,
+                    "existing_status": existing_action.status,
+                    "existing_amount": existing_action.amount,
+                }
 
-        # 4. Deterministic Risk Check
-        if amount <= REFUND_AUTO_APPROVAL_THRESHOLD:
-            # Low-value refund -> Execute automatically
-            action = Action(
-                action_type="REFUND",
-                reference_id=order_id,
-                customer_id=authenticated_customer_id,
-                amount=amount,
-                status="COMPLETED",
-            )
-            db.add(action)
-            db.commit()
-            db.refresh(action)
+            safe_set_attribute(span, "tool.duplicate_found", False)
 
-            return {
-                "status": "COMPLETED",
-                "message": f"Refund of ${amount:.2f} issued successfully for Order #{order_id}.",
-                "order_id": order_id,
-                "customer_id": authenticated_customer_id,
-                "amount": amount,
-                "action_id": action.id,
-                "approval_required": False,
-            }
-        else:
-            # High-value refund -> Trapped by risk rule, create PENDING Approval
-            app_res = create_approval_request(
-                action_type="REFUND",
-                reference_id=order_id,
-                customer_id=authenticated_customer_id,
-                amount=amount,
-                db=db,
-            )
+            # 4. Deterministic Risk Check
+            approval_required = amount > REFUND_AUTO_APPROVAL_THRESHOLD
+            safe_set_attribute(span, "tool.approval_required", approval_required)
+            safe_set_attribute(span, "tool.threshold", REFUND_AUTO_APPROVAL_THRESHOLD)
 
-            return {
-                "status": "PENDING_APPROVAL",
-                "message": (
-                    f"Refund request of ${amount:.2f} for Order #{order_id} exceeds auto-approval "
-                    f"threshold (${REFUND_AUTO_APPROVAL_THRESHOLD:.2f}). Human approval is required."
-                ),
-                "order_id": order_id,
-                "customer_id": authenticated_customer_id,
-                "amount": amount,
-                "action_id": app_res["action_id"],
-                "approval_id": app_res["approval_id"],
-                "approval_required": True,
-            }
-    finally:
-        if close_db:
-            db.close()
+            if not approval_required:
+                # Low-value refund -> Execute automatically
+                action = Action(
+                    action_type="REFUND",
+                    reference_id=order_id,
+                    customer_id=authenticated_customer_id,
+                    amount=amount,
+                    status="COMPLETED",
+                )
+                db.add(action)
+                db.commit()
+                db.refresh(action)
+
+                safe_set_attribute(span, "tool.action_id", action.id)
+                safe_set_attribute(span, "tool.status", "COMPLETED")
+                return {
+                    "status": "COMPLETED",
+                    "message": f"Refund of ${amount:.2f} issued successfully for Order #{order_id}.",
+                    "order_id": order_id,
+                    "customer_id": authenticated_customer_id,
+                    "amount": amount,
+                    "action_id": action.id,
+                    "approval_required": False,
+                }
+            else:
+                # High-value refund -> Trapped by risk rule, create PENDING Approval
+                app_res = create_approval_request(
+                    action_type="REFUND",
+                    reference_id=order_id,
+                    customer_id=authenticated_customer_id,
+                    amount=amount,
+                    db=db,
+                )
+
+                safe_set_attribute(span, "tool.action_id", app_res["action_id"])
+                safe_set_attribute(span, "tool.approval_id", app_res["approval_id"])
+                safe_set_attribute(span, "tool.status", "PENDING_APPROVAL")
+                return {
+                    "status": "PENDING_APPROVAL",
+                    "message": (
+                        f"Refund request of ${amount:.2f} for Order #{order_id} exceeds auto-approval "
+                        f"threshold (${REFUND_AUTO_APPROVAL_THRESHOLD:.2f}). Human approval is required."
+                    ),
+                    "order_id": order_id,
+                    "customer_id": authenticated_customer_id,
+                    "amount": amount,
+                    "action_id": app_res["action_id"],
+                    "approval_id": app_res["approval_id"],
+                    "approval_required": True,
+                }
+        finally:
+            if close_db:
+                db.close()
 

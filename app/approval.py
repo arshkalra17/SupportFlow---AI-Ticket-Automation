@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, Base, engine
 from app.models import Action, Approval
+from app.observability import traced_span, safe_set_attribute
 
 # Ensure tables exist
 Base.metadata.create_all(bind=engine)
@@ -38,44 +39,54 @@ def create_approval_request(
     Returns:
         dict with action_id, approval_id, and status.
     """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
+    with traced_span("approval.create_approval_request") as span:
+        safe_set_attribute(span, "approval.action_type", action_type)
+        safe_set_attribute(span, "approval.reference_id", reference_id)
+        if amount is not None:
+            safe_set_attribute(span, "approval.amount", amount)
 
-    try:
-        action = Action(
-            action_type=action_type,
-            reference_id=reference_id,
-            customer_id=customer_id,
-            amount=amount,
-            status="PENDING",
-        )
-        db.add(action)
-        db.flush()  # get action.id before creating approval
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
 
-        approval = Approval(
-            action_id=action.id,
-            status=APPROVAL_PENDING,
-        )
-        db.add(approval)
-        db.commit()
-        db.refresh(action)
-        db.refresh(approval)
+        try:
+            action = Action(
+                action_type=action_type,
+                reference_id=reference_id,
+                customer_id=customer_id,
+                amount=amount,
+                status="PENDING",
+            )
+            db.add(action)
+            db.flush()  # get action.id before creating approval
 
-        return {
-            "action_id": action.id,
-            "action_type": action.action_type,
-            "reference_id": action.reference_id,
-            "customer_id": action.customer_id,
-            "amount": action.amount,
-            "action_status": action.status,
-            "approval_id": approval.id,
-            "status": approval.status,
-        }
-    finally:
-        if close_db:
-            db.close()
+            approval = Approval(
+                action_id=action.id,
+                status=APPROVAL_PENDING,
+            )
+            db.add(approval)
+            db.commit()
+            db.refresh(action)
+            db.refresh(approval)
+
+            safe_set_attribute(span, "approval.action_id", action.id)
+            safe_set_attribute(span, "approval.approval_id", approval.id)
+            safe_set_attribute(span, "approval.status", approval.status)
+
+            return {
+                "action_id": action.id,
+                "action_type": action.action_type,
+                "reference_id": action.reference_id,
+                "customer_id": action.customer_id,
+                "amount": action.amount,
+                "action_status": action.status,
+                "approval_id": approval.id,
+                "status": approval.status,
+            }
+        finally:
+            if close_db:
+                db.close()
 
 
 def approve_request(

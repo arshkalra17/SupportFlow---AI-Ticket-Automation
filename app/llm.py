@@ -1,5 +1,6 @@
 import json
 import os
+import time
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
@@ -15,7 +16,8 @@ from app.tools import (
     issue_refund,
 )
 # pyrefly: ignore [missing-import]
-from evaluation.config import _CLASSIFICATION_SYSTEM_PROMPT
+from evaluation.config import _CLASSIFICATION_SYSTEM_PROMPT, _CLASSIFICATION_PROMPT_VERSION
+from app.observability import traced_span, record_llm_call, sanitize_tool_args, safe_set_attribute
 
 load_dotenv()
 
@@ -34,42 +36,59 @@ def classify_ticket(message: str) -> dict:
             invalid JSON, or missing required fields.
         RuntimeError: If the Groq API call fails.
     """
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY environment variable is not set")
+    with traced_span("llm.groq.classify") as span:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
 
-    client = Groq(api_key=api_key)
+        client = Groq(api_key=api_key)
 
-    system_prompt = _CLASSIFICATION_SYSTEM_PROMPT
+        system_prompt = _CLASSIFICATION_SYSTEM_PROMPT
 
-    try:
-        response = client.chat.completions.create(
-            model="openai/gpt-oss-120b",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": message},
-            ],
-            response_format={"type": "json_object"},
-            temperature=0.0,
-        )
-    except Exception as err:
-        raise RuntimeError(f"Groq API request failed: {err}") from err
+        start = time.time()
+        try:
+            response = client.chat.completions.create(
+                model="openai/gpt-oss-120b",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": message},
+                ],
+                response_format={"type": "json_object"},
+                temperature=0.0,
+            )
+        except Exception as err:
+            raise RuntimeError(f"Groq API request failed: {err}") from err
 
-    content = response.choices[0].message.content
-    if not content:
-        raise ValueError("Groq API returned an empty response content")
+        latency_ms = (time.time() - start) * 1000
 
-    try:
-        data = json.loads(content)
-    except json.JSONDecodeError as err:
-        raise ValueError(f"Failed to parse invalid JSON from Groq LLM: {err}. Raw content: {content!r}") from err
+        if span:
+            record_llm_call(
+                span,
+                model="openai/gpt-oss-120b",
+                prompt_version=_CLASSIFICATION_PROMPT_VERSION,
+                latency_ms=latency_ms,
+            )
 
-    required_fields = {"category", "priority", "sentiment"}
-    missing_fields = required_fields - set(data.keys())
-    if missing_fields:
-        raise ValueError(f"LLM JSON response is missing required keys: {missing_fields}. Data: {data}")
+        content = response.choices[0].message.content
+        if not content:
+            raise ValueError("Groq API returned an empty response content")
 
-    return data
+        try:
+            data = json.loads(content)
+        except json.JSONDecodeError as err:
+            raise ValueError(f"Failed to parse invalid JSON from Groq LLM: {err}. Raw content: {content!r}") from err
+
+        required_fields = {"category", "priority", "sentiment"}
+        missing_fields = required_fields - set(data.keys())
+        if missing_fields:
+            raise ValueError(f"LLM JSON response is missing required keys: {missing_fields}. Data: {data}")
+
+        if span:
+            safe_set_attribute(span, "classification.category", data.get("category", ""))
+            safe_set_attribute(span, "classification.priority", data.get("priority", ""))
+            safe_set_attribute(span, "classification.sentiment", data.get("sentiment", ""))
+
+        return data
 
 
 # ── Tool schemas exposed to Groq ─────────────────────────────────────
@@ -164,126 +183,193 @@ def _execute_tool_call(
     Returns:
         dict with keys: validation_passed, authorization_passed, backend_executed, tool_result.
     """
-    if tool_name == "get_order_status":
-        # Step 1: Validate
-        is_valid, validated, val_err = validate_get_order_status_args(tool_args or {})
-        if not is_valid:
-            return {
-                "validation_passed": False,
-                "authorization_passed": None,
-                "backend_executed": False,
-                "tool_result": {"error": f"Backend Validation Error: {val_err}"},
-            }
+    with traced_span(
+        f"tool.{tool_name}",
+        attributes={
+            "tool_name": tool_name,
+            "tool_args_hash": sanitize_tool_args(tool_args or {}),
+            "customer_id": str(authenticated_customer_id),
+        }
+    ) as span:
+        if tool_name == "get_order_status":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_get_order_status_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
 
-        # Step 2: Authorize + Execute
-        is_auth, auth_err, order_data = authorize_and_get_order_status(
-            authenticated_customer_id=authenticated_customer_id,
-            order_id=validated.order_id,
-        )
-        if is_auth:
-            return {
+            # Step 2: Authorize + Execute
+            is_auth, auth_err, order_data = authorize_and_get_order_status(
+                authenticated_customer_id=authenticated_customer_id,
+                order_id=validated.order_id,
+            )
+            if is_auth:
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": True,
+                    "tool_result": order_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", True)
+                return result
+            else:
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": False,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Authorization Error: {auth_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", False)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+        elif tool_name == "create_replacement_request":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_create_replacement_request_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth + eligibility + duplicate check are internal)
+            result_data = create_replacement_request(
+                order_id=validated.order_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            # Determine outcome from result
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                # Not-found, not-eligible, or duplicate — auth was not the blocker
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+            # Success
+            result = {
                 "validation_passed": True,
                 "authorization_passed": True,
                 "backend_executed": True,
-                "tool_result": order_data,
+                "tool_result": result_data,
             }
-        else:
-            return {
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "issue_refund":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_issue_refund_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth + duplicate + risk rules handled internally)
+            result_data = issue_refund(
+                order_id=validated.order_id,
+                amount=validated.amount,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            executed = (result_data.get("status") == "COMPLETED")
+            approval_required = (result_data.get("status") == "PENDING_APPROVAL")
+
+            result = {
                 "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": executed,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", executed)
+                if approval_required:
+                    safe_set_attribute(span, "approval_required", True)
+                    if "approval_id" in result_data:
+                        safe_set_attribute(span, "approval_id", result_data["approval_id"])
+            return result
+
+        else:
+            result = {
+                "validation_passed": False,
                 "authorization_passed": False,
                 "backend_executed": False,
-                "tool_result": {"error": f"Backend Authorization Error: {auth_err}"},
+                "tool_result": {"error": f"Unknown tool '{tool_name}'"},
             }
-
-    elif tool_name == "create_replacement_request":
-        # Step 1: Validate
-        is_valid, validated, val_err = validate_create_replacement_request_args(tool_args or {})
-        if not is_valid:
-            return {
-                "validation_passed": False,
-                "authorization_passed": None,
-                "backend_executed": False,
-                "tool_result": {"error": f"Backend Validation Error: {val_err}"},
-            }
-
-        # Step 2: Execute (auth + eligibility + duplicate check are internal)
-        result = create_replacement_request(
-            order_id=validated.order_id,
-            authenticated_customer_id=authenticated_customer_id,
-        )
-
-        # Determine outcome from result
-        if "error" in result:
-            if "Unauthorized" in result["error"]:
-                return {
-                    "validation_passed": True,
-                    "authorization_passed": False,
-                    "backend_executed": False,
-                    "tool_result": result,
-                }
-            # Not-found, not-eligible, or duplicate — auth was not the blocker
-            return {
-                "validation_passed": True,
-                "authorization_passed": True,
-                "backend_executed": False,
-                "tool_result": result,
-            }
-        # Success
-        return {
-            "validation_passed": True,
-            "authorization_passed": True,
-            "backend_executed": True,
-            "tool_result": result,
-        }
-
-    elif tool_name == "issue_refund":
-        # Step 1: Validate
-        is_valid, validated, val_err = validate_issue_refund_args(tool_args or {})
-        if not is_valid:
-            return {
-                "validation_passed": False,
-                "authorization_passed": None,
-                "backend_executed": False,
-                "tool_result": {"error": f"Backend Validation Error: {val_err}"},
-            }
-
-        # Step 2: Execute (auth + duplicate + risk rules handled internally)
-        result = issue_refund(
-            order_id=validated.order_id,
-            amount=validated.amount,
-            authenticated_customer_id=authenticated_customer_id,
-        )
-
-        if "error" in result:
-            if "Unauthorized" in result["error"]:
-                return {
-                    "validation_passed": True,
-                    "authorization_passed": False,
-                    "backend_executed": False,
-                    "tool_result": result,
-                }
-            return {
-                "validation_passed": True,
-                "authorization_passed": True,
-                "backend_executed": False,
-                "tool_result": result,
-            }
-
-        executed = (result.get("status") == "COMPLETED")
-        return {
-            "validation_passed": True,
-            "authorization_passed": True,
-            "backend_executed": executed,
-            "tool_result": result,
-        }
-
-    else:
-        return {
-            "validation_passed": False,
-            "authorization_passed": False,
-            "backend_executed": False,
-            "tool_result": {"error": f"Unknown tool '{tool_name}'"},
-        }
+            if span:
+                safe_set_attribute(span, "validation_passed", False)
+            return result
+        return result
 
 
 # ── Multi-step tool-calling loop ─────────────────────────────────────

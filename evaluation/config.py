@@ -85,6 +85,9 @@ def _short_hash(text: str) -> str:
 CLASSIFICATION_PROMPT_VERSION  = f"v1-{_short_hash(_CLASSIFICATION_SYSTEM_PROMPT)}"
 TOOL_SELECTION_PROMPT_VERSION  = f"v1-{_short_hash(_TOOL_SELECTION_SYSTEM_PROMPT)}"
 
+# Export prompt version for observability
+_CLASSIFICATION_PROMPT_VERSION = CLASSIFICATION_PROMPT_VERSION
+
 # ── Rate limiting between sequential Groq calls ────────────────────────
 # Keeps the benchmark quota-conscious without sacrificing correctness.
 GROQ_CALL_DELAY_SECONDS = 1.0

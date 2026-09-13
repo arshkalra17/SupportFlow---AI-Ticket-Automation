@@ -13,12 +13,14 @@ in a later stage.
 
 import json
 import os
+import time
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
 from groq import Groq
 
 from app.kb import search_knowledge_base
+from app.observability import traced_span, record_llm_call, hash_sensitive, safe_set_attribute
 
 load_dotenv()
 
@@ -74,88 +76,115 @@ def answer_with_knowledge_base(
         ValueError: If query is empty.
         RuntimeError: If Groq API call fails.
     """
-    if not query or not isinstance(query, str) or not query.strip():
-        raise ValueError("Query must be a non-empty string")
+    with traced_span("rag.answer") as span:
+        if not query or not isinstance(query, str) or not query.strip():
+            raise ValueError("Query must be a non-empty string")
 
-    # ── Step 1: Retrieve relevant documents ───────────────────────
-    retrieved = search_knowledge_base(
-        query=query,
-        top_k=top_k,
-        similarity_threshold=similarity_threshold,
-    )
+        if span:
+            safe_set_attribute(span, "query_hash", hash_sensitive(query))
+            safe_set_attribute(span, "top_k", top_k)
+            safe_set_attribute(span, "similarity_threshold", similarity_threshold)
 
-    # Build retrieval metadata for the response
-    doc_metadata = [
-        {
-            "title": doc["title"],
-            "source": doc["source"],
-            "cosine_similarity": doc["cosine_similarity"],
-        }
-        for doc in retrieved
-    ]
+        # ── Step 1: Retrieve relevant documents ───────────────────────
+        with traced_span("rag.retrieval") as retrieval_span:
+            retrieved = search_knowledge_base(
+                query=query,
+                top_k=top_k,
+                similarity_threshold=similarity_threshold,
+            )
 
-    # ── Step 2: Handle no relevant context ────────────────────────
-    if not retrieved:
+            if retrieval_span:
+                safe_set_attribute(retrieval_span, "documents_retrieved", len(retrieved))
+                if retrieved:
+                    doc_ids = [doc.get("title", "unknown") for doc in retrieved]
+                    scores = [doc.get("cosine_similarity", 0.0) for doc in retrieved]
+                    safe_set_attribute(retrieval_span, "document_ids", str(doc_ids))
+                    safe_set_attribute(retrieval_span, "similarity_scores", str(scores))
+
+        # Build retrieval metadata for the response
+        doc_metadata = [
+            {
+                "title": doc["title"],
+                "source": doc["source"],
+                "cosine_similarity": doc["cosine_similarity"],
+            }
+            for doc in retrieved
+        ]
+
+        # ── Step 2: Handle no relevant context ────────────────────────
+        if not retrieved:
+            if span:
+                safe_set_attribute(span, "relevant_context", False)
+            return {
+                "query": query,
+                "relevant_context": False,
+                "retrieved_documents": doc_metadata,
+                "answer": (
+                    "I could not find any relevant company policy to answer your question. "
+                    "Please contact a human support agent for assistance."
+                ),
+                "model": None,
+            }
+
+        # ── Step 3: Build context block from retrieved documents ──────
+        context_block = _build_context_block(retrieved)
+
+        # ── Step 4: Construct Groq prompt ─────────────────────────────
+        system_prompt = (
+            "You are a helpful customer support assistant for SupportFlow. "
+            "You answer questions using ONLY the company policy context provided below.\n\n"
+            "RULES:\n"
+            "- Answer based EXCLUSIVELY on the provided policy context.\n"
+            "- Do NOT invent, assume, or fabricate any policy information.\n"
+            "- If the provided context does not contain enough information to fully "
+            "answer the question, say so explicitly.\n"
+            "- Be concise, helpful, and professional.\n"
+            "- Reference the specific policy when possible.\n\n"
+            "COMPANY POLICY CONTEXT:\n"
+            "─────────────────────────────────────────\n"
+            f"{context_block}\n"
+            "─────────────────────────────────────────"
+        )
+
+        user_message = f"Customer question: {query}"
+
+        # ── Step 5: Call Groq ─────────────────────────────────────────
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+
+        client = Groq(api_key=api_key)
+
+        with traced_span("llm.groq.rag_answer") as llm_span:
+            start = time.time()
+            try:
+                response = client.chat.completions.create(
+                    model=RAG_MODEL,
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_message},
+                    ],
+                    temperature=0.0,
+                )
+            except Exception as err:
+                raise RuntimeError(f"Groq RAG API request failed: {err}") from err
+
+            latency_ms = (time.time() - start) * 1000
+
+            if llm_span:
+                record_llm_call(llm_span, model=RAG_MODEL, prompt_version="rag-v1", latency_ms=latency_ms)
+
+        answer_content = response.choices[0].message.content
+        if not answer_content:
+            raise ValueError("Groq API returned an empty response for RAG query")
+
+        if span:
+            safe_set_attribute(span, "relevant_context", True)
+
         return {
             "query": query,
-            "relevant_context": False,
+            "relevant_context": True,
             "retrieved_documents": doc_metadata,
-            "answer": (
-                "I could not find any relevant company policy to answer your question. "
-                "Please contact a human support agent for assistance."
-            ),
-            "model": None,
+            "answer": answer_content.strip(),
+            "model": RAG_MODEL,
         }
-
-    # ── Step 3: Build context block from retrieved documents ──────
-    context_block = _build_context_block(retrieved)
-
-    # ── Step 4: Construct Groq prompt ─────────────────────────────
-    system_prompt = (
-        "You are a helpful customer support assistant for SupportFlow. "
-        "You answer questions using ONLY the company policy context provided below.\n\n"
-        "RULES:\n"
-        "- Answer based EXCLUSIVELY on the provided policy context.\n"
-        "- Do NOT invent, assume, or fabricate any policy information.\n"
-        "- If the provided context does not contain enough information to fully "
-        "answer the question, say so explicitly.\n"
-        "- Be concise, helpful, and professional.\n"
-        "- Reference the specific policy when possible.\n\n"
-        "COMPANY POLICY CONTEXT:\n"
-        "─────────────────────────────────────────\n"
-        f"{context_block}\n"
-        "─────────────────────────────────────────"
-    )
-
-    user_message = f"Customer question: {query}"
-
-    # ── Step 5: Call Groq ─────────────────────────────────────────
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY environment variable is not set")
-
-    client = Groq(api_key=api_key)
-
-    try:
-        response = client.chat.completions.create(
-            model=RAG_MODEL,
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message},
-            ],
-            temperature=0.0,
-        )
-    except Exception as err:
-        raise RuntimeError(f"Groq RAG API request failed: {err}") from err
-
-    answer_content = response.choices[0].message.content
-    if not answer_content:
-        raise ValueError("Groq API returned an empty response for RAG query")
-
-    return {
-        "query": query,
-        "relevant_context": True,
-        "retrieved_documents": doc_metadata,
-        "answer": answer_content.strip(),
-        "model": RAG_MODEL,
-    }
