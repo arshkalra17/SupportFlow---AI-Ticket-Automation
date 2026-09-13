@@ -114,6 +114,23 @@ flowchart TD
 
 ---
 
+
+### API Surface
+
+![SupportFlow Swagger API](docs/images/swagger.png)
+
+### End-to-End OpenTelemetry Trace
+
+![SupportFlow OpenTelemetry trace](docs/images/trace.png)
+
+### Human-in-the-Loop Approval
+
+![High-value refund approval](docs/images/approval.png)
+
+### Idempotent Replay
+
+![Idempotent action replay](docs/images/idempotency.png)
+
 ## Security Model
 
 This is the part of the project that took the most iteration, and it's the part worth reading closely.
