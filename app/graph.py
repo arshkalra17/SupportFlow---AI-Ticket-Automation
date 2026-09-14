@@ -292,6 +292,7 @@ def tool_execution_node(state: SupportFlowState) -> dict:
 
         # ── Process tool calls ────────────────────────────────────────
         approval_status = state.get("approval_status")
+        final_response = None
 
         for tc in response_message.tool_calls:
             tool_name = tc.function.name
@@ -319,6 +320,29 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 approval_status = "PENDING_APPROVAL"
                 log.append(f"    → APPROVAL REQUIRED (approval_id={tool_result.get('approval_id')})")
 
+                # Generate deterministic response for PENDING_APPROVAL
+                # Extract order_id and amount from tool_args
+                order_id = tool_args.get("order_id", "unknown")
+                amount = tool_args.get("amount")
+
+                response_parts = [
+                    f"Your refund request for order #{order_id}"
+                ]
+                if amount is not None:
+                    response_parts[0] = f"Your ${amount:,.2f} refund request for order #{order_id}"
+
+                response_parts.append(
+                    "has been submitted for human approval. "
+                    "No refund has been executed yet."
+                )
+
+                approval_id = tool_result.get("approval_id")
+                if approval_id:
+                    response_parts.append(f" Your approval ID is {approval_id}.")
+
+                final_response = " ".join(response_parts)
+                log.append(f"  → Generated deterministic PENDING_APPROVAL response")
+
             tool_calls.append({
                 "iteration": iterations + 1,
                 "tool_name": tool_name,
@@ -330,12 +354,18 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 "tool_result": tool_result,
             })
 
-        return {
+        result = {
             "tool_calls": tool_calls,
             "tool_iterations": iterations + 1,
             "approval_status": approval_status,
             "execution_log": log,
         }
+
+        # If we generated a final response for PENDING_APPROVAL, include it
+        if final_response:
+            result["final_response"] = final_response
+
+        return result
 
 
 def approval_check_node(state: SupportFlowState) -> dict:
