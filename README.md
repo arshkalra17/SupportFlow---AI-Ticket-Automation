@@ -36,17 +36,19 @@ SupportFlow was built to prove out that boundary properly — end to end, with r
 ---
 
 ## Screenshots
- 
+
 <details>
 <summary><strong>Click to view the authorization boundary in action (2 screenshots)</strong></summary>
+
 <br>
+
 | Blocked — order not owned by the logged-in customer | Allowed — order owned by the logged-in customer |
 |---|---|
 | ![Unauthorized order access blocked](docs/screenshots/order-blocked.png) | ![Authorized order access succeeds](docs/screenshots/order-allowed.png) |
 | Validated ✓ &nbsp; Authorized ✗ &nbsp; Executed ✗ — no order details leaked | Validated ✓ &nbsp; Authorized ✓ &nbsp; Executed ✓ — real status returned |
- 
+
 Same question, two different customers — the backend's authorization layer (not the LLM) decides what's allowed, live.
- 
+
 </details>
 
 ---
