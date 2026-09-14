@@ -18,7 +18,8 @@ SupportFlow is not a chatbot wrapper. It's a production-style backend system whe
 - [Key Results](#key-results)
 - [Security Model](#security-model)
 - [Reliability](#reliability)
-- [Observability](#observability)
+- [Observability & Async Processing](#observability)
+- [Authorization](#authorization)
 - [AI Evaluation](#ai-evaluation)
 - [Project Structure](#project-structure)
 - [Running Locally](#running-locally)
@@ -32,24 +33,6 @@ SupportFlow is not a chatbot wrapper. It's a production-style backend system whe
 Most AI-agent demo projects let the LLM call functions directly against a database with no real safety boundary. That works for a demo; it doesn't work in production, where a hallucinated tool call, a prompt-injection attempt, or a rate-limited/flaky model response can't be allowed to corrupt real data or execute unauthorized financial actions.
 
 SupportFlow was built to prove out that boundary properly — end to end, with real tests, not just a diagram. It answers a concrete question: **how do you let an LLM operate inside a real backend system without trusting it with anything dangerous?**
-
----
-
-## Screenshots
-
-<details>
-<summary><strong>Click to view the authorization boundary in action (2 screenshots)</strong></summary>
-
-<br>
-
-| Blocked — order not owned by the logged-in customer | Allowed — order owned by the logged-in customer |
-|---|---|
-| ![Unauthorized order access blocked](docs/screenshots/order-blocked.png) | ![Authorized order access succeeds](docs/screenshots/order-allowed.png) |
-| Validated ✓ &nbsp; Authorized ✗ &nbsp; Executed ✗ — no order details leaked | Validated ✓ &nbsp; Authorized ✓ &nbsp; Executed ✓ — real status returned |
-
-Same question, two different customers — the backend's authorization layer (not the LLM) decides what's allowed, live.
-
-</details>
 
 ---
 
@@ -95,10 +78,33 @@ flowchart TD
 
 ```
 
-**Two entry paths into the same core logic:**
+## A simpler one for understanding
+![ez-arch](docs/images/mermaid-diagram.png)
 
-- **Synchronous:** `POST /support/process` — authenticated, runs the LangGraph workflow directly, returns a full result.
-- **Asynchronous:** `POST /tickets` — creates a ticket, enqueues it to Redis, a background worker processes it independently. Decouples the API from LLM latency.
+### Simple View
+
+Customer requests enter through the React frontend and FastAPI backend.
+
+- **RAG — Knowledge Questions**
+  - *“How long does express shipping take?”*
+  - *“What is your return policy?”*
+  - LangGraph retrieves relevant information from the knowledge base.
+
+- **Backend Tools — Data & Actions**
+  - *“Where is my order #1008?”*
+  - *“Create a replacement request for my damaged order.”*
+  - LangGraph can request backend tools, which are validated and authorized before execution.
+
+- **Human Approval — High-Risk Actions**
+  - *“Refund my $1500 order.”*
+  - The backend detects that the action exceeds the automatic refund threshold and sends it for human approval.
+
+- **Async Tickets — Background Processing**
+  - *“My payment was charged twice. Please investigate.”*
+  - *“I received the wrong product. Please raise a support ticket.”*
+  - The ticket is persisted in PostgreSQL, queued through Redis, and processed by a background worker.
+
+PostgreSQL remains the durable source of truth, while Redis handles asynchronous work.
 
 ---
 
@@ -137,13 +143,60 @@ flowchart TD
 
 ![SupportFlow Swagger API](docs/images/swagger.png)
 
-### End-to-End OpenTelemetry Trace
 
-![SupportFlow OpenTelemetry trace](docs/images/trace.png)
+## Human-in-the-Loop Approval
 
-### Human-in-the-Loop Approval
+<table>
+<tr>
+<td align="center"><strong>1. Customer Request</strong>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>2. Backend Decision</strong><br><sub>LangGraph</sub></td>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>3. Admin Login</strong><br><sub>JWT</sub></td>
+</tr>
 
-![High-value refund approval](docs/images/approval.png)
+<tr>
+<td>
+<img src="docs/images/approval-request-ui.png" width="100%" alt="Customer submits high-value refund">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/approval-backend-terminal.png" width="100%" alt="Backend creates pending approval">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/admin-login.png" width="100%" alt="Admin login">
+</td>
+</tr>
+
+<tr>
+<td align="center"><strong>4. Approval Queue</strong><br><sub>PostgreSQL</sub></td>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>5. Approval</strong></td>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>6. Completed State</strong></td>
+</tr>
+
+<tr>
+<td>
+<img src="docs/images/approval-queue.png" width="100%" alt="Admin approval queue">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/approval-approved.png" width="100%" alt="Approval completed">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/refund-completed.png" width="100%" alt="Completed refund status">
+</td>
+</tr>
+</table>
+
+**Flow:** Customer request → LLM proposes `issue_refund` → backend validation and ownership authorization → high-value rule triggers `PENDING_APPROVAL` → admin reviews → approval is persisted → action reaches `COMPLETED`.
+
+
+---
+
 
 ### Idempotent Replay
 
@@ -190,13 +243,63 @@ A genuine concurrency bug was found and fixed during this work: a thread that lo
 
 ---
 
-## Observability
+## Observability & Async Processing
 
-Every request is traced end-to-end — HTTP → JWT verification → idempotency check → LangGraph nodes → LLM calls → RAG retrieval → tool execution → approval → retries → the async Redis worker — using OpenTelemetry with W3C trace-context propagation (including across the Redis queue boundary, so a worker-processed job's span is a proper child of the original HTTP request's trace).
+SupportFlow traces request execution with OpenTelemetry and uses Redis to
+coordinate asynchronous ticket processing.
+
+### Distributed Request Tracing
+
+![OpenTelemetry trace](docs/images/trace.png)
+
+The trace shows the request flowing through classification, tool execution,
+and response generation with timing for each span.
+
+### Async Processing
+
+<table>
+<tr>
+<td align="center"><strong>1. Ticket Request</strong><br><sub>FastAPI</sub></td>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>2. Background Worker</strong><br><sub>Redis + Python Worker + Groq</sub></td>
+<td align="center" width="55"><h2>→</h2></td>
+<td align="center"><strong>3. Persistent State</strong><br><sub>PostgreSQL</sub></td>
+</tr>
+
+<tr>
+<td>
+<img src="docs/images/ticket-request.png" width="100%" alt="Ticket request">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/redis-worker.png" width="100%" alt="Redis queue and worker processing">
+</td>
+<td align="center" valign="middle"><h2>→</h2></td>
+<td>
+<img src="docs/images/redis-postgres.png" width="100%" alt="Ticket persisted in PostgreSQL">
+</td>
+</tr>
+</table>
+
+**Flow:** `POST /tickets` → Redis queue (`supportflow:ticket_queue`) → background worker → Groq classification → PostgreSQL.
 
 **Fail-open by design:** if the tracing/telemetry pipeline itself fails, business logic is unaffected. A business exception is still raised and propagated normally even if the span meant to record it couldn't be written.
 
 Secrets are never logged: JWTs, Authorization headers, passwords, hashes, the Groq API key, raw idempotency keys, and raw customer messages are all excluded from trace data by default.
+
+---
+## Authorization
+
+<br>
+
+| Blocked — order not owned by the logged-in customer | Allowed — order owned by the logged-in customer |
+|---|---|
+| ![Unauthorized order access blocked](docs/screenshots/order-blocked.png) | ![Authorized order access succeeds](docs/screenshots/order-allowed.png) |
+| Validated ✓ &nbsp; Authorized ✗ &nbsp; Executed ✗ — no order details leaked | Validated ✓ &nbsp; Authorized ✓ &nbsp; Executed ✓ — real status returned |
+
+Same question, two different customers — the backend's authorization layer (not the LLM) decides what's allowed, live.
+
+
 
 ---
 
