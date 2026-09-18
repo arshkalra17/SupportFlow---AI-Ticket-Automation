@@ -24,6 +24,14 @@ from app.middleware import TraceMiddleware
 from app.health import router as health_router
 from app.approval import approve_request, reject_request
 from app.models import Approval, Action
+from app.conversation import (
+    get_or_create_conversation,
+    get_recent_messages,
+    save_user_message,
+    save_assistant_message,
+    get_or_create_context,
+    update_context,
+)
 from fastapi.middleware.cors import CORSMiddleware
 
 # Ensure tables are created
@@ -169,11 +177,14 @@ def process_support_message(
     data: SupportProcessRequest,
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     current_customer: Customer = Depends(get_current_customer),
+    db: Session = Depends(get_db),
 ):
     """Processes a customer message through the LangGraph AI workflow with idempotency support.
 
     Identity is derived strictly from the verified JWT token via `get_current_customer()`.
     Supports optional `Idempotency-Key` header for safe request retries.
+    
+    Stage 12: Persistent conversation context — maintains conversation history and active order context.
     """
     with traced_span(
         "supportflow.process_request",
@@ -182,10 +193,28 @@ def process_support_message(
             "has_idempotency_key": idempotency_key is not None,
         }
     ) as span:
+        # Load conversation state
+        conversation = get_or_create_conversation(current_customer.id, db)
+        context = get_or_create_context(conversation.id, db)
+        recent_messages = get_recent_messages(conversation.id, 10, db)
+        
+        # Add conversation metadata to trace
+        if span:
+            span.set_attribute("conversation.id", conversation.id)
+            span.set_attribute("conversation.message_count", len(recent_messages))
+            span.set_attribute("conversation.has_active_order", context.active_order_id is not None)
+            if context.active_order_id:
+                span.set_attribute("conversation.active_order_id", context.active_order_id)
+        
         def action():
             return run_supportflow(
                 customer_message=data.message,
                 authenticated_customer_id=current_customer.id,
+                conversation_id=conversation.id,
+                conversation_history=recent_messages,
+                active_order_id=context.active_order_id,
+                active_ticket_id=context.active_ticket_id,
+                last_action=context.last_action,
             )
 
         state, is_replayed = execute_with_idempotency(
@@ -194,10 +223,33 @@ def process_support_message(
             operation_type="SUPPORT_PROCESS",
             request_params={"message": data.message},
             action_fn=action,
+            db=db,
         )
 
         if span:
             span.set_attribute("idempotency_replayed", is_replayed)
+
+        # Save messages and update context ONLY on first execution (not on replay)
+        if not is_replayed:
+            # Save user message
+            save_user_message(conversation.id, data.message, db)
+            
+            # Save assistant response
+            final_response = state.get("final_response", "")
+            if final_response:
+                save_assistant_message(conversation.id, final_response, db)
+            
+            # Update conversation context if state changed
+            updated_order_id = state.get("active_order_id")
+            updated_last_action = state.get("last_action")
+            
+            if updated_order_id != context.active_order_id or updated_last_action != context.last_action:
+                update_context(
+                    conversation.id,
+                    active_order_id=updated_order_id,
+                    last_action=updated_last_action,
+                    db=db,
+                )
 
         return SupportProcessResponse(
             final_response=state.get("final_response", ""),

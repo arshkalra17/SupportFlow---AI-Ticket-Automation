@@ -40,7 +40,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Customer, Order, KnowledgeDocument
+from app.models import Customer, Order, KnowledgeDocument, Conversation, Message, ConversationContext
 from app.auth import hash_password, create_access_token
 from app.embeddings import generate_embedding
 
@@ -74,6 +74,9 @@ def db():
     session = TestSessionLocal()
 
     truncate_order = [
+        "messages",
+        "conversation_contexts",
+        "conversations",
         "idempotency_records",
         "approvals",
         "actions",
@@ -276,3 +279,38 @@ def real_redis():
     yield client
     # Clean up after
     client.delete(QUEUE_NAME)
+
+
+# ── Conversation fixtures (Stage 12) ──────────────────────────────────
+@pytest.fixture()
+def conversation(db, customer):
+    """Creates a conversation for customer."""
+    conv = Conversation(customer_id=customer.id)
+    db.add(conv)
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+
+@pytest.fixture()
+def conversation2(db, customer2):
+    """Creates a conversation for customer2."""
+    conv = Conversation(customer_id=customer2.id)
+    db.add(conv)
+    db.commit()
+    db.refresh(conv)
+    return conv
+
+
+@pytest.fixture()
+def conversation_with_context(db, conversation, orders):
+    """Creates a conversation with context: active_order_id=1001."""
+    ctx = ConversationContext(
+        conversation_id=conversation.id,
+        active_order_id=1001,
+        last_action="get_order_status",
+    )
+    db.add(ctx)
+    db.commit()
+    db.refresh(ctx)
+    return conversation, ctx

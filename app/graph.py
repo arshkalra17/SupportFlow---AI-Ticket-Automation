@@ -72,6 +72,15 @@ class SupportFlowState(TypedDict):
     customer_message: str
     authenticated_customer_id: int
     ticket_id: int | None
+    
+    # Conversation context (Stage 12)
+    conversation_id: int
+    conversation_history: list[dict]  # Recent messages: [{role, content, created_at}, ...]
+    active_order_id: int | None
+    active_ticket_id: int | None
+    last_action: str | None
+    
+    # Workflow state
     classification: dict | None
     retrieved_documents: list[dict] | None
     rag_answer: str | None
@@ -90,6 +99,8 @@ class SupportFlowState(TypedDict):
 def classify_node(state: SupportFlowState) -> dict:
     """Classifies the customer message into category/priority/sentiment.
 
+    Passes conversation context to classification for context-aware routing.
+    
     Reuses: classify_ticket() from app.llm
     """
     with traced_span("supportflow.graph.classify") as span:
@@ -98,7 +109,16 @@ def classify_node(state: SupportFlowState) -> dict:
 
         try:
             start = time.time()
-            classification = classify_ticket(state["customer_message"])
+            
+            # Pass conversation context to classifier
+            classification = classify_ticket(
+                message=state["customer_message"],
+                active_order_id=state.get("active_order_id"),
+                active_ticket_id=state.get("active_ticket_id"),
+                last_action=state.get("last_action"),
+                recent_messages=state.get("conversation_history"),
+            )
+            
             latency_ms = (time.time() - start) * 1000
 
             if span:
@@ -238,6 +258,21 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "Do not fabricate tool results."
         )
 
+        # Add conversation history context if available
+        conversation_history = state.get("conversation_history", [])
+        if conversation_history:
+            # Include recent history (most recent first, reverse for chronological)
+            history_lines = []
+            for msg in reversed(conversation_history[-10:]):  # Last 10 messages, chronological order
+                history_lines.append(f"{msg['role'].capitalize()}: {msg['content']}")
+            history_section = "\n\nRecent conversation:\n" + "\n".join(history_lines)
+            system_prompt += history_section
+
+        # Add active order context hint if available
+        active_order_id = state.get("active_order_id")
+        if active_order_id:
+            system_prompt += f"\n\nContext: The customer is currently discussing Order #{active_order_id}. If they refer to 'it', 'that order', or 'this order', they likely mean Order #{active_order_id}."
+
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": state["customer_message"]},
@@ -293,6 +328,8 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         # ── Process tool calls ────────────────────────────────────────
         approval_status = state.get("approval_status")
         final_response = None
+        updated_active_order_id = state.get("active_order_id")
+        updated_last_action = state.get("last_action")
 
         for tc in response_message.tool_calls:
             tool_name = tc.function.name
@@ -343,6 +380,14 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 final_response = " ".join(response_parts)
                 log.append(f"  → Generated deterministic PENDING_APPROVAL response")
 
+            # Update active_order_id if order-related tool succeeded
+            if execution["backend_executed"] and tool_name in ("get_order_status", "issue_refund", "create_replacement_request"):
+                if "order_id" in tool_args:
+                    updated_active_order_id = tool_args["order_id"]
+                    log.append(f"    → Updated active_order_id to {updated_active_order_id}")
+                updated_last_action = tool_name
+                log.append(f"    → Updated last_action to {updated_last_action}")
+
             tool_calls.append({
                 "iteration": iterations + 1,
                 "tool_name": tool_name,
@@ -360,6 +405,12 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "approval_status": approval_status,
             "execution_log": log,
         }
+
+        # Update active order and last action in state
+        if updated_active_order_id != state.get("active_order_id"):
+            result["active_order_id"] = updated_active_order_id
+        if updated_last_action != state.get("last_action"):
+            result["last_action"] = updated_last_action
 
         # If we generated a final response for PENDING_APPROVAL, include it
         if final_response:
@@ -489,20 +540,64 @@ def route_after_classify(state: SupportFlowState) -> str:
     Knowledge/policy questions → RAG retrieval
     Action-oriented categories → tool execution
     Errors → error node
+    
+    STAGE 12 FIX: Adds routing safeguard for implicit order references.
+    If active_order_id exists and message appears to be an order-specific
+    follow-up (even if misclassified as General Inquiry), route to tool execution.
     """
     if state.get("error"):
         return "error_node"
 
     classification = state.get("classification", {})
     category = (classification.get("category", "") or "").strip()
-
-    # Check if this is a knowledge/policy question
-    # Use case-insensitive comparison
     category_lower = category.lower()
+    
+    # ROUTING SAFEGUARD: Detect implicit order-specific follow-ups
+    # If we have active order context and the message looks like an order action,
+    # route to tool execution even if classifier said "General Inquiry"
+    active_order_id = state.get("active_order_id")
+    message_lower = state.get("customer_message", "").lower()
+    
+    # Order-specific action keywords that indicate tool execution is needed
+    ORDER_ACTION_KEYWORDS = [
+        "status", "cancel", "refund", "replace", "track", "ship",
+        "deliver", "return", "exchange", "modify", "update", "change"
+    ]
+    
+    # Policy question indicators that should NOT be overridden
+    POLICY_KEYWORDS = ["policy", "policies", "rule", "rules", "guideline", "guidelines"]
+    
+    # Debug logging
+    import sys
+    print(f"[DEBUG route_after_classify] active_order_id={active_order_id}, category={category}, message={state.get('customer_message')}", file=sys.stderr)
+    
+    if active_order_id and "general inquiry" in category_lower:
+        # Don't override if asking about policy/rules (even with order context)
+        is_policy_question = any(keyword in message_lower for keyword in POLICY_KEYWORDS)
+        
+        print(f"[DEBUG] is_policy_question={is_policy_question}", file=sys.stderr)
+        
+        if not is_policy_question:
+            # Check if message contains order-specific action words
+            has_order_action = any(keyword in message_lower for keyword in ORDER_ACTION_KEYWORDS)
+            
+            # Additional check: very short messages like "What's the status?" with active context
+            is_short_contextual = len(message_lower.split()) <= 5 and has_order_action
+            
+            print(f"[DEBUG] has_order_action={has_order_action}, is_short_contextual={is_short_contextual}", file=sys.stderr)
+            
+            if has_order_action or is_short_contextual:
+                # Override misclassification - this is likely an implicit order reference
+                print(f"[DEBUG] SAFEGUARD TRIGGERED: Routing to tool_execution_node", file=sys.stderr)
+                return "tool_execution_node"
+    
+    # Standard classification routing
     if any(kc.lower() in category_lower for kc in KNOWLEDGE_CATEGORIES):
+        print(f"[DEBUG] Routing to retrieve_knowledge_node (knowledge category)", file=sys.stderr)
         return "retrieve_knowledge_node"
 
     # Default: assume action-oriented → tool execution
+    print(f"[DEBUG] Routing to tool_execution_node (default)", file=sys.stderr)
     return "tool_execution_node"
 
 
@@ -635,6 +730,11 @@ def run_supportflow(
     customer_message: str,
     authenticated_customer_id: int,
     ticket_id: int | None = None,
+    conversation_id: int = 0,
+    conversation_history: list[dict] | None = None,
+    active_order_id: int | None = None,
+    active_ticket_id: int | None = None,
+    last_action: str | None = None,
 ) -> SupportFlowState:
     """Executes the SupportFlow LangGraph workflow.
 
@@ -646,6 +746,11 @@ def run_supportflow(
         customer_message:         The customer's natural-language message.
         authenticated_customer_id: Trusted customer identity.
         ticket_id:                Optional ticket ID for context.
+        conversation_id:          Conversation ID for context tracking.
+        conversation_history:     Recent messages for multi-turn understanding.
+        active_order_id:          Currently active order in conversation context.
+        active_ticket_id:         Currently active ticket in conversation context.
+        last_action:              Last action performed in conversation.
 
     Returns:
         SupportFlowState: Final workflow state with all accumulated context.
@@ -654,6 +759,11 @@ def run_supportflow(
         "customer_message": customer_message,
         "authenticated_customer_id": authenticated_customer_id,
         "ticket_id": ticket_id,
+        "conversation_id": conversation_id,
+        "conversation_history": conversation_history or [],
+        "active_order_id": active_order_id,
+        "active_ticket_id": active_ticket_id,
+        "last_action": last_action,
         "classification": None,
         "retrieved_documents": None,
         "rag_answer": None,

@@ -22,11 +22,21 @@ from app.observability import traced_span, record_llm_call, sanitize_tool_args, 
 load_dotenv()
 
 
-def classify_ticket(message: str) -> dict:
+def classify_ticket(
+    message: str,
+    active_order_id: int | None = None,
+    active_ticket_id: int | None = None,
+    last_action: str | None = None,
+    recent_messages: list[dict] | None = None,
+) -> dict:
     """Classifies a customer support ticket into category, priority, and sentiment using Groq.
 
     Args:
         message (str): The customer support ticket message text.
+        active_order_id (int | None): Currently active order ID from conversation context.
+        active_ticket_id (int | None): Currently active ticket ID from conversation context.
+        last_action (str | None): Last action performed (e.g., "get_order_status").
+        recent_messages (list[dict] | None): Recent conversation history (limited to last 3 messages).
 
     Returns:
         dict: Dictionary with keys 'category', 'priority', and 'sentiment'.
@@ -44,6 +54,31 @@ def classify_ticket(message: str) -> dict:
         client = Groq(api_key=api_key)
 
         system_prompt = _CLASSIFICATION_SYSTEM_PROMPT
+
+        # Enrich system prompt with conversation context
+        context_parts = []
+        if recent_messages:
+            # Limit to last 3 messages for classification context
+            limited_history = recent_messages[-3:]
+            history_lines = []
+            for msg in limited_history:
+                history_lines.append(f"{msg['role'].capitalize()}: {msg['content']}")
+            if history_lines:
+                context_parts.append("Recent conversation:\n" + "\n".join(history_lines))
+        
+        if active_order_id:
+            context_parts.append(f"Active order context: The customer is currently discussing Order #{active_order_id}.")
+        
+        if active_ticket_id:
+            context_parts.append(f"Active ticket context: Ticket #{active_ticket_id}.")
+        
+        if last_action:
+            context_parts.append(f"Last action: {last_action}")
+        
+        if context_parts:
+            context_block = "\n\n" + "\n".join(context_parts)
+            context_block += "\n\nIMPORTANT: If the current message is an implicit follow-up related to the active order (e.g., 'What's the status?', 'Can I cancel it?'), classify it as 'Order Issue', not 'General Inquiry'."
+            system_prompt += context_block
 
         start = time.time()
         try:
@@ -68,6 +103,10 @@ def classify_ticket(message: str) -> dict:
                 prompt_version=_CLASSIFICATION_PROMPT_VERSION,
                 latency_ms=latency_ms,
             )
+            if active_order_id:
+                safe_set_attribute(span, "classification.active_order_id", active_order_id)
+            if last_action:
+                safe_set_attribute(span, "classification.last_action", last_action)
 
         content = response.choices[0].message.content
         if not content:
