@@ -81,7 +81,21 @@ flowchart TD
 ```
 
 ## A simpler one for understanding
-![ez-arch](docs/Etools, which are validated and authorized before execution.
+![ez-arch](docs/images/mermaid.png)
+
+### Simple View
+
+Customer requests enter through the React frontend and FastAPI backend.
+
+- **RAG — Knowledge Questions**
+  - *“How long does express shipping take?”*
+  - *“What is your return policy?”*
+  - LangGraph retrieves relevant information from the knowledge base.
+
+- **Backend Tools — Data & Actions**
+  - *“Where is my order #1008?”*
+  - *“Create a replacement request for my damaged order.”*
+  - LangGraph can request backend tools, which are validated and authorized before execution.
 
 - **Human Approval — High-Risk Actions**
   - *“Refund my $1500 order.”*
