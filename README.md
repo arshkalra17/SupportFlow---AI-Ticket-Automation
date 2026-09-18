@@ -2,7 +2,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**230 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
+**328 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
 
 SupportFlow is not a chatbot wrapper. It's a production-style backend system where an LLM classifies customer support requests, retrieves company knowledge via RAG, and requests actions through native tool-calling — but every single action passes through backend-owned validation, authorization, business-rule enforcement, and (for high-risk actions) human approval before anything actually happens.
 
@@ -54,7 +54,7 @@ flowchart TD
     subgraph Graph[LangGraph Orchestration]
         Classify[classify_node<br/>Groq LLM] --> Route{Needs RAG<br/>or tools?}
         Route -->|Company knowledge| RAG[retrieve_knowledge_node<br/>pgvector similarity search]
-        Route -->|Action needed| Tools[tool_execution_node<br/>get_order_status / create_replacement_request / issue_refund<br/>+ conversation history context]
+        Route -->|Action needed| Tools[tool_execution_node<br/>get_order_status / get_order_details / list_customer_orders<br/>check_cancellation_eligibility / cancel_order / get_delivery_estimate<br/>create_replacement_request / issue_refund / get_ticket_status / get_customer_tickets<br/>+ conversation history context]
         RAG --> Respond
         Tools --> Validate[Pydantic arg validation]
         Validate --> Authz[Ownership authorization<br/>customer_id == resource owner?]
@@ -131,7 +131,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **230 passed** |
+| Deterministic tests | **328 passed** |
 | RAG Hit@1 | **100%** |
 | RAG Hit@3 | **100%** |
 | OOD rejection | **100%** |
@@ -241,7 +241,7 @@ The LLM is never asked to decide eligibility. That's a business rule the backend
 
 A genuine concurrency bug was found and fixed during this work: a thread that lost the unique-constraint race could read another thread's still-`PENDING` record and re-trigger execution. The fix moved conflict detection to `IntegrityError` handling on the insert itself, rather than a check-then-insert pattern that had a race window.
 
-**Failure recovery.** Tickets move through explicit states (`PENDING → PROCESSING → COMPLETED`, or `RETRYABLE_FAILED` → requeued, up to `MAX_RETRIES = 3`, or `FAILED` permanently). Transient failures (rate limits, timeouts) are retried; permanent failures are not silently retried forever.
+**Failure recovery.** Tickets move through explicit states (`PENDING → PROCESSED` on success, or `CLASSIFICATION_FAILED` after exhausted retries, or `QUEUE_FAILED` if Redis enqueue fails). Transient failures (rate limits, timeouts) are retried; permanent failures are not silently retried forever.
 
 ---
 
@@ -328,7 +328,7 @@ supportflow/
 │   ├── database.py            # Engine, session, Base
 │   ├── llm.py                 # Groq classification + tool-calling client
 │   ├── graph.py               # LangGraph orchestration (run_supportflow)
-│   ├── tools.py               # get_order_status, create_replacement_request, issue_refund + authorization
+│   ├── tools.py               # get_order_status / get_order_details / list_customer_orders / check_cancellation_eligibility / cancel_order / get_delivery_estimate / create_replacement_request / issue_refund / get_ticket_status / get_customer_tickets + authorization
 │   ├── rag.py                 # pgvector embedding + retrieval
 │   ├── approval.py            # Human-in-the-loop approval workflow
 │   ├── idempotency.py         # Idempotency key handling
@@ -342,7 +342,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (230 passing, deterministic by default)
+├── tests/                     # pytest suite (328 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -398,7 +398,7 @@ Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 ## Testing
 
 ```bash
-pytest              # 230 deterministic tests — no Groq API key required
+pytest              # 328 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark
@@ -426,6 +426,6 @@ CI runs the deterministic suite against real PostgreSQL/pgvector and Redis servi
 
 **Stage 11 scope note:** multi-stage Dockerfile, 5-service Compose stack (postgres, redis, migrate, api, worker) with health checks, non-root container execution, graceful shutdown handling (API and worker), Alembic migration infrastructure (currently deferred in favor of `Base.metadata.create_all` until fully validated), and CI-verified image builds with security scanning. **Not yet configured for internet-facing production:** no TLS/reverse proxy, rate limiting, or container resource limits. Full deployment details in `DEPLOYMENT.md`.
 
-**Stage 12 scope note:** Persistent conversation state for multi-turn support requests. Each customer has one conversation (`UNIQUE(customer_id)`) with persisted message history (user/assistant messages) and structured conversation context (`active_order_id`, `active_ticket_id`, `last_action`) stored in PostgreSQL. The LLM receives recent conversation history (last 10 messages) and active context for understanding implicit references. Example: "Actually, check order 1011." followed by "What's the status?" — the second request resolves to `get_order_status(1011)` using backend-owned context. Context-aware classification: when `active_order_id` exists and the message contains order action keywords (status, cancel, refund, etc.), a narrow routing safeguard can override a "General Inquiry" misclassification to route to tool execution. Genuine policy questions ("What is your return policy?") still route to RAG even with active order context. Context updates are driven by validated, authorized backend tool execution only — the LLM proposes, the backend decides and persists. Full idempotency integration: replay does not duplicate messages or mutate context twice. 230 deterministic tests passing.
+**Stage 12 scope note:** Persistent conversation state for multi-turn support requests. Each customer has one conversation (`UNIQUE(customer_id)`) with persisted message history (user/assistant messages) and structured conversation context (`active_order_id`, `active_ticket_id`, `last_action`) stored in PostgreSQL. The LLM receives recent conversation history (last 10 messages) and active context for understanding implicit references. Example: "Actually, check order 1011." followed by "What's the status?" — the second request resolves to `get_order_status(1011)` using backend-owned context. Context-aware classification: when `active_order_id` exists and the message contains order action keywords (status, cancel, refund, etc.), a narrow routing safeguard can override a "General Inquiry" misclassification to route to tool execution. Genuine policy questions ("What is your return policy?") still route to RAG even with active order context. Context updates are driven by validated, authorized backend tool execution only — the LLM proposes, the backend decides and persists. Full idempotency integration: replay does not duplicate messages or mutate context twice. 328 deterministic tests passing.
 
 ---

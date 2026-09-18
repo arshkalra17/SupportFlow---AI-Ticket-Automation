@@ -145,20 +145,59 @@ def orders(db, customer, customer2):
     """
     Seeds a small set of orders covering different states and owners:
 
-        1001  customer   SHIPPED
-        1002  customer   DELIVERED
-        1003  customer   PROCESSING
-        1004  customer2  DELIVERED   ← owned by customer2, not customer
-        1005  customer   CANCELLED
-        1006  customer   DELIVERED   ← used for refund tests
+        1001  customer   SHIPPED      $150.00  [Widget A]
+        1002  customer   DELIVERED    $250.00  [Widget B, Widget C]
+        1003  customer   PROCESSING   $75.00   [Gadget X]
+        1004  customer2  DELIVERED    $300.00  [Device Y]  ← owned by customer2, not customer
+        1005  customer   CANCELLED    $100.00  [Tool Z]
+        1006  customer   DELIVERED    $1200.00 [Premium Item] ← used for refund tests
     """
     rows = [
-        Order(id=1001, customer_id=customer.id, status="SHIPPED"),
-        Order(id=1002, customer_id=customer.id, status="DELIVERED"),
-        Order(id=1003, customer_id=customer.id, status="PROCESSING"),
-        Order(id=1004, customer_id=customer2.id, status="DELIVERED"),
-        Order(id=1005, customer_id=customer.id, status="CANCELLED"),
-        Order(id=1006, customer_id=customer.id, status="DELIVERED"),
+        Order(
+            id=1001, 
+            customer_id=customer.id, 
+            status="SHIPPED",
+            total=150.00,
+            items=[{"sku": "WIDGET-A", "quantity": 1, "price": 150.00}]
+        ),
+        Order(
+            id=1002, 
+            customer_id=customer.id, 
+            status="DELIVERED",
+            total=250.00,
+            items=[
+                {"sku": "WIDGET-B", "quantity": 1, "price": 100.00},
+                {"sku": "WIDGET-C", "quantity": 1, "price": 150.00}
+            ]
+        ),
+        Order(
+            id=1003, 
+            customer_id=customer.id, 
+            status="PROCESSING",
+            total=75.00,
+            items=[{"sku": "GADGET-X", "quantity": 1, "price": 75.00}]
+        ),
+        Order(
+            id=1004, 
+            customer_id=customer2.id, 
+            status="DELIVERED",
+            total=300.00,
+            items=[{"sku": "DEVICE-Y", "quantity": 2, "price": 150.00}]
+        ),
+        Order(
+            id=1005, 
+            customer_id=customer.id, 
+            status="CANCELLED",
+            total=100.00,
+            items=[{"sku": "TOOL-Z", "quantity": 1, "price": 100.00}]
+        ),
+        Order(
+            id=1006, 
+            customer_id=customer.id, 
+            status="DELIVERED",
+            total=1200.00,
+            items=[{"sku": "PREMIUM-ITEM", "quantity": 1, "price": 1200.00}]
+        ),
     ]
     db.add_all(rows)
     db.commit()
@@ -314,3 +353,44 @@ def conversation_with_context(db, conversation, orders):
     db.commit()
     db.refresh(ctx)
     return conversation, ctx
+
+
+# ── Ticket fixtures with customer ownership ───────────────────────────
+
+@pytest.fixture()
+def tickets(db, customer, customer2):
+    """
+    Seeds tickets with customer ownership for isolation tests:
+        ticket owned by customer  → status PENDING, category Order Issue
+        ticket owned by customer  → status RESOLVED, category Billing
+        ticket owned by customer2 → status PENDING, category Technical Support
+    """
+    from app.models import Ticket
+    rows = [
+        Ticket(
+            customer_id=customer.id,
+            customer_message="My order arrived damaged",
+            status="PENDING",
+            category="Order Issue",
+            priority="HIGH",
+        ),
+        Ticket(
+            customer_id=customer.id,
+            customer_message="I was charged twice",
+            status="RESOLVED",
+            category="Billing",
+            priority="URGENT",
+        ),
+        Ticket(
+            customer_id=customer2.id,
+            customer_message="Cannot log in",
+            status="PENDING",
+            category="Technical Support",
+            priority="HIGH",
+        ),
+    ]
+    db.add_all(rows)
+    db.commit()
+    for t in rows:
+        db.refresh(t)
+    return rows

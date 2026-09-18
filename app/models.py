@@ -10,6 +10,7 @@ class Ticket(Base):
     __tablename__ = "tickets"
 
     id = Column(Integer, primary_key=True, index=True)
+    customer_id = Column(Integer, nullable=True, index=True)  # nullable for legacy tickets
     customer_message = Column(Text, nullable=False)
     status = Column(String, default="PENDING")
     category = Column(String, nullable=True)
@@ -23,6 +24,8 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     customer_id = Column(Integer, nullable=False)
     status = Column(String, nullable=False, default="PROCESSING")
+    total = Column(Float, nullable=True)  # Order total in USD
+    items = Column(JSON, nullable=True)  # Order line items as JSON
     created_at = Column(DateTime, default=datetime.utcnow)
 
 

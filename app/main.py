@@ -292,8 +292,32 @@ def get_order(
 # ── Ticket Endpoints ───────────────────────────────────────────────────
 
 @app.post("/tickets", response_model=TicketResponse, status_code=status.HTTP_201_CREATED)
-def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
+def create_ticket(
+    ticket_data: TicketCreate,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Creates a support ticket and enqueues it for background processing.
+
+    Accepts an optional Authorization header. When provided and valid, the
+    ticket is associated with the authenticated customer. When absent the
+    ticket is created without a customer_id (legacy/unauthenticated path).
+    """
+    # Resolve customer identity from optional JWT
+    customer_id: int | None = None
+    if authorization and authorization.startswith("Bearer "):
+        from app.auth import decode_access_token
+        token = authorization.removeprefix("Bearer ").strip()
+        try:
+            payload = decode_access_token(token)
+            sub = payload.get("sub")
+            if sub:
+                customer_id = int(sub)
+        except Exception:
+            pass  # treat as unauthenticated — do not reject
+
     ticket = Ticket(
+        customer_id=customer_id,
         customer_message=ticket_data.message,
         status="PENDING"
     )
@@ -316,13 +340,54 @@ def create_ticket(ticket_data: TicketCreate, db: Session = Depends(get_db)):
 
 
 @app.get("/tickets/{ticket_id}", response_model=TicketDetail)
-def get_ticket(ticket_id: int, db: Session = Depends(get_db)):
+def get_ticket(
+    ticket_id: int,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(None),
+):
+    """Returns ticket details.
+
+    When an Authorization header is present and valid, enforces that the ticket
+    belongs to the authenticated customer. Without auth, only returns tickets
+    that have no customer_id (legacy/unauthenticated tickets).
+    """
+    from app.auth import decode_access_token
+
     ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not ticket:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Ticket with id {ticket_id} not found"
+            detail=f"Ticket #{ticket_id} not found",
         )
+
+    # Resolve caller identity from optional JWT
+    caller_customer_id: int | None = None
+    if authorization and authorization.startswith("Bearer "):
+        from app.auth import decode_access_token
+        token = authorization.removeprefix("Bearer ").strip()
+        try:
+            payload = decode_access_token(token)
+            sub = payload.get("sub")
+            if sub:
+                caller_customer_id = int(sub)
+        except Exception:
+            pass
+
+    if caller_customer_id is not None:
+        # Authenticated request — enforce ownership
+        if ticket.customer_id != caller_customer_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have permission to access this ticket",
+            )
+    else:
+        # Unauthenticated request — only allow tickets without an owner
+        if ticket.customer_id is not None:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Authentication required to access this ticket",
+            )
+
     return ticket
 
 

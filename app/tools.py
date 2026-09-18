@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal, Base, engine
-from app.models import Order, ReplacementRequest, Action, Approval
+from app.models import Order, ReplacementRequest, Action, Approval, Ticket
 from app.approval import create_approval_request
 from app.observability import traced_span, safe_set_attribute
 
@@ -467,3 +467,758 @@ def issue_refund(
             if close_db:
                 db.close()
 
+
+
+# ══════════════════════════════════════════════════════════════════════
+# NEW TOOLS: Stage 12+ Backend Tool Expansion
+# ══════════════════════════════════════════════════════════════════════
+
+# ── Tool 1: get_order_details ────────────────────────────────────────
+
+class GetOrderDetailsArgs(BaseModel):
+    order_id: int = Field(gt=0, description="Unique positive integer ID of the order")
+
+
+def validate_get_order_details_args(args: dict) -> tuple[bool, GetOrderDetailsArgs | None, str | None]:
+    """Validates raw arguments dictionary against GetOrderDetailsArgs schema.
+
+    Args:
+        args (dict): Raw dictionary extracted from LLM tool call arguments.
+
+    Returns:
+        tuple[bool, GetOrderDetailsArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "order_id" in args and isinstance(args["order_id"], bool):
+        return False, None, "Validation Error: order_id cannot be a boolean value"
+
+    try:
+        validated_args = GetOrderDetailsArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["order_id"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def get_order_details(
+    order_id: int,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Retrieves detailed order information after verifying ownership.
+
+    Args:
+        order_id (int): ID of the order to retrieve.
+        authenticated_customer_id (int): ID of the authenticated customer.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: Order details on success, or a structured error.
+    """
+    with traced_span("tool.get_order_details") as span:
+        safe_set_attribute(span, "tool.name", "get_order_details")
+        safe_set_attribute(span, "tool.order_id", order_id)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
+
+            safe_set_attribute(span, "tool.order_found", True)
+
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Order #{order_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+
+            return {
+                "order_id": order.id,
+                "customer_id": order.customer_id,
+                "status": order.status,
+                "total": order.total,
+                "items": order.items,
+                "created_at": order.created_at.isoformat() if order.created_at else None,
+            }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 2: list_customer_orders ─────────────────────────────────────
+
+# Valid order status values (single source of truth)
+VALID_ORDER_STATUSES = {"SHIPPED", "DELIVERED", "PROCESSING", "CANCELLED"}
+
+
+class ListCustomerOrdersArgs(BaseModel):
+    status_filter: str | None = Field(
+        None,
+        description="Optional status filter: SHIPPED, DELIVERED, PROCESSING, or CANCELLED"
+    )
+    limit: int = Field(10, ge=1, le=100, description="Maximum number of orders to return (1-100)")
+
+
+def validate_list_customer_orders_args(args: dict) -> tuple[bool, ListCustomerOrdersArgs | None, str | None]:
+    """Validates raw arguments for list_customer_orders.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, ListCustomerOrdersArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    # Validate status_filter against known values before Pydantic
+    if "status_filter" in args and args["status_filter"] is not None:
+        sf = str(args["status_filter"]).upper()
+        if sf not in VALID_ORDER_STATUSES:
+            return False, None, (
+                f"Validation Error: status_filter must be one of "
+                f"{sorted(VALID_ORDER_STATUSES)}, got '{args['status_filter']}'"
+            )
+        # Normalize to uppercase so downstream query is clean
+        args = {**args, "status_filter": sf}
+
+    try:
+        validated_args = ListCustomerOrdersArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["unknown"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def list_customer_orders(
+    authenticated_customer_id: int,
+    status_filter: str | None = None,
+    limit: int = 10,
+    db: Session | None = None
+) -> dict:
+    """Lists orders for the authenticated customer with optional status filter.
+
+    Args:
+        authenticated_customer_id (int): ID of the authenticated customer.
+        status_filter (str | None): Optional status to filter by.
+        limit (int): Maximum number of orders to return.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: List of orders or empty list.
+    """
+    with traced_span("tool.list_customer_orders") as span:
+        safe_set_attribute(span, "tool.name", "list_customer_orders")
+        safe_set_attribute(span, "tool.customer_id", authenticated_customer_id)
+        if status_filter:
+            safe_set_attribute(span, "tool.status_filter", status_filter)
+        safe_set_attribute(span, "tool.limit", limit)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            query = db.query(Order).filter(Order.customer_id == authenticated_customer_id)
+            
+            if status_filter:
+                query = query.filter(Order.status == status_filter.upper())
+            
+            orders = query.order_by(Order.created_at.desc()).limit(limit).all()
+
+            safe_set_attribute(span, "tool.orders_found", len(orders))
+
+            return {
+                "orders": [
+                    {
+                        "order_id": order.id,
+                        "status": order.status,
+                        "total": order.total,
+                        "created_at": order.created_at.isoformat() if order.created_at else None,
+                    }
+                    for order in orders
+                ],
+                "count": len(orders),
+            }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 3: check_cancellation_eligibility ───────────────────────────
+
+CANCELLATION_ELIGIBLE_STATUSES = {"PROCESSING", "SHIPPED"}
+
+
+class CheckCancellationEligibilityArgs(BaseModel):
+    order_id: int = Field(gt=0, description="Unique positive integer ID of the order")
+
+
+def validate_check_cancellation_eligibility_args(args: dict) -> tuple[bool, CheckCancellationEligibilityArgs | None, str | None]:
+    """Validates raw arguments for check_cancellation_eligibility.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, CheckCancellationEligibilityArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "order_id" in args and isinstance(args["order_id"], bool):
+        return False, None, "Validation Error: order_id cannot be a boolean value"
+
+    try:
+        validated_args = CheckCancellationEligibilityArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["order_id"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def check_cancellation_eligibility(
+    order_id: int,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Checks if an order can be cancelled without actually cancelling it.
+
+    Args:
+        order_id (int): ID of the order to check.
+        authenticated_customer_id (int): ID of the authenticated customer.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: Eligibility status with explanation.
+    """
+    with traced_span("tool.check_cancellation_eligibility") as span:
+        safe_set_attribute(span, "tool.name", "check_cancellation_eligibility")
+        safe_set_attribute(span, "tool.order_id", order_id)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
+
+            safe_set_attribute(span, "tool.order_found", True)
+
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Order #{order_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+
+            eligible = order.status in CANCELLATION_ELIGIBLE_STATUSES
+            safe_set_attribute(span, "tool.eligible", eligible)
+
+            if eligible:
+                return {
+                    "order_id": order.id,
+                    "eligible": True,
+                    "reason": f"Order is in {order.status} status and can be cancelled.",
+                }
+            else:
+                return {
+                    "order_id": order.id,
+                    "eligible": False,
+                    "reason": f"Order is in {order.status} status and cannot be cancelled.",
+                }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 4: get_delivery_estimate ────────────────────────────────────
+
+class GetDeliveryEstimateArgs(BaseModel):
+    order_id: int = Field(gt=0, description="Unique positive integer ID of the order")
+
+
+def validate_get_delivery_estimate_args(args: dict) -> tuple[bool, GetDeliveryEstimateArgs | None, str | None]:
+    """Validates raw arguments for get_delivery_estimate.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, GetDeliveryEstimateArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "order_id" in args and isinstance(args["order_id"], bool):
+        return False, None, "Validation Error: order_id cannot be a boolean value"
+
+    try:
+        validated_args = GetDeliveryEstimateArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["order_id"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def get_delivery_estimate(
+    order_id: int,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Returns delivery estimate information if available (fail-safe, no error if data unavailable).
+
+    Args:
+        order_id (int): ID of the order.
+        authenticated_customer_id (int): ID of the authenticated customer.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: Delivery information or placeholder message.
+    """
+    with traced_span("tool.get_delivery_estimate") as span:
+        safe_set_attribute(span, "tool.name", "get_delivery_estimate")
+        safe_set_attribute(span, "tool.order_id", order_id)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
+
+            safe_set_attribute(span, "tool.order_found", True)
+
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Order #{order_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+
+            # Fail-safe: return placeholder if no delivery data
+            # In production this would integrate with shipping provider API
+            if order.status == "DELIVERED":
+                return {
+                    "order_id": order.id,
+                    "status": "DELIVERED",
+                    "message": "Order has already been delivered.",
+                }
+            elif order.status in ("SHIPPED", "PROCESSING"):
+                return {
+                    "order_id": order.id,
+                    "status": order.status,
+                    "message": f"Order is {order.status}. Delivery estimate information is not available at this time.",
+                }
+            else:
+                return {
+                    "order_id": order.id,
+                    "status": order.status,
+                    "message": "Delivery estimate not available for this order status.",
+                }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 5: get_ticket_status ────────────────────────────────────────
+
+class GetTicketStatusArgs(BaseModel):
+    ticket_id: int = Field(gt=0, description="Unique positive integer ID of the ticket")
+
+
+def validate_get_ticket_status_args(args: dict) -> tuple[bool, GetTicketStatusArgs | None, str | None]:
+    """Validates raw arguments for get_ticket_status.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, GetTicketStatusArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "ticket_id" in args and isinstance(args["ticket_id"], bool):
+        return False, None, "Validation Error: ticket_id cannot be a boolean value"
+
+    try:
+        validated_args = GetTicketStatusArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["ticket_id"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def get_ticket_status(
+    ticket_id: int,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Retrieves ticket status after verifying customer ownership.
+
+    Ticket.customer_id must match the authenticated customer. Tickets
+    without a customer_id (legacy) are not accessible via this tool.
+
+    Args:
+        ticket_id (int): ID of the ticket.
+        authenticated_customer_id (int): ID of the authenticated customer.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: Ticket status or error.
+    """
+    with traced_span("tool.get_ticket_status") as span:
+        safe_set_attribute(span, "tool.name", "get_ticket_status")
+        safe_set_attribute(span, "tool.ticket_id", ticket_id)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
+            if not ticket:
+                safe_set_attribute(span, "tool.ticket_found", False)
+                return {"error": f"Ticket #{ticket_id} not found"}
+
+            safe_set_attribute(span, "tool.ticket_found", True)
+
+            # Authorization: verify customer owns this ticket
+            if ticket.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Ticket #{ticket_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.ticket_status", ticket.status)
+
+            return {
+                "ticket_id": ticket.id,
+                "status": ticket.status,
+                "category": ticket.category,
+                "priority": ticket.priority,
+                "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
+            }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 6: get_customer_tickets ─────────────────────────────────────
+
+class GetCustomerTicketsArgs(BaseModel):
+    limit: int = Field(10, ge=1, le=50, description="Maximum number of tickets to return (1-50)")
+
+
+def validate_get_customer_tickets_args(args: dict) -> tuple[bool, GetCustomerTicketsArgs | None, str | None]:
+    """Validates raw arguments for get_customer_tickets.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, GetCustomerTicketsArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    try:
+        validated_args = GetCustomerTicketsArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["limit"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def get_customer_tickets(
+    authenticated_customer_id: int,
+    limit: int = 10,
+    db: Session | None = None
+) -> dict:
+    """Lists tickets owned by the authenticated customer.
+
+    Only returns tickets where Ticket.customer_id matches the authenticated
+    customer. Tickets without a customer_id (legacy) are excluded.
+
+    Args:
+        authenticated_customer_id (int): ID of the authenticated customer.
+        limit (int): Maximum number of tickets to return.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: List of tickets owned by this customer.
+    """
+    with traced_span("tool.get_customer_tickets") as span:
+        safe_set_attribute(span, "tool.name", "get_customer_tickets")
+        safe_set_attribute(span, "tool.customer_id", authenticated_customer_id)
+        safe_set_attribute(span, "tool.limit", limit)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            tickets = (
+                db.query(Ticket)
+                .filter(Ticket.customer_id == authenticated_customer_id)
+                .order_by(Ticket.created_at.desc())
+                .limit(limit)
+                .all()
+            )
+
+            safe_set_attribute(span, "tool.tickets_found", len(tickets))
+
+            return {
+                "tickets": [
+                    {
+                        "ticket_id": ticket.id,
+                        "status": ticket.status,
+                        "category": ticket.category,
+                        "priority": ticket.priority,
+                        "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
+                    }
+                    for ticket in tickets
+                ],
+                "count": len(tickets),
+            }
+        finally:
+            if close_db:
+                db.close()
+
+
+# ── Tool 7: cancel_order (state-changing) ────────────────────────────
+
+
+class CancelOrderArgs(BaseModel):
+    order_id: int = Field(gt=0, description="Unique positive integer ID of the order to cancel")
+
+
+def validate_cancel_order_args(args: dict) -> tuple[bool, CancelOrderArgs | None, str | None]:
+    """Validates raw arguments for cancel_order.
+
+    Args:
+        args (dict): Raw arguments dictionary.
+
+    Returns:
+        tuple[bool, CancelOrderArgs | None, str | None]:
+            (is_valid, validated_model_instance, error_message_if_invalid)
+    """
+    if not isinstance(args, dict):
+        return False, None, f"Tool arguments must be a JSON object/dict, got {type(args).__name__}"
+
+    if "order_id" in args and isinstance(args["order_id"], bool):
+        return False, None, "Validation Error: order_id cannot be a boolean value"
+
+    try:
+        validated_args = CancelOrderArgs(**args)
+        return True, validated_args, None
+    except ValidationError as err:
+        errors = err.errors()
+        err_msg = errors[0].get("msg", str(err))
+        field = errors[0].get("loc", ["order_id"])[0]
+        return False, None, f"Validation Error: {err_msg} for field '{field}'"
+    except Exception as err:
+        return False, None, f"Validation Error: {err}"
+
+
+def cancel_order(
+    order_id: int,
+    authenticated_customer_id: int,
+    db: Session | None = None
+) -> dict:
+    """Cancels an eligible order by updating its status to CANCELLED in PostgreSQL.
+
+    Reuses CANCELLATION_ELIGIBLE_STATUSES business rule constant.
+
+    Order of checks:
+    1. Order must exist.
+    2. Authenticated customer must own the order.
+    3. Order status must be cancellation-eligible (PROCESSING or SHIPPED).
+    4. Idempotency: if already CANCELLED, return current state without error.
+    5. Update order status to CANCELLED and record the action.
+
+    Args:
+        order_id (int): ID of the order to cancel.
+        authenticated_customer_id (int): ID of the authenticated customer.
+        db (Session, optional): SQLAlchemy DB session.
+
+    Returns:
+        dict: Cancellation result with order_id, status, and action_id, or a structured error.
+    """
+    with traced_span("tool.cancel_order") as span:
+        safe_set_attribute(span, "tool.name", "cancel_order")
+        safe_set_attribute(span, "tool.order_id", order_id)
+
+        close_db = False
+        if db is None:
+            db = SessionLocal()
+            close_db = True
+
+        try:
+            # 1. Fetch the order
+            order = db.query(Order).filter(Order.id == order_id).first()
+            if not order:
+                safe_set_attribute(span, "tool.order_found", False)
+                return {"error": f"Order #{order_id} not found"}
+
+            safe_set_attribute(span, "tool.order_found", True)
+
+            # 2. Authorization: verify ownership
+            if order.customer_id != authenticated_customer_id:
+                safe_set_attribute(span, "tool.authorized", False)
+                return {
+                    "error": (
+                        f"Unauthorized: Customer #{authenticated_customer_id} does not "
+                        f"have permission to access Order #{order_id}"
+                    )
+                }
+
+            safe_set_attribute(span, "tool.authorized", True)
+            safe_set_attribute(span, "tool.order_status", order.status)
+
+            # 3. Idempotency: if already CANCELLED, return current state cleanly
+            if order.status == "CANCELLED":
+                safe_set_attribute(span, "tool.already_cancelled", True)
+                return {
+                    "status": "ALREADY_CANCELLED",
+                    "message": f"Order #{order_id} is already cancelled.",
+                    "order_id": order_id,
+                    "order_status": order.status,
+                }
+
+            # 4. Eligibility check — reuse shared constant
+            if order.status not in CANCELLATION_ELIGIBLE_STATUSES:
+                safe_set_attribute(span, "tool.eligible", False)
+                return {
+                    "error": (
+                        f"Order #{order_id} cannot be cancelled. "
+                        f"Current status is {order.status}. "
+                        f"Only orders in {sorted(CANCELLATION_ELIGIBLE_STATUSES)} status can be cancelled."
+                    )
+                }
+
+            safe_set_attribute(span, "tool.eligible", True)
+
+            # 5. Check for duplicate cancellation action
+            existing_action = (
+                db.query(Action)
+                .filter(
+                    Action.action_type == "CANCELLATION",
+                    Action.reference_id == order_id,
+                    Action.status == "COMPLETED",
+                )
+                .first()
+            )
+            if existing_action:
+                safe_set_attribute(span, "tool.duplicate_found", True)
+                return {
+                    "status": "ALREADY_CANCELLED",
+                    "message": f"Cancellation was already recorded for Order #{order_id}.",
+                    "order_id": order_id,
+                    "order_status": order.status,
+                    "action_id": existing_action.id,
+                }
+
+            safe_set_attribute(span, "tool.duplicate_found", False)
+
+            # 6. Execute cancellation — update order status in PostgreSQL
+            previous_status = order.status
+            order.status = "CANCELLED"
+
+            action = Action(
+                action_type="CANCELLATION",
+                reference_id=order_id,
+                customer_id=authenticated_customer_id,
+                amount=None,
+                status="COMPLETED",
+            )
+            db.add(action)
+            db.commit()
+            db.refresh(order)
+            db.refresh(action)
+
+            safe_set_attribute(span, "tool.action_id", action.id)
+            safe_set_attribute(span, "tool.previous_status", previous_status)
+            safe_set_attribute(span, "tool.new_status", order.status)
+
+            return {
+                "status": "COMPLETED",
+                "message": f"Order #{order_id} has been successfully cancelled.",
+                "order_id": order_id,
+                "previous_status": previous_status,
+                "order_status": order.status,
+                "action_id": action.id,
+            }
+        finally:
+            if close_db:
+                db.close()

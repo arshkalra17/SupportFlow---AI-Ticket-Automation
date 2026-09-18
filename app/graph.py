@@ -12,6 +12,7 @@ modules (tools.py, approval.py, kb.py, rag.py, llm.py).
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 from typing import TypedDict
@@ -30,6 +31,8 @@ from app.rag import answer_with_knowledge_base, RAG_SIMILARITY_THRESHOLD
 from app.observability import traced_span, safe_set_attribute
 
 load_dotenv()
+
+logger = logging.getLogger("supportflow.graph")
 
 # ── Configuration ─────────────────────────────────────────────────────
 MAX_TOOL_ITERATIONS = 5
@@ -239,23 +242,43 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         # Build messages from accumulated context
         system_prompt = (
             "You are a helpful customer support AI assistant for SupportFlow. "
-            "Answer customer questions politely and concisely. "
-            "If the customer asks about an order status and provides an order ID, "
-            "use the 'get_order_status' tool to look it up. "
-            "If the customer wants a replacement for a damaged or defective order, "
-            "first check the order status with 'get_order_status', then ALWAYS use "
-            "'create_replacement_request' to attempt the replacement. "
-            "If the customer requests a refund for an order, use the 'issue_refund' tool "
-            "with the order_id and requested amount. "
-            "If the 'issue_refund' tool returns status 'PENDING_APPROVAL', inform the "
-            "customer clearly that their refund request has been submitted for human "
-            "approval and has NOT been issued yet. Never claim a refund was completed "
-            "if approval is pending. "
-            "You must NOT decide whether an order is eligible or whether approval is required — "
-            "the backend will make that determination. Always call the tool and "
-            "relay the backend result to the customer. "
-            "Do not invent or guess order details. "
-            "Do not fabricate tool results."
+            "Answer customer questions politely and concisely.\n\n"
+
+            "## TOOL USAGE RULES\n\n"
+
+            "### READ-ONLY TOOLS — describe observed state only, never claim a change happened\n"
+            "- get_order_status: Report the order status exactly as returned.\n"
+            "- get_order_details: Report order details exactly as returned. "
+            "If total or items is null, say that information is not available.\n"
+            "- list_customer_orders: List the orders returned. Never add orders not in the result.\n"
+            "- check_cancellation_eligibility: This tool ONLY checks eligibility. "
+            "It does NOT cancel the order. If eligible=true, say the order CAN be cancelled "
+            "but that you have NOT cancelled it. NEVER say the cancellation was submitted or completed.\n"
+            "- get_delivery_estimate: Report exactly what the tool returns. "
+            "If the message says estimate is not available, say that clearly. "
+            "Never invent a delivery date.\n"
+            "- get_ticket_status: Report the ticket status exactly as returned.\n"
+            "- get_customer_tickets: List the tickets returned. Do not add tickets not in the result.\n\n"
+
+            "### STATE-CHANGING TOOLS — claim completion ONLY if the backend confirms it\n"
+            "- create_replacement_request: If status=PENDING in the result, confirm the request "
+            "was created. If there is an error, report it honestly.\n"
+            "- issue_refund:\n"
+            "  * If status=COMPLETED: say the refund was successfully issued.\n"
+            "  * If status=PENDING_APPROVAL: say the refund request has been submitted for human "
+            "approval and has NOT been issued yet. NEVER claim the refund was completed.\n"
+            "  * If error: report the error honestly.\n"
+            "- cancel_order:\n"
+            "  * If status=COMPLETED: confirm the order has been cancelled.\n"
+            "  * If status=ALREADY_CANCELLED: say the order was already cancelled.\n"
+            "  * If error: report the error. Do not claim cancellation happened.\n\n"
+
+            "## GENERAL RULES\n"
+            "- Do not invent or guess order details, ticket details, or status values.\n"
+            "- Do not fabricate tool results.\n"
+            "- Customer identity is handled by the backend — never ask for or accept a customer ID.\n"
+            "- If authorization fails, say the resource could not be accessed.\n"
+            "- Always use the appropriate tool for the customer's request before responding.\n"
         )
 
         # Add conversation history context if available
@@ -381,7 +404,11 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 log.append(f"  → Generated deterministic PENDING_APPROVAL response")
 
             # Update active_order_id if order-related tool succeeded
-            if execution["backend_executed"] and tool_name in ("get_order_status", "issue_refund", "create_replacement_request"):
+            if execution["backend_executed"] and tool_name in (
+                "get_order_status", "issue_refund", "create_replacement_request",
+                "get_order_details", "check_cancellation_eligibility",
+                "get_delivery_estimate", "cancel_order",
+            ):
                 if "order_id" in tool_args:
                     updated_active_order_id = tool_args["order_id"]
                     log.append(f"    → Updated active_order_id to {updated_active_order_id}")
@@ -540,10 +567,12 @@ def route_after_classify(state: SupportFlowState) -> str:
     Knowledge/policy questions → RAG retrieval
     Action-oriented categories → tool execution
     Errors → error node
-    
-    STAGE 12 FIX: Adds routing safeguard for implicit order references.
-    If active_order_id exists and message appears to be an order-specific
-    follow-up (even if misclassified as General Inquiry), route to tool execution.
+
+    STAGE 12 FIX: Routing safeguard for implicit order references when
+    active_order_id is set and message contains order action keywords.
+
+    TOOLS EXPANSION FIX: Routing safeguard for order-list requests
+    (e.g., "Show me my orders") independent of active order context.
     """
     if state.get("error"):
         return "error_node"
@@ -551,53 +580,87 @@ def route_after_classify(state: SupportFlowState) -> str:
     classification = state.get("classification", {})
     category = (classification.get("category", "") or "").strip()
     category_lower = category.lower()
-    
-    # ROUTING SAFEGUARD: Detect implicit order-specific follow-ups
-    # If we have active order context and the message looks like an order action,
-    # route to tool execution even if classifier said "General Inquiry"
-    active_order_id = state.get("active_order_id")
+
     message_lower = state.get("customer_message", "").lower()
-    
-    # Order-specific action keywords that indicate tool execution is needed
-    ORDER_ACTION_KEYWORDS = [
-        "status", "cancel", "refund", "replace", "track", "ship",
-        "deliver", "return", "exchange", "modify", "update", "change"
-    ]
-    
-    # Policy question indicators that should NOT be overridden
-    POLICY_KEYWORDS = ["policy", "policies", "rule", "rules", "guideline", "guidelines"]
-    
-    # Debug logging
-    import sys
-    print(f"[DEBUG route_after_classify] active_order_id={active_order_id}, category={category}, message={state.get('customer_message')}", file=sys.stderr)
-    
-    if active_order_id and "general inquiry" in category_lower:
-        # Don't override if asking about policy/rules (even with order context)
+    active_order_id = state.get("active_order_id")
+
+    logger.debug(
+        "route_after_classify: active_order_id=%s category=%r message=%r",
+        active_order_id, category, state.get("customer_message"),
+    )
+
+    # ROUTING SAFEGUARD 1: Customer resource-list requests (orders and tickets)
+    # Catches "Show me my orders", "List my tickets", etc. when classified as
+    # General Inquiry instead of an action category.
+    if "general inquiry" in category_lower:
+        CUSTOMER_LIST_PATTERNS = [
+            # Order list patterns
+            "show me my order",
+            "show my order",
+            "list my order",
+            "see my order",
+            "view my order",
+            "what orders do i have",
+            "what orders have i",
+            "do i have any order",
+            "can i see my order",
+            "display my order",
+            "get my order",
+            "my recent order",
+            "my past order",
+            # Ticket list patterns
+            "show me my ticket",
+            "show my ticket",
+            "list my ticket",
+            "see my ticket",
+            "view my ticket",
+            "what tickets do i have",
+            "do i have any ticket",
+            "can i see my ticket",
+            "my support ticket",
+            "my open ticket",
+            "my recent ticket",
+        ]
+        POLICY_KEYWORDS = ["policy", "policies", "rule", "rules", "guideline", "guidelines", "how long", "how does"]
+
         is_policy_question = any(keyword in message_lower for keyword in POLICY_KEYWORDS)
-        
-        print(f"[DEBUG] is_policy_question={is_policy_question}", file=sys.stderr)
-        
+
         if not is_policy_question:
-            # Check if message contains order-specific action words
-            has_order_action = any(keyword in message_lower for keyword in ORDER_ACTION_KEYWORDS)
-            
-            # Additional check: very short messages like "What's the status?" with active context
-            is_short_contextual = len(message_lower.split()) <= 5 and has_order_action
-            
-            print(f"[DEBUG] has_order_action={has_order_action}, is_short_contextual={is_short_contextual}", file=sys.stderr)
-            
-            if has_order_action or is_short_contextual:
-                # Override misclassification - this is likely an implicit order reference
-                print(f"[DEBUG] SAFEGUARD TRIGGERED: Routing to tool_execution_node", file=sys.stderr)
+            is_list_request = any(pattern in message_lower for pattern in CUSTOMER_LIST_PATTERNS)
+            logger.debug("route_after_classify: is_list_request=%s", is_list_request)
+            if is_list_request:
+                logger.debug("route_after_classify: CUSTOMER-LIST SAFEGUARD → tool_execution_node")
                 return "tool_execution_node"
-    
+
+    # ROUTING SAFEGUARD 2: Implicit order-specific follow-ups (Stage 12)
+    if active_order_id and "general inquiry" in category_lower:
+        ORDER_ACTION_KEYWORDS = [
+            "status", "cancel", "refund", "replace", "track", "ship",
+            "deliver", "return", "exchange", "modify", "update", "change",
+            "details", "items", "total", "arrive",
+        ]
+        POLICY_KEYWORDS = ["policy", "policies", "rule", "rules", "guideline", "guidelines"]
+
+        is_policy_question = any(keyword in message_lower for keyword in POLICY_KEYWORDS)
+        logger.debug("route_after_classify: Stage12 is_policy_question=%s", is_policy_question)
+
+        if not is_policy_question:
+            has_order_action = any(keyword in message_lower for keyword in ORDER_ACTION_KEYWORDS)
+            is_short_contextual = len(message_lower.split()) <= 6 and has_order_action
+            logger.debug(
+                "route_after_classify: has_order_action=%s is_short_contextual=%s",
+                has_order_action, is_short_contextual,
+            )
+            if has_order_action or is_short_contextual:
+                logger.debug("route_after_classify: STAGE12 SAFEGUARD → tool_execution_node")
+                return "tool_execution_node"
+
     # Standard classification routing
     if any(kc.lower() in category_lower for kc in KNOWLEDGE_CATEGORIES):
-        print(f"[DEBUG] Routing to retrieve_knowledge_node (knowledge category)", file=sys.stderr)
+        logger.debug("route_after_classify: → retrieve_knowledge_node")
         return "retrieve_knowledge_node"
 
-    # Default: assume action-oriented → tool execution
-    print(f"[DEBUG] Routing to tool_execution_node (default)", file=sys.stderr)
+    logger.debug("route_after_classify: → tool_execution_node (default)")
     return "tool_execution_node"
 
 

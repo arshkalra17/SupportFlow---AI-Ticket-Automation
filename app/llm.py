@@ -14,6 +14,21 @@ from app.tools import (
     create_replacement_request,
     validate_issue_refund_args,
     issue_refund,
+    # New tools
+    validate_get_order_details_args,
+    get_order_details,
+    validate_list_customer_orders_args,
+    list_customer_orders,
+    validate_check_cancellation_eligibility_args,
+    check_cancellation_eligibility,
+    validate_get_delivery_estimate_args,
+    get_delivery_estimate,
+    validate_get_ticket_status_args,
+    get_ticket_status,
+    validate_get_customer_tickets_args,
+    get_customer_tickets,
+    validate_cancel_order_args,
+    cancel_order,
 )
 # pyrefly: ignore [missing-import]
 from evaluation.config import _CLASSIFICATION_SYSTEM_PROMPT, _CLASSIFICATION_PROMPT_VERSION
@@ -196,10 +211,168 @@ ISSUE_REFUND_TOOL_SCHEMA = {
     }
 }
 
+GET_ORDER_DETAILS_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "get_order_details",
+        "description": "Retrieves detailed information about an order including total amount and line items.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the order to query."
+                }
+            },
+            "required": ["order_id"]
+        }
+    }
+}
+
+LIST_CUSTOMER_ORDERS_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "list_customer_orders",
+        "description": (
+            "Lists/shows all orders belonging to the authenticated customer. "
+            "Use this tool when the customer wants to VIEW, LIST, or SEE their own orders. "
+            "The backend automatically filters to show only the authenticated customer's orders. "
+            "Examples: 'Show me my orders', 'List my orders', 'What orders do I have?', "
+            "'Can I see my orders?', 'Show my recent orders'. "
+            "This is a read-only operation that returns order summaries (order_id, status, total, created_at)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "status_filter": {
+                    "type": "string",
+                    "description": "Optional status filter (e.g., 'SHIPPED', 'DELIVERED', 'PROCESSING', 'CANCELLED')"
+                },
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of orders to return (1-100, default 10)"
+                }
+            },
+            "required": []
+        }
+    }
+}
+
+CHECK_CANCELLATION_ELIGIBILITY_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "check_cancellation_eligibility",
+        "description": (
+            "Checks if an order can be cancelled without actually cancelling it. "
+            "Returns eligibility status with explanation."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the order to check."
+                }
+            },
+            "required": ["order_id"]
+        }
+    }
+}
+
+GET_DELIVERY_ESTIMATE_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "get_delivery_estimate",
+        "description": (
+            "Returns delivery estimate information for an order if available. "
+            "Fail-safe: returns placeholder message if data is unavailable."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the order."
+                }
+            },
+            "required": ["order_id"]
+        }
+    }
+}
+
+GET_TICKET_STATUS_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "get_ticket_status",
+        "description": "Retrieves the status of a support ticket by its ID.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "ticket_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the ticket."
+                }
+            },
+            "required": ["ticket_id"]
+        }
+    }
+}
+
+GET_CUSTOMER_TICKETS_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "get_customer_tickets",
+        "description": "Lists support tickets for the authenticated customer.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "description": "Maximum number of tickets to return (1-50, default 10)"
+                }
+            },
+            "required": []
+        }
+    }
+}
+
+CANCEL_ORDER_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "cancel_order",
+        "description": (
+            "Cancels an order by updating its status to CANCELLED in the database. "
+            "This is a STATE-CHANGING operation — it actually cancels the order. "
+            "Only use this tool when the customer explicitly asks to CANCEL their order. "
+            "Use check_cancellation_eligibility first if you only need to know whether "
+            "cancellation is possible without actually cancelling. "
+            "Eligible statuses for cancellation: PROCESSING, SHIPPED. "
+            "DELIVERED and CANCELLED orders cannot be cancelled again."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "order_id": {
+                    "type": "integer",
+                    "description": "The unique integer ID of the order to cancel."
+                }
+            },
+            "required": ["order_id"]
+        }
+    }
+}
+
 AVAILABLE_TOOLS = [
     ORDER_STATUS_TOOL_SCHEMA,
     CREATE_REPLACEMENT_TOOL_SCHEMA,
     ISSUE_REFUND_TOOL_SCHEMA,
+    GET_ORDER_DETAILS_TOOL_SCHEMA,
+    LIST_CUSTOMER_ORDERS_TOOL_SCHEMA,
+    CHECK_CANCELLATION_ELIGIBILITY_TOOL_SCHEMA,
+    CANCEL_ORDER_TOOL_SCHEMA,
+    GET_DELIVERY_ESTIMATE_TOOL_SCHEMA,
+    GET_TICKET_STATUS_TOOL_SCHEMA,
+    GET_CUSTOMER_TICKETS_TOOL_SCHEMA,
 ]
 
 MAX_TOOL_ITERATIONS = 5
@@ -398,6 +571,360 @@ def _execute_tool_call(
                         safe_set_attribute(span, "approval_id", result_data["approval_id"])
             return result
 
+        elif tool_name == "get_order_details":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_get_order_details_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth check is internal)
+            result_data = get_order_details(
+                order_id=validated.order_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "list_customer_orders":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_list_customer_orders_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (no per-order auth needed, filters by authenticated customer)
+            result_data = list_customer_orders(
+                authenticated_customer_id=authenticated_customer_id,
+                status_filter=validated.status_filter,
+                limit=validated.limit,
+            )
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "check_cancellation_eligibility":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_check_cancellation_eligibility_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth check is internal)
+            result_data = check_cancellation_eligibility(
+                order_id=validated.order_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "get_delivery_estimate":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_get_delivery_estimate_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth check is internal)
+            result_data = get_delivery_estimate(
+                order_id=validated.order_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "get_ticket_status":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_get_ticket_status_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (customer_id ownership enforced inside get_ticket_status)
+            result_data = get_ticket_status(
+                ticket_id=validated.ticket_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "get_customer_tickets":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_get_customer_tickets_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (filters by authenticated customer)
+            result_data = get_customer_tickets(
+                authenticated_customer_id=authenticated_customer_id,
+                limit=validated.limit,
+            )
+
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": True,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", True)
+            return result
+
+        elif tool_name == "cancel_order":
+            # Step 1: Validate
+            is_valid, validated, val_err = validate_cancel_order_args(tool_args or {})
+            if not is_valid:
+                result = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {"error": f"Backend Validation Error: {val_err}"},
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", False)
+                return result
+
+            # Step 2: Execute (auth + eligibility + idempotency are internal)
+            result_data = cancel_order(
+                order_id=validated.order_id,
+                authenticated_customer_id=authenticated_customer_id,
+            )
+
+            if "error" in result_data:
+                if "Unauthorized" in result_data["error"]:
+                    result = {
+                        "validation_passed": True,
+                        "authorization_passed": False,
+                        "backend_executed": False,
+                        "tool_result": result_data,
+                    }
+                    if span:
+                        safe_set_attribute(span, "validation_passed", True)
+                        safe_set_attribute(span, "authorization_passed", False)
+                        safe_set_attribute(span, "backend_executed", False)
+                    return result
+                # Not found or ineligible
+                result = {
+                    "validation_passed": True,
+                    "authorization_passed": True,
+                    "backend_executed": False,
+                    "tool_result": result_data,
+                }
+                if span:
+                    safe_set_attribute(span, "validation_passed", True)
+                    safe_set_attribute(span, "authorization_passed", True)
+                    safe_set_attribute(span, "backend_executed", False)
+                return result
+
+            # COMPLETED or ALREADY_CANCELLED are both successful outcomes
+            executed = result_data.get("status") in ("COMPLETED", "ALREADY_CANCELLED")
+            result = {
+                "validation_passed": True,
+                "authorization_passed": True,
+                "backend_executed": executed,
+                "tool_result": result_data,
+            }
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "authorization_passed", True)
+                safe_set_attribute(span, "backend_executed", executed)
+                safe_set_attribute(span, "tool.cancel_status", result_data.get("status", ""))
+            return result
+
         else:
             result = {
                 "validation_passed": False,
@@ -408,7 +935,6 @@ def _execute_tool_call(
             if span:
                 safe_set_attribute(span, "validation_passed", False)
             return result
-        return result
 
 
 # ── Multi-step tool-calling loop ─────────────────────────────────────

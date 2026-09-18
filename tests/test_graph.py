@@ -462,3 +462,149 @@ class TestGraphLiveGroq:
                 "Prompt injection bypassed authorization — "
                 "LLM or routing must not override authenticated_customer_id"
             )
+
+
+# ══════════════════════════════════════════════════════════════════════
+# TOOLS EXPANSION FIX: Order-list request routing tests
+# ══════════════════════════════════════════════════════════════════════
+
+from app.graph import route_after_classify as rac_func
+
+
+class TestOrderListRequestRouting:
+    """Tests that order-list and ticket-list requests route to tool execution
+    even when classified as General Inquiry."""
+
+    # ── order-list requests ───────────────────────────────────────────
+
+    def test_show_me_my_orders_routes_to_tools(self):
+        state = {
+            "customer_message": "Show me my orders",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_list_my_orders_routes_to_tools(self):
+        state = {
+            "customer_message": "List my orders",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_what_orders_do_i_have_routes_to_tools(self):
+        state = {
+            "customer_message": "What orders do I have?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_can_i_see_my_orders_routes_to_tools(self):
+        state = {
+            "customer_message": "Can I see my orders?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_show_my_recent_orders_routes_to_tools(self):
+        state = {
+            "customer_message": "Show my recent orders",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    # ── ticket-list requests ──────────────────────────────────────────
+
+    def test_show_me_my_support_tickets_routes_to_tools(self):
+        state = {
+            "customer_message": "Show me my support tickets",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_list_my_tickets_routes_to_tools(self):
+        state = {
+            "customer_message": "List my tickets",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_show_my_open_tickets_routes_to_tools(self):
+        state = {
+            "customer_message": "Show my open tickets",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_do_i_have_any_tickets_routes_to_tools(self):
+        state = {
+            "customer_message": "Do I have any tickets?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_my_support_ticket_routes_to_tools(self):
+        state = {
+            "customer_message": "Can I see my support tickets?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    # ── policy/info questions must stay with RAG ──────────────────────
+
+    def test_policy_question_stays_with_rag(self):
+        state = {
+            "customer_message": "What is your return policy?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "retrieve_knowledge_node"
+
+    def test_shipping_info_question_stays_with_rag(self):
+        state = {
+            "customer_message": "How long does shipping take?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": None,
+            "error": None,
+        }
+        assert rac_func(state) == "retrieve_knowledge_node"
+
+    # ── Stage 12 compatibility ────────────────────────────────────────
+
+    def test_stage12_contextual_routing_still_works(self):
+        state = {
+            "customer_message": "What's the status?",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": 1011,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
+
+    def test_order_list_request_with_active_order_still_routes_to_tools(self):
+        state = {
+            "customer_message": "List my orders",
+            "classification": {"category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL"},
+            "active_order_id": 1011,
+            "error": None,
+        }
+        assert rac_func(state) == "tool_execution_node"
