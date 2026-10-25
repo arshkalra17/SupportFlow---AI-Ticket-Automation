@@ -25,7 +25,10 @@ load_dotenv()
 
 # ── Configuration ─────────────────────────────────────────────────────
 RAG_TOP_K = 3
-RAG_SIMILARITY_THRESHOLD = 0.15  # Minimum cosine similarity to consider relevant
+# Minimum cosine similarity to consider a section relevant. 0.30 refused 95%
+# of out-of-scope questions while answering 99% of in-scope ones in
+# evaluation/retrieval_eval.py; the old 0.15 refused almost none.
+RAG_SIMILARITY_THRESHOLD = 0.30
 
 
 def _build_context_block(documents: list[dict]) -> str:
@@ -39,8 +42,9 @@ def _build_context_block(documents: list[dict]) -> str:
     """
     sections = []
     for i, doc in enumerate(documents, 1):
+        heading = f" — {doc['heading']}" if doc.get("heading") else ""
         sections.append(
-            f"[Policy {i}] {doc['title']}\n"
+            f"[Policy {i}] {doc['title']}{heading}\n"
             f"Source: {doc['source']}\n"
             f"{doc['content']}"
         )
@@ -66,7 +70,7 @@ def answer_with_knowledge_base(
         dict with keys:
             query               – original question
             relevant_context    – whether any relevant policy was found (bool)
-            retrieved_documents – list of {title, source, cosine_similarity}
+            retrieved_documents – list of {title, heading, content, source, cosine_similarity, rerank_score}
             answer              – LLM-generated answer or "no relevant policy" message
             model               – LLM model used (or None if LLM was not called)
 
@@ -103,8 +107,11 @@ def answer_with_knowledge_base(
         doc_metadata = [
             {
                 "title": doc["title"],
+                "heading": doc.get("heading"),
+                "content": doc["content"],
                 "source": doc["source"],
                 "cosine_similarity": doc["cosine_similarity"],
+                "rerank_score": doc.get("rerank_score"),
             }
             for doc in retrieved
         ]

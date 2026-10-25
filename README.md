@@ -4,7 +4,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**346 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
+**346 deterministic tests passing · RAG Hit@1 87.9% on 116 labelled questions over 24 articles · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
 
 SupportFlow is not a chatbot wrapper. It's a production-style backend system where an LLM classifies customer support requests, retrieves company knowledge via RAG, and requests actions through native tool-calling — but every single action passes through backend-owned validation, authorization, business-rule enforcement, and (for high-risk actions) human approval before anything actually happens.
 
@@ -94,7 +94,7 @@ Customer requests enter through the React frontend and FastAPI backend.
 - **RAG — Knowledge Questions**
   - *“How long does express shipping take?”*
   - *“What is your return policy?”*
-  - LangGraph retrieves relevant information from the knowledge base.
+  - LangGraph retrieves the most relevant sections of the 24-article knowledge base (`knowledge_base/`): vector search, then a cross-encoder re-ranks the candidates.
 
 - **Backend Tools — Data & Actions**
   - *“Where is my order #1008?”*
@@ -124,6 +124,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 | Orchestration | LangGraph | Explicit workflow/state transitions |
 | LLM | Groq (`openai/gpt-oss-120b`) | Classification + native tool calling |
 | Embeddings | `all-MiniLM-L6-v2` | Local RAG embeddings |
+| Re-ranker | `BAAI/bge-reranker-base` | Local cross-encoder over the top 10 sections |
 | Auth | JWT + bcrypt | Stateless authentication |
 | Observability | OpenTelemetry | Vendor-neutral distributed tracing |
 | Testing | pytest + fakeredis | Deterministic testing |
@@ -136,9 +137,9 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 | Area | Result |
 |---|---:|
 | Deterministic tests | **346 passed** |
-| RAG Hit@1 | **100%** |
-| RAG Hit@3 | **100%** |
-| OOD rejection | **100%** |
+| RAG Hit@1 (116 questions, 24 articles) | **87.9%** (74.1% whole-document baseline) — [retrieval write-up](evaluation/results/retrieval.md) |
+| RAG Hit@3 | **98.3%** |
+| Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
 | BANKING77 | **64.6% mapped category accuracy (144 cases, 10 ambiguous excluded)** |
 | Concurrent idempotency | **1 execution / 10 identical requests** |
 

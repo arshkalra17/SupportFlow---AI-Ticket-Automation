@@ -1,0 +1,840 @@
+{
+  "version": "retrieval-v1",
+  "description": "Customer-voice questions labelled with the knowledge_base article (slug) and section heading that answers them. type: paraphrase = different wording from the article; lexical = hinges on an exact term, status or number; confusable = a neighbouring article covers a similar topic. out_of_scope questions have no answer in the KB. The last 8 out_of_scope questions are near misses: shop-related but not answered by any article.",
+  "questions": [
+    {
+      "id": "r001",
+      "query": "how many days do I have to ask for my money back",
+      "doc": "returns-and-refunds",
+      "section": "Refund eligibility window",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r002",
+      "query": "does the 30 day clock start when I ordered or when it arrived",
+      "doc": "returns-and-refunds",
+      "section": "Refund eligibility window",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r003",
+      "query": "can I send back personalised engraved stuff",
+      "doc": "returns-and-refunds",
+      "section": "Items that cannot be refunded",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r004",
+      "query": "why does my refund over $1000 need someone to approve it",
+      "doc": "returns-and-refunds",
+      "section": "How refund approval works",
+      "type": "lexical"
+    },
+    {
+      "id": "r005",
+      "query": "how long until the refund shows up on my card",
+      "doc": "returns-and-refunds",
+      "section": "How you receive your money",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r006",
+      "query": "can you refund me to a different credit card",
+      "doc": "returns-and-refunds",
+      "section": "How you receive your money",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r007",
+      "query": "I got the return label, how long do I have to drop the parcel off",
+      "doc": "returns-and-refunds",
+      "section": "Returning the item",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r008",
+      "query": "they sent me the blue one instead of black, can I get the right one",
+      "doc": "replacements",
+      "section": "When a replacement is available",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r009",
+      "query": "my order is cancelled, can I still get a replacement",
+      "doc": "replacements",
+      "section": "Eligible order statuses",
+      "type": "lexical"
+    },
+    {
+      "id": "r010",
+      "query": "what should I include when asking for a replacement for a broken item",
+      "doc": "replacements",
+      "section": "What we need from you",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r011",
+      "query": "what if the replacement item is out of stock",
+      "doc": "replacements",
+      "section": "What happens next",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r012",
+      "query": "should I pick a replacement or my money back",
+      "doc": "replacements",
+      "section": "Replacement or refund?",
+      "type": "confusable"
+    },
+    {
+      "id": "r013",
+      "query": "how quick is next day delivery",
+      "doc": "shipping-and-delivery",
+      "section": "Delivery speeds",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r014",
+      "query": "if I order at 5pm when does it go out",
+      "doc": "shipping-and-delivery",
+      "section": "Delivery speeds",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r015",
+      "query": "is delivery free",
+      "doc": "shipping-and-delivery",
+      "section": "Shipping costs",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r016",
+      "query": "extra fee for shipping a big monitor",
+      "doc": "shipping-and-delivery",
+      "section": "Shipping costs",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r017",
+      "query": "can you ship express to Hawaii",
+      "doc": "shipping-and-delivery",
+      "section": "Delivery areas",
+      "type": "lexical"
+    },
+    {
+      "id": "r018",
+      "query": "can I get my order sent to a PO box",
+      "doc": "shipping-and-delivery",
+      "section": "Delivery areas",
+      "type": "lexical"
+    },
+    {
+      "id": "r019",
+      "query": "nobody was home to sign for my parcel",
+      "doc": "shipping-and-delivery",
+      "section": "Signature on delivery",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r020",
+      "query": "can I stop an order that has already been shipped",
+      "doc": "order-cancellation",
+      "section": "Which orders can be cancelled",
+      "type": "lexical"
+    },
+    {
+      "id": "r021",
+      "query": "what's the process to cancel something I just bought",
+      "doc": "order-cancellation",
+      "section": "How to cancel",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r022",
+      "query": "I cancelled, when do I get the money back",
+      "doc": "order-cancellation",
+      "section": "Refund after cancelling",
+      "type": "confusable"
+    },
+    {
+      "id": "r023",
+      "query": "can I remove just one item from my order",
+      "doc": "order-cancellation",
+      "section": "Cancelling part of an order",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r024",
+      "query": "can I undo a cancellation",
+      "doc": "order-cancellation",
+      "section": "Orders that were already cancelled",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r025",
+      "query": "do you deliver to Germany",
+      "doc": "international-shipping",
+      "section": "Countries we ship to",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r026",
+      "query": "how long does shipping to the UK take",
+      "doc": "international-shipping",
+      "section": "International delivery times",
+      "type": "confusable"
+    },
+    {
+      "id": "r027",
+      "query": "the courier wants me to pay import fees, is that right",
+      "doc": "international-shipping",
+      "section": "Customs, duties and import taxes",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r028",
+      "query": "why did my spare battery disappear from the cart when I entered my Canadian address",
+      "doc": "international-shipping",
+      "section": "Restricted items",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r029",
+      "query": "do I have to pay return postage from Australia",
+      "doc": "international-shipping",
+      "section": "International returns",
+      "type": "confusable"
+    },
+    {
+      "id": "r030",
+      "query": "what does PROCESSING mean on my order",
+      "doc": "order-tracking",
+      "section": "Order statuses explained",
+      "type": "lexical"
+    },
+    {
+      "id": "r031",
+      "query": "where do I find my tracking code",
+      "doc": "order-tracking",
+      "section": "Where to find tracking",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r032",
+      "query": "tracking hasn't moved in a week",
+      "doc": "order-tracking",
+      "section": "Tracking not updating",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r033",
+      "query": "how is the expected arrival date worked out",
+      "doc": "order-tracking",
+      "section": "Delivery estimates",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r034",
+      "query": "I only got half my order, the rest is missing",
+      "doc": "order-tracking",
+      "section": "Split shipments",
+      "type": "confusable"
+    },
+    {
+      "id": "r035",
+      "query": "it says delivered but there's nothing on my doorstep",
+      "doc": "lost-or-delayed-packages",
+      "section": "Package marked delivered but not received",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r036",
+      "query": "how long does a carrier trace take for a lost box",
+      "doc": "lost-or-delayed-packages",
+      "section": "Investigating a lost parcel",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r037",
+      "query": "someone took my parcel from my porch",
+      "doc": "lost-or-delayed-packages",
+      "section": "Stolen packages",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r038",
+      "query": "the box came soaked and squashed",
+      "doc": "lost-or-delayed-packages",
+      "section": "Damaged in transit",
+      "type": "confusable"
+    },
+    {
+      "id": "r039",
+      "query": "my express order is a week late, do I get the shipping fee back",
+      "doc": "lost-or-delayed-packages",
+      "section": "Delayed packages",
+      "type": "confusable"
+    },
+    {
+      "id": "r040",
+      "query": "can I pay with bitcoin",
+      "doc": "payments-and-billing",
+      "section": "Accepted payment methods",
+      "type": "lexical"
+    },
+    {
+      "id": "r041",
+      "query": "do you take Apple Pay",
+      "doc": "payments-and-billing",
+      "section": "Accepted payment methods",
+      "type": "lexical"
+    },
+    {
+      "id": "r042",
+      "query": "when does the money actually leave my account",
+      "doc": "payments-and-billing",
+      "section": "When you are charged",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r043",
+      "query": "I was charged twice for one order",
+      "doc": "payments-and-billing",
+      "section": "Duplicate or unexpected charges",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r044",
+      "query": "I need a VAT invoice for my company",
+      "doc": "payments-and-billing",
+      "section": "Invoices and receipts",
+      "type": "confusable"
+    },
+    {
+      "id": "r045",
+      "query": "my card got declined, what happens to my order",
+      "doc": "payments-and-billing",
+      "section": "Failed payments",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r046",
+      "query": "forgot to enter my discount code at checkout, can you add it now",
+      "doc": "promo-codes",
+      "section": "Using a promo code",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r047",
+      "query": "can I use two coupons on one order",
+      "doc": "promo-codes",
+      "section": "Stacking rules",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r048",
+      "query": "my voucher code says invalid",
+      "doc": "promo-codes",
+      "section": "Why a code is not working",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r049",
+      "query": "how much do I get back if I return one thing from an order that used a coupon",
+      "doc": "promo-codes",
+      "section": "Refunds on discounted orders",
+      "type": "confusable"
+    },
+    {
+      "id": "r050",
+      "query": "is there a student discount",
+      "doc": "promo-codes",
+      "section": "Student and military discounts",
+      "type": "lexical"
+    },
+    {
+      "id": "r051",
+      "query": "what's the most I can put on an e-gift card",
+      "doc": "gift-cards",
+      "section": "Buying gift cards",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r052",
+      "query": "do gift cards run out after a year",
+      "doc": "gift-cards",
+      "section": "Balance and expiry",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r053",
+      "query": "I lost the gift card my aunt gave me",
+      "doc": "gift-cards",
+      "section": "Lost or stolen gift cards",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r054",
+      "query": "can I turn my gift card balance into cash",
+      "doc": "gift-cards",
+      "section": "Refunds of gift cards",
+      "type": "confusable"
+    },
+    {
+      "id": "r055",
+      "query": "someone on the phone asked me to pay a fine with store cards",
+      "doc": "gift-cards",
+      "section": "Gift card scams",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r056",
+      "query": "password reset email never came",
+      "doc": "account-security",
+      "section": "Resetting your password",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r057",
+      "query": "how do I set up 2FA",
+      "doc": "account-security",
+      "section": "Two-step verification",
+      "type": "lexical"
+    },
+    {
+      "id": "r058",
+      "query": "I typed my password wrong too many times and now I can't log in",
+      "doc": "account-security",
+      "section": "Locked accounts",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r059",
+      "query": "there are orders on my account I didn't make",
+      "doc": "account-security",
+      "section": "Suspicious activity",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r060",
+      "query": "the support bot asked for my password, is that normal",
+      "doc": "account-security",
+      "section": "Support will never ask for your password",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r061",
+      "query": "do you keep my card number on file",
+      "doc": "privacy-and-data",
+      "section": "What we collect",
+      "type": "confusable"
+    },
+    {
+      "id": "r062",
+      "query": "how long do you store my chats with the assistant",
+      "doc": "privacy-and-data",
+      "section": "How support conversations are used",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r063",
+      "query": "I want a copy of all the data you have about me",
+      "doc": "privacy-and-data",
+      "section": "Downloading your data",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r064",
+      "query": "please delete my account permanently",
+      "doc": "privacy-and-data",
+      "section": "Deleting your account",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r065",
+      "query": "stop sending me promotional emails",
+      "doc": "privacy-and-data",
+      "section": "Marketing emails",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r066",
+      "query": "how long is the guarantee on a laptop",
+      "doc": "warranty",
+      "section": "Warranty length",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r067",
+      "query": "I dropped my phone in water, is that covered",
+      "doc": "warranty",
+      "section": "What the warranty covers",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r068",
+      "query": "how do I claim on the warranty",
+      "doc": "warranty",
+      "section": "Making a warranty claim",
+      "type": "lexical"
+    },
+    {
+      "id": "r069",
+      "query": "my headphones broke after two months, do I return them or use the warranty",
+      "doc": "warranty",
+      "section": "Warranty versus returns",
+      "type": "confusable"
+    },
+    {
+      "id": "r070",
+      "query": "do refurbished devices have any cover",
+      "doc": "warranty",
+      "section": "Refurbished products",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r071",
+      "query": "the price went down a week after I bought it",
+      "doc": "price-adjustments",
+      "section": "Price drops after you buy",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r072",
+      "query": "will you match a cheaper price from another shop",
+      "doc": "price-adjustments",
+      "section": "Price matching competitors",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r073",
+      "query": "I returned one item from a bundle, why was my refund less",
+      "doc": "price-adjustments",
+      "section": "Bundles and multi-buy offers",
+      "type": "confusable"
+    },
+    {
+      "id": "r074",
+      "query": "the website showed the TV for $5, will you honour it",
+      "doc": "price-adjustments",
+      "section": "Price errors",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r075",
+      "query": "can I pay in euros",
+      "doc": "price-adjustments",
+      "section": "Currency",
+      "type": "confusable"
+    },
+    {
+      "id": "r076",
+      "query": "when will my pre-ordered console be sent",
+      "doc": "preorders-backorders",
+      "section": "How pre-orders work",
+      "type": "lexical"
+    },
+    {
+      "id": "r077",
+      "query": "the preorder price dropped, do I pay less",
+      "doc": "preorders-backorders",
+      "section": "Pre-order price guarantee",
+      "type": "confusable"
+    },
+    {
+      "id": "r078",
+      "query": "what does backordered mean",
+      "doc": "preorders-backorders",
+      "section": "Backordered items",
+      "type": "lexical"
+    },
+    {
+      "id": "r079",
+      "query": "my order has an item that isn't released yet plus some other things",
+      "doc": "preorders-backorders",
+      "section": "Mixed orders",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r080",
+      "query": "the release got pushed back two months",
+      "doc": "preorders-backorders",
+      "section": "Release date delays",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r081",
+      "query": "how many points do I earn per dollar",
+      "doc": "rewards-program",
+      "section": "Earning points",
+      "type": "lexical"
+    },
+    {
+      "id": "r082",
+      "query": "what are 500 points worth",
+      "doc": "rewards-program",
+      "section": "Redeeming points",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r083",
+      "query": "do my loyalty points expire",
+      "doc": "rewards-program",
+      "section": "Points expiry",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r084",
+      "query": "what happens to my points when I send something back",
+      "doc": "rewards-program",
+      "section": "Returns and points",
+      "type": "confusable"
+    },
+    {
+      "id": "r085",
+      "query": "how do I become a Gold member",
+      "doc": "rewards-program",
+      "section": "Membership tiers",
+      "type": "lexical"
+    },
+    {
+      "id": "r086",
+      "query": "can I get printer ink delivered automatically every month",
+      "doc": "subscriptions",
+      "section": "How subscriptions work",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r087",
+      "query": "skip my next filter delivery",
+      "doc": "subscriptions",
+      "section": "Changing or skipping a delivery",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r088",
+      "query": "is there a fee to stop my subscription",
+      "doc": "subscriptions",
+      "section": "Cancelling a subscription",
+      "type": "confusable"
+    },
+    {
+      "id": "r089",
+      "query": "my subscription payment bounced",
+      "doc": "subscriptions",
+      "section": "Payment failures on subscriptions",
+      "type": "confusable"
+    },
+    {
+      "id": "r090",
+      "query": "I want to swap an item in my order for a different one",
+      "doc": "changing-an-order",
+      "section": "Changing items in an order",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r091",
+      "query": "I moved, can you send my order to my new flat",
+      "doc": "changing-an-order",
+      "section": "Changing the delivery address before shipping",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r092",
+      "query": "my parcel is on the way but I need it sent somewhere else",
+      "doc": "changing-an-order",
+      "section": "Changing the address after shipping",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r093",
+      "query": "can I switch to faster delivery after ordering",
+      "doc": "changing-an-order",
+      "section": "Upgrading shipping speed",
+      "type": "confusable"
+    },
+    {
+      "id": "r094",
+      "query": "I typed my old address by mistake and it got delivered there",
+      "doc": "changing-an-order",
+      "section": "Wrong address entered",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r095",
+      "query": "are you open on Sundays",
+      "doc": "contact-support",
+      "section": "Support hours",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r096",
+      "query": "how fast do you answer tickets",
+      "doc": "contact-support",
+      "section": "Response times",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r097",
+      "query": "I want to speak to a real person",
+      "doc": "contact-support",
+      "section": "Talking to a human",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r098",
+      "query": "I want to make a formal complaint about how my case was handled",
+      "doc": "contact-support",
+      "section": "Escalating a complaint",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r099",
+      "query": "we're a company, can we have several logins on one account",
+      "doc": "business-orders",
+      "section": "Business accounts",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r100",
+      "query": "discount for buying 50 keyboards for our office",
+      "doc": "business-orders",
+      "section": "Bulk pricing",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r101",
+      "query": "can our company pay on net 30 terms",
+      "doc": "business-orders",
+      "section": "Paying by invoice",
+      "type": "lexical"
+    },
+    {
+      "id": "r102",
+      "query": "we're a charity, how do we stop being charged sales tax",
+      "doc": "business-orders",
+      "section": "Tax-exempt purchases",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r103",
+      "query": "is your packaging plastic free",
+      "doc": "packaging-and-recycling",
+      "section": "Our packaging",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r104",
+      "query": "can I send you my old laptop to recycle",
+      "doc": "packaging-and-recycling",
+      "section": "Recycling old electronics",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r105",
+      "query": "how do I throw away a lithium battery safely",
+      "doc": "packaging-and-recycling",
+      "section": "Battery disposal",
+      "type": "lexical"
+    },
+    {
+      "id": "r106",
+      "query": "my tablet won't switch on at all",
+      "doc": "electronics-troubleshooting",
+      "section": "Device will not turn on",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r107",
+      "query": "phone battery dies by lunchtime",
+      "doc": "electronics-troubleshooting",
+      "section": "Battery draining quickly",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r108",
+      "query": "bluetooth earbuds won't pair",
+      "doc": "electronics-troubleshooting",
+      "section": "Headphones not connecting",
+      "type": "lexical"
+    },
+    {
+      "id": "r109",
+      "query": "my screen says no signal",
+      "doc": "electronics-troubleshooting",
+      "section": "Monitor shows no signal",
+      "type": "lexical"
+    },
+    {
+      "id": "r110",
+      "query": "does your site work with screen readers",
+      "doc": "accessibility",
+      "section": "Website and app accessibility",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r111",
+      "query": "can I get the manual in large print",
+      "doc": "accessibility",
+      "section": "Alternative formats",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r112",
+      "query": "I use a wheelchair and need the courier to wait longer at the door",
+      "doc": "accessibility",
+      "section": "Delivery assistance",
+      "type": "paraphrase"
+    },
+    {
+      "id": "r113",
+      "query": "the glass was cracked when I opened the box, how long do I have to tell you",
+      "doc": "damaged-items",
+      "section": "What counts as damaged on arrival",
+      "type": "confusable"
+    },
+    {
+      "id": "r114",
+      "query": "do I need to send back the broken item before I get my refund",
+      "doc": "damaged-items",
+      "section": "Your options",
+      "type": "confusable"
+    },
+    {
+      "id": "r115",
+      "query": "what photos do you need for a damaged delivery",
+      "doc": "damaged-items",
+      "section": "Evidence we ask for",
+      "type": "confusable"
+    },
+    {
+      "id": "r116",
+      "query": "only one of the three plates in my order arrived smashed",
+      "doc": "damaged-items",
+      "section": "Partial damage in multi-item orders",
+      "type": "paraphrase"
+    }
+  ],
+  "out_of_scope": [
+    "what is the capital of France",
+    "who won the 2022 World Cup",
+    "recipe for chocolate cake",
+    "what's the weather tomorrow",
+    "write me a poem about the sea",
+    "how do I file my income taxes",
+    "what's the best laptop for gaming",
+    "can you recommend a good movie",
+    "how many calories are in a banana",
+    "translate hello into Japanese",
+    "what time is it in Tokyo",
+    "explain quantum computing",
+    "do you offer installation services for TVs",
+    "what is your company's stock price",
+    "do you have a physical store I can visit",
+    "who is the CEO of your company",
+    "can I rent a laptop instead of buying one",
+    "do you sell groceries",
+    "are you hiring, how do I apply for a job",
+    "can you repair a phone I bought somewhere else"
+  ]
+}

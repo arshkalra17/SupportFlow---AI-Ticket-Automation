@@ -1,0 +1,2717 @@
+{
+  "meta": {
+    "dataset": "retrieval-v1",
+    "questions": 116,
+    "dev": 58,
+    "test": 58,
+    "out_of_scope": 20,
+    "articles": 24,
+    "generated_at": "2026-10-25 22:48 UTC"
+  },
+  "results": [
+    {
+      "config": "document:vector",
+      "chunks": 24,
+      "all": {
+        "n": 116,
+        "hit@1": 0.7413793103448276,
+        "hit@3": 0.9224137931034483,
+        "mrr@5": 0.8346264367816092,
+        "ctx@3": 0.9224137931034483
+      },
+      "dev": {
+        "n": 58,
+        "hit@1": 0.7068965517241379,
+        "hit@3": 0.9137931034482759,
+        "mrr@5": 0.8123563218390805,
+        "ctx@3": 0.9137931034482759
+      },
+      "test": {
+        "n": 58,
+        "hit@1": 0.7758620689655172,
+        "hit@3": 0.9310344827586207,
+        "mrr@5": 0.856896551724138,
+        "ctx@3": 0.9310344827586207
+      },
+      "by_type": {
+        "confusable": {
+          "n": 22,
+          "hit@1": 0.6818181818181818,
+          "hit@3": 1.0,
+          "mrr@5": 0.8409090909090909,
+          "ctx@3": 1.0
+        },
+        "lexical": {
+          "n": 19,
+          "hit@1": 1.0,
+          "hit@3": 1.0,
+          "mrr@5": 1.0,
+          "ctx@3": 1.0
+        },
+        "paraphrase": {
+          "n": 75,
+          "hit@1": 0.6933333333333334,
+          "hit@3": 0.88,
+          "mrr@5": 0.790888888888889,
+          "ctx@3": 0.88
+        }
+      },
+      "oos_auroc": 0.9650862068965518,
+      "abstain": {
+        "threshold": 0.2828893577191436,
+        "refused": 0.9,
+        "answered": 0.9310344827586207
+      },
+      "correct": {
+        "r001": true,
+        "r002": false,
+        "r003": false,
+        "r004": true,
+        "r005": true,
+        "r006": false,
+        "r007": false,
+        "r008": true,
+        "r009": true,
+        "r010": false,
+        "r011": true,
+        "r012": true,
+        "r013": true,
+        "r014": false,
+        "r015": true,
+        "r016": true,
+        "r017": true,
+        "r018": true,
+        "r019": false,
+        "r020": true,
+        "r021": true,
+        "r022": false,
+        "r023": true,
+        "r024": true,
+        "r025": true,
+        "r026": true,
+        "r027": true,
+        "r028": true,
+        "r029": true,
+        "r030": true,
+        "r031": true,
+        "r032": true,
+        "r033": true,
+        "r034": false,
+        "r035": false,
+        "r036": false,
+        "r037": true,
+        "r038": false,
+        "r039": false,
+        "r040": true,
+        "r041": true,
+        "r042": false,
+        "r043": true,
+        "r044": false,
+        "r045": false,
+        "r046": true,
+        "r047": true,
+        "r048": true,
+        "r049": true,
+        "r050": true,
+        "r051": true,
+        "r052": true,
+        "r053": true,
+        "r054": true,
+        "r055": true,
+        "r056": true,
+        "r057": true,
+        "r058": true,
+        "r059": true,
+        "r060": true,
+        "r061": true,
+        "r062": true,
+        "r063": true,
+        "r064": false,
+        "r065": false,
+        "r066": true,
+        "r067": false,
+        "r068": true,
+        "r069": false,
+        "r070": true,
+        "r071": true,
+        "r072": true,
+        "r073": true,
+        "r074": true,
+        "r075": true,
+        "r076": true,
+        "r077": true,
+        "r078": true,
+        "r079": false,
+        "r080": false,
+        "r081": true,
+        "r082": true,
+        "r083": true,
+        "r084": true,
+        "r085": true,
+        "r086": true,
+        "r087": true,
+        "r088": true,
+        "r089": true,
+        "r090": true,
+        "r091": true,
+        "r092": false,
+        "r093": true,
+        "r094": true,
+        "r095": false,
+        "r096": false,
+        "r097": false,
+        "r098": true,
+        "r099": false,
+        "r100": false,
+        "r101": true,
+        "r102": true,
+        "r103": true,
+        "r104": true,
+        "r105": true,
+        "r106": true,
+        "r107": true,
+        "r108": true,
+        "r109": true,
+        "r110": true,
+        "r111": true,
+        "r112": false,
+        "r113": true,
+        "r114": false,
+        "r115": true,
+        "r116": true
+      },
+      "p50_ms": 14.404791509150527,
+      "p95_ms": 17.855666985269636,
+      "misses": [
+        {
+          "id": "r002",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders",
+            "order-tracking",
+            "subscriptions"
+          ]
+        },
+        {
+          "id": "r003",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "gift-cards",
+            "replacements",
+            "privacy-and-data"
+          ]
+        },
+        {
+          "id": "r006",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "gift-cards",
+            "order-cancellation",
+            "returns-and-refunds"
+          ]
+        },
+        {
+          "id": "r007",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "lost-or-delayed-packages",
+            "order-tracking",
+            "packaging-and-recycling"
+          ]
+        },
+        {
+          "id": "r010",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items",
+            "replacements",
+            "warranty"
+          ]
+        },
+        {
+          "id": "r014",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders",
+            "subscriptions",
+            "order-tracking"
+          ]
+        },
+        {
+          "id": "r019",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 5,
+          "section_rank": null,
+          "chunk_rank": 5,
+          "top": [
+            "lost-or-delayed-packages",
+            "privacy-and-data",
+            "damaged-items"
+          ]
+        },
+        {
+          "id": "r022",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "returns-and-refunds",
+            "order-cancellation",
+            "subscriptions"
+          ]
+        },
+        {
+          "id": "r034",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "replacements",
+            "order-tracking",
+            "damaged-items"
+          ]
+        },
+        {
+          "id": "r035",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "order-tracking",
+            "lost-or-delayed-packages",
+            "shipping-and-delivery"
+          ]
+        },
+        {
+          "id": "r036",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "order-tracking",
+            "lost-or-delayed-packages",
+            "shipping-and-delivery"
+          ]
+        },
+        {
+          "id": "r038",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items",
+            "lost-or-delayed-packages",
+            "packaging-and-recycling"
+          ]
+        },
+        {
+          "id": "r039",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "shipping-and-delivery",
+            "lost-or-delayed-packages",
+            "payments-and-billing"
+          ]
+        },
+        {
+          "id": "r042",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 4,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "privacy-and-data",
+            "subscriptions",
+            "rewards-program"
+          ]
+        },
+        {
+          "id": "r044",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "business-orders",
+            "payments-and-billing",
+            "privacy-and-data"
+          ]
+        },
+        {
+          "id": "r045",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "order-cancellation",
+            "payments-and-billing",
+            "preorders-backorders"
+          ]
+        },
+        {
+          "id": "r064",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "account-security",
+            "privacy-and-data",
+            "subscriptions"
+          ]
+        },
+        {
+          "id": "r065",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions",
+            "privacy-and-data",
+            "promo-codes"
+          ]
+        },
+        {
+          "id": "r067",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "damaged-items",
+            "lost-or-delayed-packages",
+            "warranty"
+          ]
+        },
+        {
+          "id": "r069",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "electronics-troubleshooting",
+            "warranty",
+            "damaged-items"
+          ]
+        },
+        {
+          "id": "r079",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "replacements",
+            "damaged-items",
+            "preorders-backorders"
+          ]
+        },
+        {
+          "id": "r080",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "order-tracking",
+            "subscriptions",
+            "preorders-backorders"
+          ]
+        },
+        {
+          "id": "r092",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "lost-or-delayed-packages",
+            "shipping-and-delivery",
+            "order-tracking"
+          ]
+        },
+        {
+          "id": "r095",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "business-orders",
+            "subscriptions",
+            "preorders-backorders"
+          ]
+        },
+        {
+          "id": "r096",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "shipping-and-delivery",
+            "contact-support",
+            "rewards-program"
+          ]
+        },
+        {
+          "id": "r097",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "accessibility",
+            "privacy-and-data",
+            "contact-support"
+          ]
+        },
+        {
+          "id": "r099",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "account-security",
+            "business-orders",
+            "privacy-and-data"
+          ]
+        },
+        {
+          "id": "r100",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 5,
+          "section_rank": null,
+          "chunk_rank": 5,
+          "top": [
+            "promo-codes",
+            "electronics-troubleshooting",
+            "rewards-program"
+          ]
+        },
+        {
+          "id": "r112",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "contact-support",
+            "accessibility",
+            "shipping-and-delivery"
+          ]
+        },
+        {
+          "id": "r114",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "replacements",
+            "damaged-items",
+            "lost-or-delayed-packages"
+          ]
+        }
+      ]
+    },
+    {
+      "config": "section:vector",
+      "chunks": 120,
+      "all": {
+        "n": 116,
+        "hit@1": 0.8362068965517241,
+        "hit@3": 0.9741379310344828,
+        "mrr@5": 0.8994252873563218,
+        "ctx@3": 0.9482758620689655,
+        "sec@1": 0.8017241379310345,
+        "sec@3": 0.9051724137931034
+      },
+      "dev": {
+        "n": 58,
+        "hit@1": 0.8103448275862069,
+        "hit@3": 0.9482758620689655,
+        "mrr@5": 0.8735632183908045,
+        "ctx@3": 0.9310344827586207,
+        "sec@1": 0.7758620689655172,
+        "sec@3": 0.896551724137931
+      },
+      "test": {
+        "n": 58,
+        "hit@1": 0.8620689655172413,
+        "hit@3": 1.0,
+        "mrr@5": 0.925287356321839,
+        "ctx@3": 0.9655172413793104,
+        "sec@1": 0.8275862068965517,
+        "sec@3": 0.9137931034482759
+      },
+      "by_type": {
+        "confusable": {
+          "n": 22,
+          "hit@1": 0.8181818181818182,
+          "hit@3": 1.0,
+          "mrr@5": 0.9090909090909091,
+          "ctx@3": 1.0,
+          "sec@1": 0.8181818181818182,
+          "sec@3": 1.0
+        },
+        "lexical": {
+          "n": 19,
+          "hit@1": 0.8947368421052632,
+          "hit@3": 1.0,
+          "mrr@5": 0.9473684210526315,
+          "ctx@3": 1.0,
+          "sec@1": 0.8947368421052632,
+          "sec@3": 1.0
+        },
+        "paraphrase": {
+          "n": 75,
+          "hit@1": 0.8266666666666667,
+          "hit@3": 0.96,
+          "mrr@5": 0.8844444444444444,
+          "ctx@3": 0.92,
+          "sec@1": 0.7733333333333333,
+          "sec@3": 0.8533333333333334
+        }
+      },
+      "oos_auroc": 0.9896551724137931,
+      "abstain": {
+        "threshold": 0.29965330063263496,
+        "refused": 0.95,
+        "answered": 0.9913793103448276
+      },
+      "correct": {
+        "r001": true,
+        "r002": false,
+        "r003": true,
+        "r004": true,
+        "r005": true,
+        "r006": false,
+        "r007": true,
+        "r008": true,
+        "r009": false,
+        "r010": true,
+        "r011": true,
+        "r012": true,
+        "r013": false,
+        "r014": false,
+        "r015": true,
+        "r016": true,
+        "r017": true,
+        "r018": true,
+        "r019": true,
+        "r020": true,
+        "r021": true,
+        "r022": true,
+        "r023": true,
+        "r024": true,
+        "r025": true,
+        "r026": false,
+        "r027": true,
+        "r028": false,
+        "r029": true,
+        "r030": true,
+        "r031": true,
+        "r032": true,
+        "r033": true,
+        "r034": true,
+        "r035": true,
+        "r036": true,
+        "r037": true,
+        "r038": false,
+        "r039": true,
+        "r040": true,
+        "r041": true,
+        "r042": false,
+        "r043": true,
+        "r044": true,
+        "r045": false,
+        "r046": true,
+        "r047": true,
+        "r048": true,
+        "r049": true,
+        "r050": true,
+        "r051": true,
+        "r052": true,
+        "r053": true,
+        "r054": true,
+        "r055": true,
+        "r056": true,
+        "r057": true,
+        "r058": true,
+        "r059": true,
+        "r060": true,
+        "r061": true,
+        "r062": true,
+        "r063": true,
+        "r064": true,
+        "r065": true,
+        "r066": true,
+        "r067": false,
+        "r068": false,
+        "r069": true,
+        "r070": true,
+        "r071": true,
+        "r072": true,
+        "r073": true,
+        "r074": false,
+        "r075": true,
+        "r076": true,
+        "r077": true,
+        "r078": true,
+        "r079": false,
+        "r080": true,
+        "r081": true,
+        "r082": true,
+        "r083": true,
+        "r084": true,
+        "r085": true,
+        "r086": true,
+        "r087": true,
+        "r088": true,
+        "r089": true,
+        "r090": true,
+        "r091": true,
+        "r092": false,
+        "r093": false,
+        "r094": true,
+        "r095": true,
+        "r096": true,
+        "r097": true,
+        "r098": true,
+        "r099": false,
+        "r100": false,
+        "r101": true,
+        "r102": true,
+        "r103": true,
+        "r104": true,
+        "r105": true,
+        "r106": true,
+        "r107": true,
+        "r108": true,
+        "r109": true,
+        "r110": true,
+        "r111": true,
+        "r112": true,
+        "r113": true,
+        "r114": true,
+        "r115": false,
+        "r116": true
+      },
+      "p50_ms": 15.801354515133426,
+      "p95_ms": 17.9938749934081,
+      "misses": [
+        {
+          "id": "r002",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders#Release date delays",
+            "subscriptions#Changing or skipping a delivery",
+            "preorders-backorders#How pre-orders work"
+          ]
+        },
+        {
+          "id": "r006",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "gift-cards#Refunds of gift cards",
+            "order-cancellation#Refund after cancelling",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r009",
+          "type": "lexical",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-cancellation#Orders that were already cancelled",
+            "replacements#Eligible order statuses",
+            "order-cancellation#Which orders can be cancelled"
+          ]
+        },
+        {
+          "id": "r013",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "shipping-and-delivery#Delivery speeds",
+            "subscriptions#Changing or skipping a delivery"
+          ]
+        },
+        {
+          "id": "r014",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders#Release date delays",
+            "preorders-backorders#How pre-orders work",
+            "subscriptions#Changing or skipping a delivery"
+          ]
+        },
+        {
+          "id": "r026",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "shipping-and-delivery#Delivery speeds",
+            "international-shipping#International delivery times",
+            "lost-or-delayed-packages#Package marked delivered but not received"
+          ]
+        },
+        {
+          "id": "r028",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "packaging-and-recycling#Battery disposal",
+            "international-shipping#Restricted items",
+            "electronics-troubleshooting#Battery draining quickly"
+          ]
+        },
+        {
+          "id": "r038",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items#Evidence we ask for",
+            "lost-or-delayed-packages#Damaged in transit",
+            "damaged-items#What counts as damaged on arrival"
+          ]
+        },
+        {
+          "id": "r042",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "privacy-and-data#Deleting your account",
+            "payments-and-billing#Failed payments",
+            "account-security#Locked accounts"
+          ]
+        },
+        {
+          "id": "r045",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-cancellation#Refund after cancelling",
+            "payments-and-billing#Failed payments",
+            "preorders-backorders#How pre-orders work"
+          ]
+        },
+        {
+          "id": "r067",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "damaged-items#Evidence we ask for",
+            "lost-or-delayed-packages#Damaged in transit",
+            "damaged-items#What counts as damaged on arrival"
+          ]
+        },
+        {
+          "id": "r068",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items#Faults that appear later",
+            "warranty#Making a warranty claim",
+            "warranty#Warranty versus returns"
+          ]
+        },
+        {
+          "id": "r074",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 4,
+          "chunk_rank": 3,
+          "top": [
+            "rewards-program#Redeeming points",
+            "promo-codes#Student and military discounts",
+            "price-adjustments#Price matching competitors"
+          ]
+        },
+        {
+          "id": "r079",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "order-cancellation#Orders that were already cancelled",
+            "damaged-items#Partial damage in multi-item orders",
+            "preorders-backorders#Backordered items"
+          ]
+        },
+        {
+          "id": "r092",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "lost-or-delayed-packages#Stolen packages",
+            "lost-or-delayed-packages#Investigating a lost parcel"
+          ]
+        },
+        {
+          "id": "r093",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#Changing or skipping a delivery",
+            "changing-an-order#Upgrading shipping speed",
+            "changing-an-order#Changing the delivery address before shipping"
+          ]
+        },
+        {
+          "id": "r099",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "account-security#Two-step verification",
+            "account-security#Locked accounts",
+            "account-security#Support will never ask for your password"
+          ]
+        },
+        {
+          "id": "r100",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "promo-codes#Student and military discounts",
+            "electronics-troubleshooting#Keyboard keys not responding",
+            "rewards-program#Redeeming points"
+          ]
+        },
+        {
+          "id": "r115",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "lost-or-delayed-packages#Damaged in transit",
+            "damaged-items#Evidence we ask for",
+            "replacements#What we need from you"
+          ]
+        }
+      ]
+    },
+    {
+      "config": "section:keyword",
+      "chunks": 120,
+      "all": {
+        "n": 116,
+        "hit@1": 0.5689655172413793,
+        "hit@3": 0.8362068965517241,
+        "mrr@5": 0.6985632183908046,
+        "ctx@3": 0.8189655172413793,
+        "sec@1": 0.4396551724137931,
+        "sec@3": 0.6896551724137931
+      },
+      "dev": {
+        "n": 58,
+        "hit@1": 0.5689655172413793,
+        "hit@3": 0.7931034482758621,
+        "mrr@5": 0.6695402298850575,
+        "ctx@3": 0.7931034482758621,
+        "sec@1": 0.46551724137931033,
+        "sec@3": 0.6551724137931034
+      },
+      "test": {
+        "n": 58,
+        "hit@1": 0.5689655172413793,
+        "hit@3": 0.8793103448275862,
+        "mrr@5": 0.7275862068965517,
+        "ctx@3": 0.8448275862068966,
+        "sec@1": 0.41379310344827586,
+        "sec@3": 0.7241379310344828
+      },
+      "by_type": {
+        "confusable": {
+          "n": 22,
+          "hit@1": 0.4090909090909091,
+          "hit@3": 0.7727272727272727,
+          "mrr@5": 0.5984848484848485,
+          "ctx@3": 0.7727272727272727,
+          "sec@1": 0.3181818181818182,
+          "sec@3": 0.6363636363636364
+        },
+        "lexical": {
+          "n": 19,
+          "hit@1": 0.7368421052631579,
+          "hit@3": 0.8947368421052632,
+          "mrr@5": 0.8070175438596492,
+          "ctx@3": 0.8947368421052632,
+          "sec@1": 0.6842105263157895,
+          "sec@3": 0.8421052631578947
+        },
+        "paraphrase": {
+          "n": 75,
+          "hit@1": 0.5733333333333334,
+          "hit@3": 0.84,
+          "mrr@5": 0.7004444444444444,
+          "ctx@3": 0.8133333333333334,
+          "sec@1": 0.41333333333333333,
+          "sec@3": 0.6666666666666666
+        }
+      },
+      "oos_auroc": 0.915301724137931,
+      "abstain": {
+        "threshold": 5.478529267025676,
+        "refused": 0.9,
+        "answered": 0.8017241379310345
+      },
+      "correct": {
+        "r001": false,
+        "r002": false,
+        "r003": true,
+        "r004": true,
+        "r005": false,
+        "r006": true,
+        "r007": true,
+        "r008": false,
+        "r009": false,
+        "r010": false,
+        "r011": true,
+        "r012": false,
+        "r013": false,
+        "r014": false,
+        "r015": false,
+        "r016": false,
+        "r017": true,
+        "r018": true,
+        "r019": true,
+        "r020": false,
+        "r021": true,
+        "r022": false,
+        "r023": true,
+        "r024": true,
+        "r025": false,
+        "r026": true,
+        "r027": true,
+        "r028": true,
+        "r029": false,
+        "r030": true,
+        "r031": true,
+        "r032": false,
+        "r033": false,
+        "r034": false,
+        "r035": false,
+        "r036": true,
+        "r037": false,
+        "r038": false,
+        "r039": true,
+        "r040": false,
+        "r041": true,
+        "r042": false,
+        "r043": true,
+        "r044": true,
+        "r045": false,
+        "r046": true,
+        "r047": false,
+        "r048": true,
+        "r049": false,
+        "r050": true,
+        "r051": true,
+        "r052": true,
+        "r053": true,
+        "r054": true,
+        "r055": true,
+        "r056": true,
+        "r057": false,
+        "r058": true,
+        "r059": true,
+        "r060": true,
+        "r061": false,
+        "r062": false,
+        "r063": true,
+        "r064": true,
+        "r065": false,
+        "r066": false,
+        "r067": true,
+        "r068": true,
+        "r069": true,
+        "r070": true,
+        "r071": true,
+        "r072": true,
+        "r073": true,
+        "r074": false,
+        "r075": false,
+        "r076": true,
+        "r077": false,
+        "r078": false,
+        "r079": true,
+        "r080": false,
+        "r081": true,
+        "r082": true,
+        "r083": true,
+        "r084": false,
+        "r085": true,
+        "r086": true,
+        "r087": true,
+        "r088": true,
+        "r089": true,
+        "r090": false,
+        "r091": false,
+        "r092": false,
+        "r093": false,
+        "r094": true,
+        "r095": true,
+        "r096": true,
+        "r097": false,
+        "r098": true,
+        "r099": false,
+        "r100": false,
+        "r101": true,
+        "r102": false,
+        "r103": true,
+        "r104": true,
+        "r105": true,
+        "r106": false,
+        "r107": false,
+        "r108": true,
+        "r109": true,
+        "r110": true,
+        "r111": true,
+        "r112": true,
+        "r113": false,
+        "r114": true,
+        "r115": false,
+        "r116": false
+      },
+      "p50_ms": 1.4906870055710897,
+      "p95_ms": 4.075166012626141,
+      "misses": [
+        {
+          "id": "r001",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "rewards-program#Returns and points",
+            "returns-and-refunds#Returning the item",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r002",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 4,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "damaged-items#Faults that appear later",
+            "electronics-troubleshooting#Device will not turn on",
+            "rewards-program#Points expiry"
+          ]
+        },
+        {
+          "id": "r005",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "gift-cards#Lost or stolen gift cards",
+            "gift-cards#Refunds of gift cards",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r008",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "business-orders#Business accounts",
+            "replacements#Replacement or refund?",
+            "privacy-and-data#Downloading your data"
+          ]
+        },
+        {
+          "id": "r009",
+          "type": "lexical",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "order-cancellation#Orders that were already cancelled",
+            "order-cancellation#How to cancel",
+            "replacements#Eligible order statuses"
+          ]
+        },
+        {
+          "id": "r010",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "damaged-items#What counts as damaged on arrival",
+            "lost-or-delayed-packages#Damaged in transit",
+            "replacements#Replacement or refund?"
+          ]
+        },
+        {
+          "id": "r012",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 4,
+          "chunk_rank": 3,
+          "top": [
+            "rewards-program#Returns and points",
+            "damaged-items#Your options",
+            "replacements#What happens next"
+          ]
+        },
+        {
+          "id": "r013",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#Changing or skipping a delivery",
+            "shipping-and-delivery#Delivery speeds",
+            "subscriptions#Payment failures on subscriptions"
+          ]
+        },
+        {
+          "id": "r014",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "packaging-and-recycling#Battery disposal",
+            "contact-support#Support hours",
+            "preorders-backorders#Mixed orders"
+          ]
+        },
+        {
+          "id": "r015",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#How subscriptions work",
+            "shipping-and-delivery#Shipping costs",
+            "changing-an-order#Wrong address entered"
+          ]
+        },
+        {
+          "id": "r016",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "lost-or-delayed-packages#Delayed packages",
+            "preorders-backorders#Mixed orders",
+            "shipping-and-delivery#Shipping costs"
+          ]
+        },
+        {
+          "id": "r020",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "subscriptions#Cancelling a subscription",
+            "order-tracking#Order statuses explained",
+            "order-cancellation#Orders that were already cancelled"
+          ]
+        },
+        {
+          "id": "r022",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "rewards-program#Returns and points",
+            "order-cancellation#Orders that were already cancelled",
+            "order-cancellation#Which orders can be cancelled"
+          ]
+        },
+        {
+          "id": "r025",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "replacements#Eligible order statuses",
+            "order-cancellation#Which orders can be cancelled"
+          ]
+        },
+        {
+          "id": "r029",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "rewards-program#Returns and points",
+            "international-shipping#Countries we ship to",
+            "international-shipping#Customs, duties and import taxes"
+          ]
+        },
+        {
+          "id": "r032",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 4,
+          "chunk_rank": 2,
+          "top": [
+            "preorders-backorders#Release date delays",
+            "order-tracking#Where to find tracking",
+            "shipping-and-delivery#Tracking numbers"
+          ]
+        },
+        {
+          "id": "r033",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "damaged-items#What counts as damaged on arrival",
+            "damaged-items#Faults that appear later",
+            "preorders-backorders#How pre-orders work"
+          ]
+        },
+        {
+          "id": "r034",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "damaged-items#Partial damage in multi-item orders",
+            "lost-or-delayed-packages#Investigating a lost parcel",
+            "preorders-backorders#Mixed orders"
+          ]
+        },
+        {
+          "id": "r035",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "replacements#Eligible order statuses",
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "order-cancellation#Which orders can be cancelled"
+          ]
+        },
+        {
+          "id": "r037",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "gift-cards#Gift card scams",
+            "lost-or-delayed-packages#Investigating a lost parcel",
+            "payments-and-billing#When you are charged"
+          ]
+        },
+        {
+          "id": "r038",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "packaging-and-recycling#Returning packaging",
+            "packaging-and-recycling#Reducing packaging",
+            "shipping-and-delivery#Delivery areas"
+          ]
+        },
+        {
+          "id": "r040",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "business-orders#Paying by invoice",
+            "preorders-backorders#Pre-order price guarantee",
+            "promo-codes#Using a promo code"
+          ]
+        },
+        {
+          "id": "r042",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "accessibility#Delivery assistance",
+            "returns-and-refunds#How you receive your money",
+            "rewards-program#Returns and points"
+          ]
+        },
+        {
+          "id": "r045",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "gift-cards#Refunds of gift cards",
+            "replacements#What happens next",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r047",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "account-security#Two-step verification",
+            "promo-codes#Stacking rules",
+            "payments-and-billing#Duplicate or unexpected charges"
+          ]
+        },
+        {
+          "id": "r049",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "rewards-program#Returns and points",
+            "promo-codes#Refunds on discounted orders",
+            "business-orders#Business accounts"
+          ]
+        },
+        {
+          "id": "r057",
+          "type": "lexical",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "business-orders#Tax-exempt purchases",
+            "subscriptions#Changing or skipping a delivery",
+            "privacy-and-data#Downloading your data"
+          ]
+        },
+        {
+          "id": "r061",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "gift-cards#Gift card scams",
+            "replacements#What we need from you",
+            "lost-or-delayed-packages#Stolen packages"
+          ]
+        },
+        {
+          "id": "r062",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "accessibility#Accessible communication",
+            "privacy-and-data#How support conversations are used",
+            "privacy-and-data#What we collect"
+          ]
+        },
+        {
+          "id": "r065",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 5,
+          "section_rank": 5,
+          "chunk_rank": 5,
+          "top": [
+            "returns-and-refunds#Returning the item",
+            "warranty#What the warranty covers",
+            "subscriptions#Cancelling a subscription"
+          ]
+        },
+        {
+          "id": "r066",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders#Pre-order price guarantee",
+            "order-tracking#Delivery estimates"
+          ]
+        },
+        {
+          "id": "r074",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "accessibility#Website and app accessibility",
+            "order-tracking#Tracking not updating",
+            "order-tracking#Split shipments"
+          ]
+        },
+        {
+          "id": "r075",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "business-orders#Paying by invoice",
+            "preorders-backorders#Pre-order price guarantee",
+            "promo-codes#Using a promo code"
+          ]
+        },
+        {
+          "id": "r077",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "price-adjustments#Price drops after you buy",
+            "preorders-backorders#Pre-order price guarantee",
+            "international-shipping#Customs, duties and import taxes"
+          ]
+        },
+        {
+          "id": "r078",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-tracking#Order statuses explained",
+            "preorders-backorders#Backordered items",
+            "preorders-backorders#Pre-order price guarantee"
+          ]
+        },
+        {
+          "id": "r080",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 4,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "order-tracking#Delivery estimates",
+            "rewards-program#Points expiry",
+            "account-security#Two-step verification"
+          ]
+        },
+        {
+          "id": "r084",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "packaging-and-recycling#Battery disposal",
+            "replacements#What happens next",
+            "rewards-program#Returns and points"
+          ]
+        },
+        {
+          "id": "r090",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "order-tracking#Split shipments",
+            "order-cancellation#Orders that were already cancelled",
+            "changing-an-order#Changing items in an order"
+          ]
+        },
+        {
+          "id": "r091",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "preorders-backorders#Release date delays",
+            "replacements#What happens next",
+            "changing-an-order#Changing the delivery address before shipping"
+          ]
+        },
+        {
+          "id": "r092",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "account-security#Two-step verification",
+            "accessibility#Delivery assistance",
+            "lost-or-delayed-packages#Damaged in transit"
+          ]
+        },
+        {
+          "id": "r093",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "warranty#Warranty versus returns",
+            "replacements#What we need from you",
+            "subscriptions#Changing or skipping a delivery"
+          ]
+        },
+        {
+          "id": "r097",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-cancellation#Orders that were already cancelled",
+            "contact-support#Talking to a human",
+            "privacy-and-data#Downloading your data"
+          ]
+        },
+        {
+          "id": "r099",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "payments-and-billing#When you are charged",
+            "account-security#Locked accounts",
+            "account-security#Suspicious activity"
+          ]
+        },
+        {
+          "id": "r100",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "electronics-troubleshooting#Keyboard keys not responding",
+            "promo-codes#Refunds on discounted orders",
+            "promo-codes#Student and military discounts"
+          ]
+        },
+        {
+          "id": "r102",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "warranty#What the warranty covers",
+            "business-orders#Tax-exempt purchases",
+            "international-shipping#Customs, duties and import taxes"
+          ]
+        },
+        {
+          "id": "r106",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": []
+        },
+        {
+          "id": "r107",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "packaging-and-recycling#Battery disposal",
+            "electronics-troubleshooting#Battery draining quickly",
+            "international-shipping#Restricted items"
+          ]
+        },
+        {
+          "id": "r113",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "packaging-and-recycling#Returning packaging",
+            "damaged-items#What counts as damaged on arrival",
+            "accessibility#Reporting an accessibility problem"
+          ]
+        },
+        {
+          "id": "r115",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "replacements#What we need from you",
+            "damaged-items#Evidence we ask for",
+            "lost-or-delayed-packages#Damaged in transit"
+          ]
+        },
+        {
+          "id": "r116",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "order-tracking#Split shipments",
+            "shipping-and-delivery#Signature on delivery",
+            "damaged-items#Partial damage in multi-item orders"
+          ]
+        }
+      ]
+    },
+    {
+      "config": "section:hybrid",
+      "chunks": 120,
+      "all": {
+        "n": 116,
+        "hit@1": 0.7931034482758621,
+        "hit@3": 0.9137931034482759,
+        "mrr@5": 0.860919540229885,
+        "ctx@3": 0.9137931034482759,
+        "sec@1": 0.6810344827586207,
+        "sec@3": 0.8448275862068966
+      },
+      "dev": {
+        "n": 58,
+        "hit@1": 0.7586206896551724,
+        "hit@3": 0.8793103448275862,
+        "mrr@5": 0.8281609195402299,
+        "ctx@3": 0.8793103448275862,
+        "sec@1": 0.6379310344827587,
+        "sec@3": 0.8275862068965517
+      },
+      "test": {
+        "n": 58,
+        "hit@1": 0.8275862068965517,
+        "hit@3": 0.9482758620689655,
+        "mrr@5": 0.8936781609195402,
+        "ctx@3": 0.9482758620689655,
+        "sec@1": 0.7241379310344828,
+        "sec@3": 0.8620689655172413
+      },
+      "by_type": {
+        "confusable": {
+          "n": 22,
+          "hit@1": 0.6818181818181818,
+          "hit@3": 0.8636363636363636,
+          "mrr@5": 0.7878787878787878,
+          "ctx@3": 0.8636363636363636,
+          "sec@1": 0.5909090909090909,
+          "sec@3": 0.7727272727272727
+        },
+        "lexical": {
+          "n": 19,
+          "hit@1": 0.8421052631578947,
+          "hit@3": 1.0,
+          "mrr@5": 0.9122807017543859,
+          "ctx@3": 1.0,
+          "sec@1": 0.8421052631578947,
+          "sec@3": 0.9473684210526315
+        },
+        "paraphrase": {
+          "n": 75,
+          "hit@1": 0.8133333333333334,
+          "hit@3": 0.9066666666666666,
+          "mrr@5": 0.8693333333333334,
+          "ctx@3": 0.9066666666666666,
+          "sec@1": 0.6666666666666666,
+          "sec@3": 0.84
+        }
+      },
+      "oos_auroc": 0.9879310344827587,
+      "abstain": {
+        "threshold": 0.29965330063263496,
+        "refused": 0.95,
+        "answered": 0.9827586206896551
+      },
+      "correct": {
+        "r001": true,
+        "r002": false,
+        "r003": true,
+        "r004": true,
+        "r005": true,
+        "r006": false,
+        "r007": true,
+        "r008": true,
+        "r009": false,
+        "r010": true,
+        "r011": true,
+        "r012": false,
+        "r013": false,
+        "r014": false,
+        "r015": true,
+        "r016": false,
+        "r017": true,
+        "r018": true,
+        "r019": true,
+        "r020": false,
+        "r021": true,
+        "r022": true,
+        "r023": true,
+        "r024": true,
+        "r025": false,
+        "r026": false,
+        "r027": true,
+        "r028": true,
+        "r029": true,
+        "r030": true,
+        "r031": true,
+        "r032": true,
+        "r033": true,
+        "r034": false,
+        "r035": true,
+        "r036": true,
+        "r037": true,
+        "r038": false,
+        "r039": true,
+        "r040": false,
+        "r041": true,
+        "r042": false,
+        "r043": true,
+        "r044": true,
+        "r045": false,
+        "r046": true,
+        "r047": true,
+        "r048": true,
+        "r049": true,
+        "r050": true,
+        "r051": true,
+        "r052": true,
+        "r053": true,
+        "r054": true,
+        "r055": true,
+        "r056": true,
+        "r057": true,
+        "r058": true,
+        "r059": true,
+        "r060": true,
+        "r061": true,
+        "r062": true,
+        "r063": true,
+        "r064": true,
+        "r065": true,
+        "r066": true,
+        "r067": true,
+        "r068": true,
+        "r069": true,
+        "r070": true,
+        "r071": false,
+        "r072": true,
+        "r073": true,
+        "r074": false,
+        "r075": false,
+        "r076": true,
+        "r077": true,
+        "r078": true,
+        "r079": true,
+        "r080": true,
+        "r081": true,
+        "r082": true,
+        "r083": true,
+        "r084": true,
+        "r085": true,
+        "r086": true,
+        "r087": true,
+        "r088": true,
+        "r089": true,
+        "r090": true,
+        "r091": true,
+        "r092": false,
+        "r093": false,
+        "r094": true,
+        "r095": false,
+        "r096": true,
+        "r097": true,
+        "r098": true,
+        "r099": false,
+        "r100": false,
+        "r101": true,
+        "r102": true,
+        "r103": true,
+        "r104": true,
+        "r105": true,
+        "r106": true,
+        "r107": true,
+        "r108": true,
+        "r109": true,
+        "r110": true,
+        "r111": true,
+        "r112": true,
+        "r113": true,
+        "r114": true,
+        "r115": false,
+        "r116": true
+      },
+      "p50_ms": 18.92591649084352,
+      "p95_ms": 23.9046250062529,
+      "misses": [
+        {
+          "id": "r002",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "preorders-backorders#Release date delays",
+            "returns-and-refunds#Refund eligibility window",
+            "warranty#Warranty versus returns"
+          ]
+        },
+        {
+          "id": "r006",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "gift-cards#Refunds of gift cards",
+            "returns-and-refunds#How you receive your money",
+            "returns-and-refunds#Items that cannot be refunded"
+          ]
+        },
+        {
+          "id": "r009",
+          "type": "lexical",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-cancellation#Orders that were already cancelled",
+            "replacements#Eligible order statuses",
+            "order-cancellation#How to cancel"
+          ]
+        },
+        {
+          "id": "r012",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items#Your options",
+            "replacements#Replacement or refund?",
+            "replacements#What happens next"
+          ]
+        },
+        {
+          "id": "r013",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#Changing or skipping a delivery",
+            "shipping-and-delivery#Delivery speeds",
+            "international-shipping#International delivery times"
+          ]
+        },
+        {
+          "id": "r014",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "preorders-backorders#How pre-orders work",
+            "contact-support#Support hours",
+            "preorders-backorders#Mixed orders"
+          ]
+        },
+        {
+          "id": "r016",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "lost-or-delayed-packages#Delayed packages",
+            "shipping-and-delivery#Shipping costs",
+            "payments-and-billing#When you are charged"
+          ]
+        },
+        {
+          "id": "r020",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 3,
+          "top": [
+            "order-tracking#Order statuses explained",
+            "subscriptions#Cancelling a subscription",
+            "order-cancellation#Orders that were already cancelled"
+          ]
+        },
+        {
+          "id": "r025",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": 5,
+          "chunk_rank": 5,
+          "top": [
+            "shipping-and-delivery#Delivery areas",
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "order-tracking#Split shipments"
+          ]
+        },
+        {
+          "id": "r026",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "shipping-and-delivery#Delivery speeds",
+            "international-shipping#International delivery times",
+            "international-shipping#Countries we ship to"
+          ]
+        },
+        {
+          "id": "r034",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 4,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "damaged-items#Partial damage in multi-item orders",
+            "order-cancellation#Orders that were already cancelled",
+            "preorders-backorders#Mixed orders"
+          ]
+        },
+        {
+          "id": "r038",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 4,
+          "section_rank": 5,
+          "chunk_rank": 5,
+          "top": [
+            "damaged-items#Evidence we ask for",
+            "packaging-and-recycling#Returning packaging",
+            "packaging-and-recycling#Reducing packaging"
+          ]
+        },
+        {
+          "id": "r040",
+          "type": "lexical",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "business-orders#Paying by invoice",
+            "payments-and-billing#Accepted payment methods",
+            "gift-cards#Gift card scams"
+          ]
+        },
+        {
+          "id": "r042",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "privacy-and-data#Deleting your account",
+            "account-security#Locked accounts",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r045",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 4,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "order-cancellation#Refund after cancelling",
+            "preorders-backorders#How pre-orders work",
+            "returns-and-refunds#How you receive your money"
+          ]
+        },
+        {
+          "id": "r071",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "preorders-backorders#Pre-order price guarantee",
+            "price-adjustments#Price drops after you buy",
+            "price-adjustments#Bundles and multi-buy offers"
+          ]
+        },
+        {
+          "id": "r074",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 5,
+          "section_rank": null,
+          "chunk_rank": 5,
+          "top": [
+            "rewards-program#Redeeming points",
+            "accessibility#Website and app accessibility",
+            "promo-codes#Student and military discounts"
+          ]
+        },
+        {
+          "id": "r075",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "payments-and-billing#Accepted payment methods",
+            "business-orders#Paying by invoice",
+            "gift-cards#Gift card scams"
+          ]
+        },
+        {
+          "id": "r092",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "lost-or-delayed-packages#Investigating a lost parcel",
+            "lost-or-delayed-packages#Damaged in transit",
+            "lost-or-delayed-packages#Package marked delivered but not received"
+          ]
+        },
+        {
+          "id": "r093",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#Changing or skipping a delivery",
+            "changing-an-order#Changing the delivery address before shipping",
+            "shipping-and-delivery#Delivery speeds"
+          ]
+        },
+        {
+          "id": "r095",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 2,
+          "top": [
+            "business-orders#Business accounts",
+            "contact-support#Response times",
+            "contact-support#Support hours"
+          ]
+        },
+        {
+          "id": "r099",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "account-security#Locked accounts",
+            "account-security#Two-step verification",
+            "business-orders#Business accounts"
+          ]
+        },
+        {
+          "id": "r100",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "electronics-troubleshooting#Keyboard keys not responding",
+            "promo-codes#Student and military discounts",
+            "rewards-program#Redeeming points"
+          ]
+        },
+        {
+          "id": "r115",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "lost-or-delayed-packages#Damaged in transit",
+            "replacements#What we need from you",
+            "damaged-items#Evidence we ask for"
+          ]
+        }
+      ]
+    },
+    {
+      "config": "section:rerank",
+      "chunks": 120,
+      "all": {
+        "n": 116,
+        "hit@1": 0.8793103448275862,
+        "hit@3": 0.9827586206896551,
+        "mrr@5": 0.92816091954023,
+        "ctx@3": 0.9655172413793104,
+        "sec@1": 0.8189655172413793,
+        "sec@3": 0.9310344827586207
+      },
+      "dev": {
+        "n": 58,
+        "hit@1": 0.8793103448275862,
+        "hit@3": 0.9655172413793104,
+        "mrr@5": 0.9195402298850575,
+        "ctx@3": 0.9482758620689655,
+        "sec@1": 0.8275862068965517,
+        "sec@3": 0.9310344827586207
+      },
+      "test": {
+        "n": 58,
+        "hit@1": 0.8793103448275862,
+        "hit@3": 1.0,
+        "mrr@5": 0.9367816091954023,
+        "ctx@3": 0.9827586206896551,
+        "sec@1": 0.8103448275862069,
+        "sec@3": 0.9310344827586207
+      },
+      "by_type": {
+        "confusable": {
+          "n": 22,
+          "hit@1": 0.7272727272727273,
+          "hit@3": 1.0,
+          "mrr@5": 0.856060606060606,
+          "ctx@3": 1.0,
+          "sec@1": 0.6818181818181818,
+          "sec@3": 0.9545454545454546
+        },
+        "lexical": {
+          "n": 19,
+          "hit@1": 1.0,
+          "hit@3": 1.0,
+          "mrr@5": 1.0,
+          "ctx@3": 1.0,
+          "sec@1": 1.0,
+          "sec@3": 1.0
+        },
+        "paraphrase": {
+          "n": 75,
+          "hit@1": 0.8933333333333333,
+          "hit@3": 0.9733333333333334,
+          "mrr@5": 0.931111111111111,
+          "ctx@3": 0.9466666666666667,
+          "sec@1": 0.8133333333333334,
+          "sec@3": 0.9066666666666666
+        }
+      },
+      "oos_auroc": 0.9556034482758621,
+      "abstain": {
+        "threshold": 0.002205542055889964,
+        "refused": 0.85,
+        "answered": 0.9655172413793104
+      },
+      "correct": {
+        "r001": true,
+        "r002": true,
+        "r003": true,
+        "r004": true,
+        "r005": true,
+        "r006": true,
+        "r007": true,
+        "r008": true,
+        "r009": true,
+        "r010": true,
+        "r011": true,
+        "r012": true,
+        "r013": true,
+        "r014": true,
+        "r015": true,
+        "r016": true,
+        "r017": true,
+        "r018": true,
+        "r019": true,
+        "r020": true,
+        "r021": true,
+        "r022": true,
+        "r023": true,
+        "r024": true,
+        "r025": true,
+        "r026": true,
+        "r027": true,
+        "r028": true,
+        "r029": true,
+        "r030": true,
+        "r031": true,
+        "r032": true,
+        "r033": true,
+        "r034": false,
+        "r035": false,
+        "r036": true,
+        "r037": true,
+        "r038": false,
+        "r039": true,
+        "r040": true,
+        "r041": true,
+        "r042": false,
+        "r043": true,
+        "r044": false,
+        "r045": false,
+        "r046": true,
+        "r047": true,
+        "r048": true,
+        "r049": true,
+        "r050": true,
+        "r051": true,
+        "r052": true,
+        "r053": true,
+        "r054": true,
+        "r055": true,
+        "r056": true,
+        "r057": true,
+        "r058": true,
+        "r059": true,
+        "r060": true,
+        "r061": true,
+        "r062": true,
+        "r063": true,
+        "r064": true,
+        "r065": true,
+        "r066": true,
+        "r067": true,
+        "r068": true,
+        "r069": false,
+        "r070": true,
+        "r071": true,
+        "r072": true,
+        "r073": true,
+        "r074": false,
+        "r075": true,
+        "r076": true,
+        "r077": true,
+        "r078": true,
+        "r079": false,
+        "r080": true,
+        "r081": true,
+        "r082": true,
+        "r083": true,
+        "r084": true,
+        "r085": true,
+        "r086": true,
+        "r087": true,
+        "r088": true,
+        "r089": true,
+        "r090": true,
+        "r091": false,
+        "r092": false,
+        "r093": false,
+        "r094": true,
+        "r095": true,
+        "r096": true,
+        "r097": true,
+        "r098": true,
+        "r099": true,
+        "r100": false,
+        "r101": true,
+        "r102": true,
+        "r103": true,
+        "r104": true,
+        "r105": true,
+        "r106": true,
+        "r107": true,
+        "r108": true,
+        "r109": true,
+        "r110": true,
+        "r111": true,
+        "r112": true,
+        "r113": true,
+        "r114": true,
+        "r115": false,
+        "r116": true
+      },
+      "p50_ms": 182.17089600511827,
+      "p95_ms": 241.8320419965312,
+      "misses": [
+        {
+          "id": "r034",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items#Partial damage in multi-item orders",
+            "order-tracking#Split shipments",
+            "replacements#What we need from you"
+          ]
+        },
+        {
+          "id": "r035",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "order-tracking#Order statuses explained",
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "order-tracking#Split shipments"
+          ]
+        },
+        {
+          "id": "r038",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "damaged-items#Evidence we ask for",
+            "damaged-items#Partial damage in multi-item orders",
+            "lost-or-delayed-packages#Damaged in transit"
+          ]
+        },
+        {
+          "id": "r042",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "privacy-and-data#Deleting your account",
+            "payments-and-billing#Duplicate or unexpected charges",
+            "payments-and-billing#Failed payments"
+          ]
+        },
+        {
+          "id": "r044",
+          "type": "confusable",
+          "split": "dev",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "business-orders#Business accounts",
+            "payments-and-billing#Invoices and receipts",
+            "privacy-and-data#Deleting your account"
+          ]
+        },
+        {
+          "id": "r045",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 4,
+          "chunk_rank": 4,
+          "top": [
+            "order-cancellation#Refund after cancelling",
+            "order-cancellation#Which orders can be cancelled",
+            "order-cancellation#Orders that were already cancelled"
+          ]
+        },
+        {
+          "id": "r069",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "returns-and-refunds#Items that cannot be refunded",
+            "warranty#Warranty versus returns",
+            "electronics-troubleshooting#Headphones not connecting"
+          ]
+        },
+        {
+          "id": "r074",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "rewards-program#Redeeming points",
+            "damaged-items#Evidence we ask for",
+            "promo-codes#Student and military discounts"
+          ]
+        },
+        {
+          "id": "r079",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": null,
+          "chunk_rank": 2,
+          "top": [
+            "damaged-items#Partial damage in multi-item orders",
+            "preorders-backorders#Backordered items",
+            "replacements#What happens next"
+          ]
+        },
+        {
+          "id": "r091",
+          "type": "paraphrase",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 3,
+          "chunk_rank": 2,
+          "top": [
+            "replacements#What happens next",
+            "changing-an-order#Upgrading shipping speed",
+            "changing-an-order#Changing the delivery address before shipping"
+          ]
+        },
+        {
+          "id": "r092",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": 3,
+          "section_rank": null,
+          "chunk_rank": 4,
+          "top": [
+            "lost-or-delayed-packages#Package marked delivered but not received",
+            "returns-and-refunds#Returning the item",
+            "lost-or-delayed-packages#Investigating a lost parcel"
+          ]
+        },
+        {
+          "id": "r093",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 2,
+          "section_rank": 2,
+          "chunk_rank": 2,
+          "top": [
+            "subscriptions#Changing or skipping a delivery",
+            "changing-an-order#Upgrading shipping speed",
+            "changing-an-order#Changing the delivery address before shipping"
+          ]
+        },
+        {
+          "id": "r100",
+          "type": "paraphrase",
+          "split": "dev",
+          "doc_rank": null,
+          "section_rank": null,
+          "chunk_rank": null,
+          "top": [
+            "rewards-program#Redeeming points",
+            "electronics-troubleshooting#Keyboard keys not responding",
+            "gift-cards#Buying gift cards"
+          ]
+        },
+        {
+          "id": "r115",
+          "type": "confusable",
+          "split": "test",
+          "doc_rank": 3,
+          "section_rank": 3,
+          "chunk_rank": 3,
+          "top": [
+            "replacements#What we need from you",
+            "lost-or-delayed-packages#Damaged in transit",
+            "damaged-items#Evidence we ask for"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -115,16 +115,18 @@ def _prepare_database():
 
     import app.models  # noqa: F401  (registers tables)
     from app.database import Base, SessionLocal, engine
-    from app.kb import embed_knowledge_documents, seed_knowledge_documents
+    from app.kb import seed_knowledge_base
+    from app.retrieval import ensure_term_stats
 
     with engine.connect() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        ensure_term_stats(conn)
 
     db = SessionLocal()
-    seed_knowledge_documents(db)
-    embed_knowledge_documents(db)
+    seed_knowledge_base(db)
     return db
 
 

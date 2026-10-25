@@ -1,62 +1,54 @@
-"""Knowledge Base module — seed dataset and document management.
+"""Knowledge Base module — seeding and search over knowledge_chunks.
 
-This module manages KnowledgeDocument entries. The pgvector extension and
-tables are created by the migrate service (app/migrate.py).
+Articles live in knowledge_base/*.md and are indexed as one chunk per
+"## " section (app/retrieval.py). The tables are created by the migrate
+service (app/migrate.py), which also seeds them.
+
+Search pipeline, chosen by evaluation/retrieval_eval.py (results in
+evaluation/results/retrieval.md):
+  1. vector search for the RERANK_CANDIDATES nearest sections
+  2. drop candidates under the similarity threshold (abstain if none are left;
+     cosine similarity separates out-of-scope questions better than the
+     cross-encoder score does)
+  3. re-rank what is left with a cross-encoder (RAG_RERANK=0 turns this off)
 """
+import os
+
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
-from app.models import KnowledgeDocument
-from app.embeddings import generate_embedding, EMBEDDING_DIMENSION
+from app.embeddings import generate_embedding
+from app.retrieval import (
+    RERANK_CANDIDATES,
+    chunk_article,
+    index_chunks,
+    load_articles,
+    rerank,
+    vector_search,
+)
+
+CHUNKING_STRATEGY = "section"
 
 
-SEED_DOCUMENTS = [
-    {
-        "title": "Return and Refund Policy",
-        "content": (
-            "Customers may request a refund for eligible orders within 30 days of delivery. "
-            "Refunds of $1000 or less are auto-approved by the system. "
-            "Refunds exceeding $1000 require human admin approval before execution."
-        ),
-        "source": "policy_docs/returns.md",
-    },
-    {
-        "title": "Item Replacement Policy",
-        "content": (
-            "Replacements can be requested for orders that arrive damaged, defective, or incorrect. "
-            "Orders in PROCESSING, SHIPPED, or DELIVERED status are eligible for replacement requests."
-        ),
-        "source": "policy_docs/replacements.md",
-    },
-    {
-        "title": "Shipping & Delivery Guidelines",
-        "content": (
-            "Standard shipping takes 3-5 business days. Express shipping takes 1-2 business days. "
-            "Tracking numbers are generated once an order status updates to SHIPPED."
-        ),
-        "source": "policy_docs/shipping.md",
-    },
-    {
-        "title": "Order Cancellation Rules",
-        "content": (
-            "Orders can only be cancelled while in PROCESSING status. "
-            "Once an order has SHIPPED or DELIVERED, direct cancellation is disabled and "
-            "the customer must initiate a return."
-        ),
-        "source": "policy_docs/cancellations.md",
-    },
-]
+def rerank_enabled() -> bool:
+    return os.getenv("RAG_RERANK", "1").lower() not in ("0", "false", "no")
 
 
-def seed_knowledge_documents(db: Session | None = None) -> list[dict]:
-    """Seeds the initial synthetic support policy documents if the table is empty.
+def kb_titles() -> list[str]:
+    """Titles of every knowledge_base/ article."""
+    return [a.title for a in load_articles()]
+
+
+def seed_knowledge_base(db: Session | None = None, force: bool = False) -> dict:
+    """Indexes knowledge_base/ into knowledge_chunks if the table is empty.
 
     Args:
         db (Session, optional): SQLAlchemy DB session.
+        force (bool): Re-index even when chunks already exist (after editing articles).
 
     Returns:
-        list[dict]: List of seeded or existing knowledge document records.
+        dict: articles and chunks counts, and whether anything was indexed.
     """
     close_db = False
     if db is None:
@@ -64,141 +56,17 @@ def seed_knowledge_documents(db: Session | None = None) -> list[dict]:
         close_db = True
 
     try:
-        count = db.query(KnowledgeDocument).count()
-        if count == 0:
-            doc_objs = [
-                KnowledgeDocument(
-                    title=doc["title"],
-                    content=doc["content"],
-                    source=doc["source"],
-                    embedding=None,  # Embeddings generated via populate_knowledge_document_embeddings
-                )
-                for doc in SEED_DOCUMENTS
-            ]
-            db.add_all(doc_objs)
-            db.commit()
-            for doc in doc_objs:
-                db.refresh(doc)
-
-        docs = db.query(KnowledgeDocument).all()
-        return [
-            {
-                "id": d.id,
-                "title": d.title,
-                "content": d.content,
-                "source": d.source,
-                "has_embedding": d.embedding is not None,
-                "created_at": str(d.created_at),
-            }
-            for d in docs
-        ]
-    finally:
-        if close_db:
-            db.close()
-
-
-def embed_knowledge_documents(db: Session | None = None) -> dict:
-    """Generates and persists embeddings for KnowledgeDocument records with NULL embeddings.
-
-    Documents with existing embeddings are safely skipped to avoid redundant API/computation costs.
-
-    Args:
-        db (Session, optional): SQLAlchemy DB session.
-
-    Returns:
-        dict: Detailed log containing processed_count, skipped_count, and document status list.
-
-    Raises:
-        RuntimeError: If embedding generation or DB persistence fails for any document.
-    """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
-
-    try:
-        # Load only documents whose embedding is currently NULL
-        pending_docs = (
-            db.query(KnowledgeDocument)
-            .filter(KnowledgeDocument.embedding == None)
-            .all()
-        )
-
-        processed_count = 0
-        for doc in pending_docs:
-            text_to_embed = f"{doc.title}\n{doc.content}"
-            try:
-                embedding_vector = generate_embedding(text_to_embed)
-            except Exception as err:
-                db.rollback()
-                raise RuntimeError(
-                    f"Embedding generation failed for Document #{doc.id} ('{doc.title}'): {err}"
-                ) from err
-
-            if not isinstance(embedding_vector, list) or len(embedding_vector) != EMBEDDING_DIMENSION:
-                db.rollback()
-                raise ValueError(
-                    f"Invalid vector dimension {len(embedding_vector) if isinstance(embedding_vector, list) else type(embedding_vector)} "
-                    f"for Document #{doc.id}, expected {EMBEDDING_DIMENSION}"
-                )
-
-            doc.embedding = embedding_vector
-            processed_count += 1
-
-        if pending_docs:
-            db.commit()
-
-        # Query all documents to construct metadata report
-        all_docs = db.query(KnowledgeDocument).all()
-        skipped_count = len(all_docs) - processed_count
-
-        doc_summaries = []
-        for d in all_docs:
-            vec_dim = len(d.embedding) if d.embedding is not None else 0
-            doc_summaries.append({
-                "id": d.id,
-                "title": d.title,
-                "has_embedding": d.embedding is not None,
-                "vector_dimension": vec_dim,
-            })
-
-        return {
-            "processed_count": processed_count,
-            "skipped_count": skipped_count,
-            "total_documents": len(all_docs),
-            "documents": doc_summaries,
-        }
-    except Exception as err:
-        if db:
-            db.rollback()
-        raise RuntimeError(f"Database embedding persistence failed: {err}") from err
-    finally:
-        if close_db:
-            db.close()
-
-
-def clear_knowledge_document_embeddings(db: Session | None = None) -> int:
-    """Sets embedding = NULL for all KnowledgeDocument records to prepare for re-embedding.
-
-    Args:
-        db (Session, optional): SQLAlchemy DB session.
-
-    Returns:
-        int: Number of document records cleared.
-    """
-    close_db = False
-    if db is None:
-        db = SessionLocal()
-        close_db = True
-
-    try:
-        updated = db.query(KnowledgeDocument).update({KnowledgeDocument.embedding: None})
+        existing = db.execute(text("SELECT count(*) FROM knowledge_chunks")).scalar()
+        articles = load_articles()
+        if existing and not force:
+            return {"articles": len(articles), "chunks": existing, "indexed": False}
+        chunks = [c for a in articles for c in chunk_article(a, CHUNKING_STRATEGY)]
+        index_chunks(db.connection(), chunks)
         db.commit()
-        return updated
-    except Exception as err:
-        if db:
-            db.rollback()
-        raise RuntimeError(f"Failed to clear knowledge document embeddings: {err}") from err
+        return {"articles": len(articles), "chunks": len(chunks), "indexed": True}
+    except Exception:
+        db.rollback()
+        raise
     finally:
         if close_db:
             db.close()
@@ -210,32 +78,21 @@ def search_knowledge_base(
     similarity_threshold: float | None = None,
     db: Session | None = None,
 ) -> list[dict]:
-    """Performs semantic vector retrieval over the knowledge base.
+    """Retrieves the knowledge base sections most relevant to a query.
 
-    Embeds the query using the same all-MiniLM-L6-v2 model that was used for
-    the stored documents, then uses pgvector's cosine distance operator (<=>) to
-    find the top-k most semantically similar KnowledgeDocument records.
-
-    Distance metric:
-        pgvector cosine distance (<=>) returns values in [0, 2]:
-            0.0 = identical direction (perfect match)
-            1.0 = orthogonal (unrelated)
-            2.0 = opposite direction
-        Cosine similarity = 1 − cosine_distance, giving values in [-1, 1]:
-            1.0 = identical direction
-            0.0 = orthogonal
-           -1.0 = opposite direction
+    Cosine similarity = 1 − pgvector cosine distance (<=>), in [-1, 1].
 
     Args:
         query:                Natural-language search query.
         top_k:                Maximum number of results to return. Must be >= 1.
         similarity_threshold: Optional minimum cosine similarity (0.0–1.0).
-                              Documents below this threshold are excluded.
+                              Sections below this threshold are excluded.
         db:                   SQLAlchemy DB session (created internally if None).
 
     Returns:
-        list[dict]: Ranked list of matching documents, each containing:
-            id, title, content, source, cosine_distance, cosine_similarity.
+        list[dict]: Ranked sections, each containing id, title (the article
+            title), heading, content, source, cosine_distance,
+            cosine_similarity and rerank_score (None when re-ranking is off).
 
     Raises:
         ValueError: If query is empty or top_k < 1.
@@ -253,60 +110,36 @@ def search_knowledge_base(
                 f"similarity_threshold must be between 0.0 and 1.0, got {similarity_threshold}"
             )
 
-    # ── Session management ────────────────────────────────────────────
     close_db = False
     if db is None:
         db = SessionLocal()
         close_db = True
 
     try:
-        # ── Embed the query with the SAME model used for documents ────
-        query_vector = generate_embedding(query)
-
-        # ── pgvector cosine distance query ────────────────────────────
-        # The <=> operator computes cosine distance.  We ORDER BY it ASC
-        # so that the most-similar documents come first, then LIMIT to top_k.
-        vector_literal = f"[{','.join(str(v) for v in query_vector)}]"
-
-        sql = text(
-            "SELECT id, title, content, source, "
-            "       embedding <=> :vec AS cosine_distance "
-            "FROM knowledge_documents "
-            "WHERE embedding IS NOT NULL "
-            "ORDER BY embedding <=> :vec ASC "
-            "LIMIT :k"
+        hits = vector_search(
+            db.connection(),
+            query,
+            max(top_k, RERANK_CANDIDATES),
+            query_vector=generate_embedding(query),
         )
+        if similarity_threshold is not None:
+            hits = [h for h in hits if h.scores["vector"] >= similarity_threshold]
+        if rerank_enabled():
+            hits = rerank(query, hits)
 
-        rows = db.execute(sql, {"vec": vector_literal, "k": top_k}).fetchall()
-
-        # ── Build result list with similarity scores ──────────────────
-        results: list[dict] = []
-        for row in rows:
-            cosine_dist = float(row.cosine_distance)
-            cosine_sim = 1.0 - cosine_dist
-
-            # Apply optional similarity threshold
-            if similarity_threshold is not None and cosine_sim < similarity_threshold:
-                continue
-
-            results.append({
-                "id": row.id,
-                "title": row.title,
-                "content": row.content,
-                "source": row.source,
-                "cosine_distance": round(cosine_dist, 6),
-                "cosine_similarity": round(cosine_sim, 6),
-            })
-
-        return results
-
+        return [
+            {
+                "id": h.chunk_id,
+                "title": h.doc_title,
+                "heading": h.heading,
+                "content": h.content,
+                "source": h.source,
+                "cosine_distance": round(1.0 - h.scores["vector"], 6),
+                "cosine_similarity": round(h.scores["vector"], 6),
+                "rerank_score": h.scores.get("rerank"),
+            }
+            for h in hits[:top_k]
+        ]
     finally:
         if close_db:
             db.close()
-
-
-# Alias for backward compatibility
-populate_knowledge_document_embeddings = embed_knowledge_documents
-
-
-

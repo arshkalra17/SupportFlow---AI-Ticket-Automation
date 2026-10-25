@@ -37,15 +37,17 @@ os.environ.setdefault("JWT_SECRET", "test_secret_key_stage8_supportflow")
 # Tests mock Groq; pin the provider chain so a GEMINI_API_KEY in .env can
 # never turn a mocked failure into a real fallback call.
 os.environ.setdefault("LLM_PROVIDERS", "groq")
+# The cross-encoder is a ~1 GB download; retrieval tests use vector order and
+# tests/test_retrieval.py covers re-ranking with a stub model.
+os.environ.setdefault("RAG_RERANK", "0")
 
 # Now safe to import app modules
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from app.database import Base
-from app.models import Customer, Order, KnowledgeDocument, Conversation, Message, ConversationContext
+from app.models import Customer, Order, Conversation, Message, ConversationContext
 from app.auth import hash_password, create_access_token
-from app.embeddings import generate_embedding
 
 # ── Test database engine ──────────────────────────────────────────────
 TEST_DATABASE_URL = os.environ["DATABASE_URL"]
@@ -62,6 +64,10 @@ def create_test_tables():
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
     Base.metadata.create_all(bind=test_engine)
+    from app.retrieval import ensure_term_stats
+
+    with test_engine.begin() as conn:
+        ensure_term_stats(conn)
     yield
 
 
@@ -84,7 +90,6 @@ def db():
         "approvals",
         "actions",
         "replacement_requests",
-        "knowledge_documents",
         "orders",
         "tickets",
         "customers",
@@ -208,40 +213,23 @@ def orders(db, customer, customer2):
 
 
 # ── Knowledge base fixture ────────────────────────────────────────────
+# knowledge_chunks is not truncated per test (no test writes to it), so the
+# 120 section chunks are embedded once per session.
 @pytest.fixture(scope="session")
-def _kb_embeddings():
-    """
-    Computes embeddings for the 4 policy documents once per session.
-    SentenceTransformer model load is expensive; session scope avoids
-    reloading it for every test.
-    """
-    from app.kb import SEED_DOCUMENTS
+def _indexed_kb(create_test_tables):
+    from app.kb import seed_knowledge_base
 
-    embedded = []
-    for doc in SEED_DOCUMENTS:
-        vec = generate_embedding(f"{doc['title']}\n{doc['content']}")
-        embedded.append({**doc, "embedding": vec})
-    return embedded
+    session = TestSessionLocal()
+    try:
+        return seed_knowledge_base(session, force=True)
+    finally:
+        session.close()
 
 
 @pytest.fixture()
-def seeded_kb(db, _kb_embeddings):
-    """
-    Inserts the 4 policy KnowledgeDocuments with pre-computed embeddings
-    into the (already-truncated) test database.
-    """
-    docs = [
-        KnowledgeDocument(
-            title=d["title"],
-            content=d["content"],
-            source=d["source"],
-            embedding=d["embedding"],
-        )
-        for d in _kb_embeddings
-    ]
-    db.add_all(docs)
-    db.commit()
-    return docs
+def seeded_kb(db, _indexed_kb):
+    """The knowledge_base/ articles, indexed as section chunks."""
+    return _indexed_kb
 
 
 # ── FastAPI test client ───────────────────────────────────────────────

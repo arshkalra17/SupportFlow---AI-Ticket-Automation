@@ -4,7 +4,7 @@ Runner — Metrics 3 & 4: RAG Hit@1, Hit@3, out-of-domain rejection.
 Uses search_knowledge_base() from app.kb with the local all-MiniLM-L6-v2
 model and pgvector.  Zero Groq calls.
 
-The similarity threshold (RAG_SIMILARITY_THRESHOLD = 0.15) is applied
+The similarity threshold (RAG_SIMILARITY_THRESHOLD = 0.30) is applied
 to filter results, matching the production threshold in app/rag.py.
 Out-of-domain queries are expected to return an empty list after filtering.
 """

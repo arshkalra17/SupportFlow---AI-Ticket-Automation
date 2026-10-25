@@ -2,7 +2,9 @@ from datetime import datetime
 # pyrefly: ignore [missing-import]
 from pgvector.sqlalchemy import Vector
 # pyrefly: ignore [missing-import]
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint, JSON
+from sqlalchemy import Column, Computed, DateTime, Float, ForeignKey, Index, Integer, String, Text, UniqueConstraint, JSON
+# pyrefly: ignore [missing-import]
+from sqlalchemy.dialects.postgresql import TSVECTOR
 from app.database import Base
 
 
@@ -67,15 +69,38 @@ class Approval(Base):
     graph_checkpoint_id = Column(String, nullable=True)
 
 
-class KnowledgeDocument(Base):
-    __tablename__ = "knowledge_documents"
+class KnowledgeChunk(Base):
+    """One retrievable piece of a knowledge_base/ article (see app/retrieval.py)."""
+    __tablename__ = "knowledge_chunks"
 
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
+    id = Column(Integer, primary_key=True)
+    doc_slug = Column(String, nullable=False, index=True)
+    doc_title = Column(String, nullable=False)
+    heading = Column(String, nullable=True)  # NULL when the chunk is a whole article
     content = Column(Text, nullable=False)
     source = Column(String, nullable=True)
-    embedding = Column(Vector(384), nullable=True)
+    embedding = Column(Vector(384), nullable=False)
+    # Kept in sync by Postgres; title and heading are weighted above the body
+    tsv = Column(
+        TSVECTOR,
+        Computed(
+            "setweight(to_tsvector('english', coalesce(doc_title, '')), 'A') || "
+            "setweight(to_tsvector('english', coalesce(heading, '')), 'A') || "
+            "setweight(to_tsvector('english', content), 'B')",
+            persisted=True,
+        ),
+    )
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index("ix_knowledge_chunks_tsv", "tsv", postgresql_using="gin"),
+        Index(
+            "ix_knowledge_chunks_embedding_hnsw",
+            "embedding",
+            postgresql_using="hnsw",
+            postgresql_ops={"embedding": "vector_cosine_ops"},
+        ),
+    )
 
 
 class Customer(Base):

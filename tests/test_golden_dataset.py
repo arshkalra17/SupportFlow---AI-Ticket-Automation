@@ -12,7 +12,7 @@ Two layers:
 
 import pytest
 
-from app.kb import SEED_DOCUMENTS
+from app.kb import kb_titles
 from app.llm import AVAILABLE_TOOLS
 from evaluation.golden import (
     STATE_CHANGING_TOOLS,
@@ -30,7 +30,7 @@ TOOL_PARAMS = {
     t["function"]["name"]: set(t["function"]["parameters"].get("properties", {}))
     for t in AVAILABLE_TOOLS
 }
-KB_TITLES = {d["title"] for d in SEED_DOCUMENTS}
+KB_TITLES = set(kb_titles())
 CUSTOMER_IDS = {c["id"] for c in FIXTURES["customers"]}
 ORDER_IDS = {o["id"] for o in FIXTURES["orders"]}
 TICKET_IDS = {t["id"] for t in FIXTURES["tickets"]}

@@ -67,3 +67,18 @@ def generate_embedding(text: str) -> list[float]:
         )
 
     return [float(val) for val in vector]
+
+
+def generate_embeddings(texts: list[str]) -> list[list[float]]:
+    """Embeds a batch of texts in one model call (much faster than one at a time).
+
+    Args:
+        texts (list[str]): Non-empty input strings.
+
+    Returns:
+        list[list[float]]: One 384-dimensional vector per input, in order.
+    """
+    if not texts or any(not isinstance(t, str) or not t.strip() for t in texts):
+        raise ValueError("generate_embeddings needs a non-empty list of non-empty strings")
+    vectors = get_embedding_model().encode(texts, convert_to_numpy=True, batch_size=64)
+    return [[float(v) for v in row] for row in vectors]

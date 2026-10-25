@@ -46,9 +46,8 @@ def setup_eval_db() -> Session:
     os.environ["DATABASE_URL"] = EVAL_DATABASE_URL
 
     from app.database import Base
-    from app.models import Customer, Order, KnowledgeDocument
-    from app.embeddings import generate_embedding
-    from app.kb import SEED_DOCUMENTS
+    from app.kb import seed_knowledge_base
+    from app.retrieval import ensure_term_stats
 
     session, engine = _make_session()
 
@@ -57,11 +56,13 @@ def setup_eval_db() -> Session:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         conn.commit()
     Base.metadata.create_all(bind=engine)
+    with engine.begin() as conn:
+        ensure_term_stats(conn)
 
     # ── Truncate eval-owned tables in dependency-safe order ──────────
     for table in [
         "idempotency_records", "approvals", "actions",
-        "replacement_requests", "knowledge_documents",
+        "replacement_requests",
         "orders", "tickets", "customers",
     ]:
         session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))
@@ -96,34 +97,14 @@ def setup_eval_db() -> Session:
             )
     session.commit()
 
-    # ── Seed knowledge documents with embeddings ─────────────────────
-    # The vector literal must be interpolated directly into the SQL string
-    # because SQLAlchemy's text() bind-param handling conflicts with
-    # PostgreSQL's ::vector cast syntax when using psycopg2.
-    for doc in SEED_DOCUMENTS:
-        vec = generate_embedding(f"{doc['title']}\n{doc['content']}")
-        # Build a safe float-only literal — no user input, no injection risk.
-        vec_literal = "[" + ",".join(f"{v:.8f}" for v in vec) + "]"
-        session.execute(
-            text(
-                "INSERT INTO knowledge_documents "
-                "(title, content, source, embedding, created_at) "
-                "VALUES (:title, :content, :source, "
-                f"'{vec_literal}'::vector, NOW())"
-            ),
-            {
-                "title":   doc["title"],
-                "content": doc["content"],
-                "source":  doc["source"],
-            },
-        )
-    session.commit()
+    # ── Index the knowledge base (skipped when already indexed) ──────
+    kb = seed_knowledge_base(session)
 
     print(
         f"  [db_setup] eval DB ready — "
         f"{len(EVAL_CUSTOMER_IDS)} customers, "
         f"{sum(len(v) for v in EVAL_ORDER_IDS.values())} orders, "
-        f"{len(SEED_DOCUMENTS)} knowledge documents"
+        f"{kb['chunks']} knowledge chunks"
     )
     return session
 
@@ -135,7 +116,7 @@ def teardown_eval_db(session: Session) -> None:
     """
     for table in [
         "idempotency_records", "approvals", "actions",
-        "replacement_requests", "knowledge_documents",
+        "replacement_requests",
         "orders", "tickets", "customers",
     ]:
         session.execute(text(f"TRUNCATE TABLE {table} RESTART IDENTITY CASCADE"))

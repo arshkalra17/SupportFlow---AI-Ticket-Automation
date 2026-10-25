@@ -22,6 +22,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM base AS builder
 COPY app/ ./app/
 COPY evaluation/ ./evaluation/
+COPY knowledge_base/ ./knowledge_base/
 
 # Production stage
 FROM base AS production
@@ -29,6 +30,7 @@ FROM base AS production
 # Copy application code from builder
 COPY --from=builder /app/app ./app
 COPY --from=builder /app/evaluation ./evaluation
+COPY --from=builder /app/knowledge_base ./knowledge_base
 
 # Copy Alembic configuration
 COPY alembic.ini .

@@ -4,8 +4,12 @@ Stage 8 — RAG retrieval tests (deterministic, no Groq required).
 Uses the real local all-MiniLM-L6-v2 model for embedding.
 Tests retrieval quality WITHOUT calling the Groq LLM for generation.
 
+The knowledge base is the 24 knowledge_base/ articles, indexed as section
+chunks. Re-ranking is off in tests (RAG_RERANK=0, see conftest.py), so these
+check the vector stage; evaluation/retrieval_eval.py measures the full pipeline.
+
 Gold dataset — query → expected top document title:
-    "package arrived damaged"      → Item Replacement Policy
+    "sent the wrong item"          → Item Replacement Policy
     "eligible for a refund"        → Return and Refund Policy
     "express delivery time"        → Shipping & Delivery Guidelines
     "cancel my processing order"   → Order Cancellation Rules
@@ -29,9 +33,9 @@ from app.rag import RAG_SIMILARITY_THRESHOLD
 
 GOLD_DATASET = [
     {
-        "query": "my package arrived damaged, I need a replacement",
+        "query": "they sent me the wrong item, I want a replacement",
         "expected_title": "Item Replacement Policy",
-        "description": "damaged package → replacement policy",
+        "description": "wrong item → replacement policy",
     },
     {
         "query": "I want to get a refund for my recent purchase",
@@ -152,6 +156,47 @@ def test_similarity_threshold_filters_low_scores(seeded_kb, db):
         db=db,
     )
     assert all(r["cosine_similarity"] >= 0.99 for r in results)
+
+
+# ══════════════════════════════════════════════════════════════════════
+# Regression floor on the labelled retrieval set
+# ══════════════════════════════════════════════════════════════════════
+
+@pytest.mark.slow
+def test_retrieval_set_meets_floor(seeded_kb, db):
+    """Section-chunk vector search put the right article in its top 3
+    chunks for 108/116 retrieval_v1 questions once the RAG threshold is
+    applied (Ctx@3 is 94.8% without it, evaluation/results/retrieval.md)
+    and, at the threshold, refused 95%
+    of out-of-scope questions while answering 99% of in-scope ones. A drop
+    below these floors means a change to the corpus, chunking or embeddings
+    made retrieval worse."""
+    import json
+    from pathlib import Path
+
+    data = json.loads(
+        (Path(__file__).resolve().parent.parent / "evaluation/datasets/retrieval_v1.json").read_text()
+    )
+    titles = {}
+    from app.retrieval import load_articles
+    for a in load_articles():
+        titles[a.slug] = a.title
+
+    hit3 = answered = 0
+    for q in data["questions"]:
+        results = search_knowledge_base(
+            query=q["query"], top_k=3, similarity_threshold=RAG_SIMILARITY_THRESHOLD, db=db
+        )
+        answered += bool(results)
+        hit3 += titles[q["doc"]] in [r["title"] for r in results]
+    refused = sum(
+        not search_knowledge_base(query=q, top_k=3, similarity_threshold=RAG_SIMILARITY_THRESHOLD, db=db)
+        for q in data["out_of_scope"]
+    )
+    n = len(data["questions"])
+    assert hit3 / n >= 0.9, f"right article in top 3 chunks for {hit3}/{n}"
+    assert answered / n >= 0.97, f"answered {answered}/{n} in-scope questions"
+    assert refused / len(data["out_of_scope"]) >= 0.9, f"refused {refused}/{len(data['out_of_scope'])} out-of-scope"
 
 
 # ══════════════════════════════════════════════════════════════════════

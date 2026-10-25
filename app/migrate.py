@@ -78,6 +78,17 @@ def run_migrations():
             logger.info("Running Alembic migrations...")
             command.upgrade(alembic_cfg, "head")
 
+        # Knowledge base: BM25 stats view (missing on a create_all schema),
+        # then index knowledge_base/*.md if the chunks table is empty
+        from app.kb import seed_knowledge_base
+        from app.retrieval import ensure_term_stats
+
+        with engine.begin() as conn:
+            ensure_term_stats(conn)
+        kb = seed_knowledge_base()
+        logger.info(f"Knowledge base: {kb['chunks']} chunks from {kb['articles']} articles "
+                    f"({'indexed now' if kb['indexed'] else 'already indexed'}).")
+
         # LangGraph checkpoint tables (managed by the checkpointer, not Alembic)
         from app.checkpoint import close_checkpointer, get_checkpointer
         get_checkpointer()
