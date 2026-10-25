@@ -61,6 +61,10 @@ class Approval(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     resolved_at = Column(DateTime, nullable=True)
     resolved_by = Column(String, nullable=True)
+    # Where the LangGraph run that requested this approval is paused, so the
+    # admin's decision resumes that exact run (see app.graph.resume_after_approval)
+    graph_thread_id = Column(String, nullable=True)
+    graph_checkpoint_id = Column(String, nullable=True)
 
 
 class KnowledgeDocument(Base):

@@ -17,7 +17,9 @@ from app.auth import (
     get_current_admin,
 )
 from app.tools import authorize_and_get_order_status
-from app.graph import run_supportflow
+import logging
+
+from app.graph import resume_after_approval, run_supportflow
 from app.idempotency import execute_with_idempotency
 from app.observability import init_observability, traced_span, get_customer_identifier
 from app.middleware import TraceMiddleware
@@ -422,6 +424,34 @@ class ApprovalActionResponse(BaseModel):
     reason: str | None
     executed: bool
     execution_error: str | None = None
+    # Reply sent to the customer's conversation when the paused run resumed
+    customer_reply: str | None = None
+
+
+def _resume_customer_run(result: dict, db: Session) -> str | None:
+    """Resumes the conversation run that was paused on this approval and
+    posts its reply to the customer's conversation.
+
+    Runs after the decision is committed, so a failure here never undoes
+    or repeats the decision; it only means the customer isn't notified.
+    """
+    decision = {
+        "approved": result["approval_status"] == "APPROVED",
+        "executed": result["executed"],
+        "execution_error": result.get("execution_error"),
+    }
+    try:
+        state = resume_after_approval(result["approval_id"], decision)
+    except Exception:
+        logging.getLogger("supportflow.api").exception(
+            "Resuming the run for approval #%s failed", result["approval_id"]
+        )
+        return None
+    if not state or not state.get("final_response"):
+        return None
+    if state.get("conversation_id"):
+        save_assistant_message(state["conversation_id"], state["final_response"], db)
+    return state["final_response"]
 
 
 @app.get("/approvals/pending", response_model=list[PendingApprovalResponse])
@@ -502,6 +532,7 @@ def approve_approval_request(
                 detail=result["error"],
             )
 
+        result["customer_reply"] = _resume_customer_run(result, db)
         return ApprovalActionResponse(**result)
 
 
@@ -550,4 +581,5 @@ def reject_approval_request(
                 detail=result["error"],
             )
 
+        result["customer_reply"] = _resume_customer_run(result, db)
         return ApprovalActionResponse(**result)

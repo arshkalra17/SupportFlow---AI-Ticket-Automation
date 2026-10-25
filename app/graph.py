@@ -15,6 +15,7 @@ import json
 import logging
 import re
 import time
+import uuid
 from typing import TypedDict
 
 # pyrefly: ignore [missing-import]
@@ -23,12 +24,16 @@ from dotenv import load_dotenv
 from app.llm_client import chat_completion
 # pyrefly: ignore [missing-import]
 from langgraph.graph import StateGraph, START, END
+from langgraph.types import Command, interrupt
 
 # Reuse existing SupportFlow capabilities — NO duplication
 from app.llm import classify_ticket, _execute_tool_call, AVAILABLE_TOOLS
 from app.kb import search_knowledge_base
 from app.rag import answer_with_knowledge_base, RAG_SIMILARITY_THRESHOLD
 from app.observability import traced_span, safe_set_attribute
+from app.checkpoint import get_checkpointer
+from app.database import SessionLocal
+from app.models import Approval
 
 load_dotenv()
 
@@ -429,24 +434,71 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         return result
 
 
+def _pending_approvals(state: SupportFlowState) -> list[dict]:
+    """Approval requests created by tool calls in this run."""
+    pending = []
+    for tc in state.get("tool_calls") or []:
+        result = tc.get("tool_result")
+        if isinstance(result, dict) and result.get("status") == "PENDING_APPROVAL" and result.get("approval_id"):
+            pending.append({
+                "approval_id": result["approval_id"],
+                "action_type": "REFUND" if tc.get("tool_name") == "issue_refund" else tc.get("tool_name"),
+                "order_id": (tc.get("tool_args") or {}).get("order_id"),
+                "amount": (tc.get("tool_args") or {}).get("amount"),
+            })
+    return pending
+
+
+def _decision_message(request: dict, decision: dict) -> str:
+    """Customer-facing outcome, built from the backend's result rather than
+    generated, so it can't claim a refund that didn't happen."""
+    what = f"your refund request for order #{request['order_id']}"
+    amount = request.get("amount")
+    money = f"${amount:,.2f} " if isinstance(amount, (int, float)) else ""
+    if not decision.get("approved"):
+        return f"Update on {what}: after review it was not approved, so no refund has been issued."
+    if decision.get("executed"):
+        return f"Update on {what}: it was approved and your {money}refund has been issued."
+    return (
+        f"Update on {what}: it was approved, but the refund could not be completed "
+        f"({decision.get('execution_error') or 'unknown error'}). A support agent will follow up."
+    )
+
+
 def approval_check_node(state: SupportFlowState) -> dict:
-    """Records that an approval is pending. Does NOT fake/bypass approval.
+    """Pauses the run until an admin approves or rejects each pending request.
 
-    In a real system this node would wait for the human decision.
-    For this milestone it captures the state and lets the response
-    generator inform the customer.
-
-    Reuses: approval status already set by tool execution results.
+    interrupt() saves the run in the checkpointer and stops it. The admin
+    endpoint executes (or rejects) the action through app.approval, under a
+    row lock, then resumes this run with the outcome via
+    resume_after_approval(); this node only turns that outcome into the
+    customer reply. Execution stays outside the graph on purpose: a node
+    re-runs from the top on resume, so anything with side effects before
+    an interrupt would run twice.
     """
     with traced_span("supportflow.graph.approval_check") as span:
         log = list(state.get("execution_log", []))
         log.append("→ ENTERED: approval_check_node")
-        log.append(f"  approval_status: {state.get('approval_status')}")
-
+        pending = _pending_approvals(state)
         if span:
-            safe_set_attribute(span, "approval_status", state.get("approval_status", ""))
+            safe_set_attribute(span, "approval.pending_count", len(pending))
+        if not pending:
+            return {"execution_log": log}
 
-        return {"execution_log": log}
+        messages, outcomes = [], []
+        for request in pending:
+            decision = interrupt(request)
+            log.append(f"  resumed: approval #{request['approval_id']} -> {decision}")
+            messages.append(_decision_message(request, decision))
+            if not decision.get("approved"):
+                outcomes.append("REJECTED")
+            elif decision.get("executed"):
+                outcomes.append("APPROVED")
+            else:
+                outcomes.append("FAILED")
+
+        status = next((s for s in ("REJECTED", "FAILED") if s in outcomes), "APPROVED")
+        return {"execution_log": log, "approval_status": status, "final_response": " ".join(messages)}
 
 
 def generate_response_node(state: SupportFlowState) -> dict:
@@ -754,19 +806,50 @@ def build_supportflow_graph():
     # error → END
     graph.add_edge("error_node", END)
 
-    return graph.compile()
+    return graph.compile(checkpointer=get_checkpointer())
 
 
-# Compiled graph singleton
+# Compiled graph singleton, rebuilt if the checkpointer was replaced
 _compiled_graph = None
 
 
 def _get_graph():
     """Returns the compiled graph singleton."""
     global _compiled_graph
-    if _compiled_graph is None:
+    if _compiled_graph is None or _compiled_graph.checkpointer is not get_checkpointer():
         _compiled_graph = build_supportflow_graph()
     return _compiled_graph
+
+
+def _thread_id(conversation_id: int | None) -> str:
+    """One thread per conversation. Runs outside a conversation (evals,
+    scripts) get a throwaway thread so their checkpoints never mix."""
+    return f"conversation-{conversation_id}" if conversation_id else f"run-{uuid.uuid4().hex}"
+
+
+def _record_pause(graph, thread_id: str) -> None:
+    """Stores on each awaiting Approval where its run is paused, so the
+    admin's decision resumes that exact run, even after a restart."""
+    snapshot = graph.get_state({"configurable": {"thread_id": thread_id}})
+    checkpoint_id = snapshot.config["configurable"]["checkpoint_id"]
+    approval_ids = [i.value["approval_id"] for i in snapshot.interrupts if isinstance(i.value, dict)]
+    if not approval_ids:
+        return
+    db = SessionLocal()
+    try:
+        for approval in db.query(Approval).filter(Approval.id.in_(approval_ids)):
+            approval.graph_thread_id = thread_id
+            approval.graph_checkpoint_id = checkpoint_id
+        db.commit()
+    finally:
+        db.close()
+
+
+def _finish(graph, result, thread_id: str) -> SupportFlowState:
+    result = dict(result)
+    if result.pop("__interrupt__", None):
+        _record_pause(graph, thread_id)
+    return result
 
 
 # ═══════════════════════════════════════════════════════════════════════
@@ -823,5 +906,35 @@ def run_supportflow(
     }
 
     graph = _get_graph()
-    result = graph.invoke(initial_state)
-    return result
+    thread_id = _thread_id(conversation_id)
+    result = graph.invoke(initial_state, {"configurable": {"thread_id": thread_id}})
+    return _finish(graph, result, thread_id)
+
+
+def resume_after_approval(approval_id: int, decision: dict) -> SupportFlowState | None:
+    """Resumes the run paused on this approval with the admin's outcome.
+
+    decision: {"approved": bool, "executed": bool, "execution_error": str | None},
+    produced by app.approval after it has executed or rejected the action.
+    Returns the run's final state, or None if no paused run is recorded
+    for this approval (e.g. it was created outside the graph).
+
+    The caller must only call this once per approval, after the approval's
+    status changed under its row lock; that lock is what makes the
+    decision, and so the resume, happen exactly once.
+    """
+    db = SessionLocal()
+    try:
+        approval = db.get(Approval, approval_id)
+        if approval is None or not approval.graph_thread_id:
+            return None
+        thread_id, checkpoint_id = approval.graph_thread_id, approval.graph_checkpoint_id
+    finally:
+        db.close()
+
+    graph = _get_graph()
+    # Resume from the checkpoint where this approval paused, even if the
+    # customer has sent more messages on the thread since.
+    config = {"configurable": {"thread_id": thread_id, "checkpoint_id": checkpoint_id}}
+    result = graph.invoke(Command(resume=decision), config)
+    return _finish(graph, result, thread_id)

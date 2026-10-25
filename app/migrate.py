@@ -77,6 +77,12 @@ def run_migrations():
         else:
             logger.info("Running Alembic migrations...")
             command.upgrade(alembic_cfg, "head")
+
+        # LangGraph checkpoint tables (managed by the checkpointer, not Alembic)
+        from app.checkpoint import close_checkpointer, get_checkpointer
+        get_checkpointer()
+        close_checkpointer()
+        logger.info("LangGraph checkpoint tables ready.")
         
         logger.info("✅ Migrations completed successfully.")
         
