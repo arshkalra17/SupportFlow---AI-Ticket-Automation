@@ -322,6 +322,74 @@ class TestRefundExecution:
         assert "error" in result
         assert "already exists" in result["error"].lower()
 
+    # ── Refund amount vs. backend-owned order total ───────────────────
+
+    def test_refund_above_order_total_rejected(self, db, customer, orders):
+        """LLM-proposed amount above what the customer paid must be rejected."""
+        result = issue_refund(
+            order_id=1001,  # total $150.00
+            amount=999.0,   # under the auto-approval threshold, but > total
+            authenticated_customer_id=customer.id,
+            db=db,
+        )
+        assert "error" in result
+        assert "exceeds the total" in result["error"].lower()
+        assert result["order_total"] == 150.0
+        # Nothing may be recorded for a rejected refund
+        assert db.query(Action).filter_by(
+            action_type="REFUND", reference_id=1001
+        ).count() == 0
+
+    def test_refund_above_total_rejected_even_when_high_value(self, db, customer, orders):
+        """Amount > total is rejected outright, not sent to human approval."""
+        result = issue_refund(
+            order_id=1006,  # total $1200.00
+            amount=9999.0,
+            authenticated_customer_id=customer.id,
+            db=db,
+        )
+        assert "error" in result
+        assert "approval_id" not in result
+        assert db.query(Action).filter_by(
+            action_type="REFUND", reference_id=1006
+        ).count() == 0
+
+    def test_refund_equal_to_order_total_allowed(self, db, customer, orders):
+        result = issue_refund(
+            order_id=1001, amount=150.0,
+            authenticated_customer_id=customer.id, db=db,
+        )
+        assert result["status"] == "COMPLETED"
+        assert result["amount"] == 150.0
+
+    def test_refund_sub_cent_over_total_allowed(self, db, customer, orders):
+        """Float noise below one cent must not cause a false rejection."""
+        result = issue_refund(
+            order_id=1001, amount=150.001,
+            authenticated_customer_id=customer.id, db=db,
+        )
+        assert result["status"] == "COMPLETED"
+
+    def test_refund_one_cent_over_total_rejected(self, db, customer, orders):
+        result = issue_refund(
+            order_id=1001, amount=150.01,
+            authenticated_customer_id=customer.id, db=db,
+        )
+        assert "error" in result
+
+    def test_refund_with_unknown_order_total_requires_approval(self, db, customer, orders):
+        """Fail closed: an unverifiable amount is never auto-approved."""
+        from app.models import Order as OrderModel
+        db.add(OrderModel(id=1099, customer_id=customer.id, status="DELIVERED", total=None))
+        db.commit()
+        result = issue_refund(
+            order_id=1099, amount=10.0,
+            authenticated_customer_id=customer.id, db=db,
+        )
+        assert result["status"] == "PENDING_APPROVAL"
+        assert result["approval_required"] is True
+        assert "could not be verified" in result["message"]
+
 
 # ══════════════════════════════════════════════════════════════════════
 # Approval state transitions
@@ -432,7 +500,7 @@ class TestExecuteToolCallDispatch:
 
     def test_issue_refund_produces_pending_approval_for_high_value(self, db, customer, orders):
         result = _execute_tool_call(
-            "issue_refund", {"order_id": 1006, "amount": 9999.0}, customer.id
+            "issue_refund", {"order_id": 1006, "amount": 1100.0}, customer.id
         )
         assert result["validation_passed"] is True
         assert result["tool_result"]["status"] == "PENDING_APPROVAL"

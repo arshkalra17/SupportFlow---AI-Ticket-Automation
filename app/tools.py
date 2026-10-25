@@ -329,9 +329,12 @@ def issue_refund(
     2. Verify order exists.
     3. Verify ownership (authenticated_customer_id owns order).
     4. Duplicate check (no active or completed refund for order_id).
-    5. Deterministic risk check:
-       - amount <= 1000: execute synthetic refund automatically (Action COMPLETED).
-       - amount > 1000: create Action & Approval records (PENDING_APPROVAL), return approval required.
+    5. Amount check against the backend-owned order total: the LLM-proposed
+       amount can never exceed what the customer actually paid.
+    6. Deterministic risk check:
+       - amount <= 1000 and order total known: execute synthetic refund automatically (Action COMPLETED).
+       - amount > 1000, or order total unknown (cannot be verified): create Action & Approval
+         records (PENDING_APPROVAL), return approval required.
 
     Args:
         order_id (int): Order ID to refund.
@@ -411,8 +414,29 @@ def issue_refund(
 
             safe_set_attribute(span, "tool.duplicate_found", False)
 
-            # 4. Deterministic Risk Check
-            approval_required = amount > REFUND_AUTO_APPROVAL_THRESHOLD
+            # 4. Amount check against the backend-owned order total.
+            # The refund amount is proposed by the LLM, so it is never trusted on
+            # its own: it must not exceed what the customer actually paid.
+            order_total = order.total
+            total_known = order_total is not None
+            safe_set_attribute(span, "tool.order_total_known", total_known)
+            if total_known and round(amount, 2) > round(order_total, 2):
+                safe_set_attribute(span, "tool.amount_exceeds_total", True)
+                return {
+                    "error": (
+                        f"Refund amount ${amount:.2f} exceeds the total of "
+                        f"Order #{order_id} (${order_total:.2f})"
+                    ),
+                    "order_id": order_id,
+                    "requested_amount": amount,
+                    "order_total": order_total,
+                }
+            safe_set_attribute(span, "tool.amount_exceeds_total", False)
+
+            # 5. Deterministic Risk Check
+            # Fail closed: if the order total is unknown the amount cannot be
+            # verified, so a human must review it regardless of size.
+            approval_required = amount > REFUND_AUTO_APPROVAL_THRESHOLD or not total_known
             safe_set_attribute(span, "tool.approval_required", approval_required)
             safe_set_attribute(span, "tool.threshold", REFUND_AUTO_APPROVAL_THRESHOLD)
 
@@ -458,6 +482,9 @@ def issue_refund(
                     "message": (
                         f"Refund request of ${amount:.2f} for Order #{order_id} exceeds auto-approval "
                         f"threshold (${REFUND_AUTO_APPROVAL_THRESHOLD:.2f}). Human approval is required."
+                        if total_known else
+                        f"Refund request of ${amount:.2f} for Order #{order_id} could not be verified "
+                        f"against the order total. Human approval is required."
                     ),
                     "order_id": order_id,
                     "customer_id": authenticated_customer_id,

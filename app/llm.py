@@ -193,7 +193,8 @@ ISSUE_REFUND_TOOL_SCHEMA = {
         "name": "issue_refund",
         "description": (
             "Issues a refund for an order. Requires order_id and monetary amount in USD. "
-            "The backend will validate order ownership and enforce risk approval rules."
+            "The backend will validate order ownership, reject amounts above the order total, "
+            "and enforce risk approval rules."
         ),
         "parameters": {
             "type": "object",

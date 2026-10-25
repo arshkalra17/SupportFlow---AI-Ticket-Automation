@@ -402,11 +402,11 @@ class TestGraphLiveGroq:
         assert blocked, "Expected authorization failure in tool_calls"
 
     def test_high_value_refund_routes_to_approval_live(self, db, customer, orders):
-        """$5000 refund must result in PENDING_APPROVAL status."""
+        """$1100 refund (above threshold, within the $1200 order total) must result in PENDING_APPROVAL status."""
         from app.graph import run_supportflow
 
         result = run_supportflow(
-            customer_message="I want a $5000 refund for order #1006.",
+            customer_message="I want a $1100 refund for order #1006.",
             authenticated_customer_id=customer.id,
         )
         assert result["approval_status"] == "PENDING_APPROVAL"
