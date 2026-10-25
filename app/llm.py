@@ -348,8 +348,9 @@ CANCEL_ORDER_TOOL_SCHEMA = {
             "Only use this tool when the customer explicitly asks to CANCEL their order. "
             "Use check_cancellation_eligibility first if you only need to know whether "
             "cancellation is possible without actually cancelling. "
-            "Eligible statuses for cancellation: PROCESSING, SHIPPED. "
-            "DELIVERED and CANCELLED orders cannot be cancelled again."
+            "Only PROCESSING orders can be cancelled. SHIPPED and DELIVERED orders "
+            "cannot be cancelled (the customer must initiate a return), and CANCELLED "
+            "orders cannot be cancelled again."
         ),
         "parameters": {
             "type": "object",

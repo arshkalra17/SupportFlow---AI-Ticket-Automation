@@ -714,7 +714,9 @@ def list_customer_orders(
 
 # ── Tool 3: check_cancellation_eligibility ───────────────────────────
 
-CANCELLATION_ELIGIBLE_STATUSES = {"PROCESSING", "SHIPPED"}
+# Matches the "Order Cancellation Rules" policy: once an order has shipped it
+# cannot be cancelled and the customer must initiate a return instead.
+CANCELLATION_ELIGIBLE_STATUSES = {"PROCESSING"}
 
 
 class CheckCancellationEligibilityArgs(BaseModel):
@@ -806,7 +808,11 @@ def check_cancellation_eligibility(
                 return {
                     "order_id": order.id,
                     "eligible": False,
-                    "reason": f"Order is in {order.status} status and cannot be cancelled.",
+                    "reason": (
+                        f"Order is in {order.status} status and cannot be cancelled."
+                        + (" The customer can initiate a return instead."
+                           if order.status in ("SHIPPED", "DELIVERED") else "")
+                    ),
                 }
         finally:
             if close_db:
@@ -1145,7 +1151,7 @@ def cancel_order(
     Order of checks:
     1. Order must exist.
     2. Authenticated customer must own the order.
-    3. Order status must be cancellation-eligible (PROCESSING or SHIPPED).
+    3. Order status must be cancellation-eligible (PROCESSING only).
     4. Idempotency: if already CANCELLED, return current state without error.
     5. Update order status to CANCELLED and record the action.
 
@@ -1206,6 +1212,8 @@ def cancel_order(
                         f"Order #{order_id} cannot be cancelled. "
                         f"Current status is {order.status}. "
                         f"Only orders in {sorted(CANCELLATION_ELIGIBLE_STATUSES)} status can be cancelled."
+                        + (" Shipped or delivered orders can be returned instead."
+                           if order.status in ("SHIPPED", "DELIVERED") else "")
                     )
                 }
 

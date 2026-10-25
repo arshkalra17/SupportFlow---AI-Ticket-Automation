@@ -684,13 +684,15 @@ class TestCheckCancellationEligibilityExecution:
         assert result["eligible"] is True
         assert "PROCESSING" in result["reason"]
 
-    def test_shipped_order_eligible(self, db, customer, orders):
+    def test_shipped_order_not_eligible(self, db, customer, orders):
+        """Per the cancellation policy, shipped orders must be returned instead."""
         result = check_cancellation_eligibility(
             order_id=1001,  # SHIPPED
             authenticated_customer_id=customer.id,
             db=db,
         )
-        assert result["eligible"] is True
+        assert result["eligible"] is False
+        assert "return" in result["reason"].lower()
 
     def test_delivered_order_not_eligible(self, db, customer, orders):
         result = check_cancellation_eligibility(
@@ -1066,11 +1068,15 @@ class TestCancelOrderExecution:
         assert result["order_status"] == "CANCELLED"
         assert "action_id" in result
 
-    def test_cancels_shipped_order(self, db, customer, orders):
-        """order 1001 is SHIPPED — eligible for cancellation."""
+    def test_shipped_order_cannot_be_cancelled(self, db, customer, orders):
+        """order 1001 is SHIPPED — per policy it must be returned, not cancelled."""
         result = cancel_order(order_id=1001, authenticated_customer_id=customer.id, db=db)
-        assert result["status"] == "COMPLETED"
-        assert result["order_status"] == "CANCELLED"
+        assert "error" in result
+        assert "cannot be cancelled" in result["error"].lower()
+        assert "returned" in result["error"].lower()
+
+        from app.models import Order as OrderModel
+        assert db.query(OrderModel).filter_by(id=1001).first().status == "SHIPPED"
 
     def test_writes_cancellation_to_database(self, db, customer, orders):
         cancel_order(order_id=1003, authenticated_customer_id=customer.id, db=db)
