@@ -92,8 +92,14 @@ jobs:
       # These are only executed when GROQ_API_KEY is configured as a
       # repository secret.  They are never required for CI to pass.
       # To enable: add GROQ_API_KEY to GitHub repository secrets.
+      # The `secrets` context is not allowed in a step `if:`, so a
+      # prior step records whether the secret exists as an output.
+      - name: Check for GROQ_API_KEY secret
+        id: groq
+        run: echo "present=${{ secrets.GROQ_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
       - name: Run live-LLM tests (optional)
-        if: ${{ secrets.GROQ_API_KEY != '' }}
+        if: steps.groq.outputs.present == 'true'
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
         run: |
@@ -144,8 +150,8 @@ jobs:
             -e DATABASE_URL=postgresql://user:pass@localhost:5432/db \
             -e REDIS_HOST=localhost \
             -e REDIS_PORT=6379 \
-            -e OPENAI_API_KEY=test \
-            -e JWT_SECRET_KEY=test-secret-key-for-ci-minimum-32-characters-long \
+            -e GROQ_API_KEY=test \
+            -e JWT_SECRET=test-secret-key-for-ci-minimum-32-characters-long \
             -e SERVICE_TYPE=api \
             -p 8000:8000 \
             supportflow:test
@@ -174,7 +180,7 @@ jobs:
           } || echo "✅ No .env files in image"
           
           # Check for common secret patterns in environment
-          docker run --rm supportflow:test env | grep -E "(SECRET|PASSWORD|TOKEN|KEY)=" | grep -v "JWT_SECRET_KEY" && {
+          docker run --rm supportflow:test env | grep -E "(SECRET|PASSWORD|TOKEN|KEY)=" | grep -v "JWT_SECRET" && {
             echo "⚠️  WARNING: Potential secrets found in environment"
           } || echo "✅ No obvious secrets in environment"
 

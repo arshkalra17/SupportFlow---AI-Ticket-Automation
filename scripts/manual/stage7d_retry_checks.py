@@ -22,7 +22,7 @@ import logging
 
 # Ensure project root is on sys.path so `app.*` imports resolve regardless
 # of the working directory used to invoke this script.
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 

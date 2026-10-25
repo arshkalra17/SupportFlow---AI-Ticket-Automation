@@ -63,4 +63,4 @@ evaluation/results/
 tests/
 test_*.py
 *_test.py
-scratch/
+scripts/
