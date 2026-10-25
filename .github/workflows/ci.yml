@@ -174,10 +174,14 @@ jobs:
       - name: Check for secrets in image
         run: |
           echo "🔍 Scanning image for potential secrets..."
-          docker run --rm supportflow:test find /app -type f -name "*.env" 2>/dev/null && {
-            echo "❌ ERROR: .env files found in image!"
+          # find exits 0 even with no matches, so check its output instead
+          ENV_FILES=$(docker run --rm supportflow:test find /app -type f -name "*.env" 2>/dev/null)
+          if [ -n "$ENV_FILES" ]; then
+            echo "❌ ERROR: .env files found in image:"
+            echo "$ENV_FILES"
             exit 1
-          } || echo "✅ No .env files in image"
+          fi
+          echo "✅ No .env files in image"
           
           # Check for common secret patterns in environment
           docker run --rm supportflow:test env | grep -E "(SECRET|PASSWORD|TOKEN|KEY)=" | grep -v "JWT_SECRET" && {
