@@ -39,12 +39,17 @@ _CLASSIFICATION_SYSTEM_PROMPT = (
     "policy, or providing feedback, and the answer does not depend on their own orders or "
     "tickets. Hypothetical or general questions are General Inquiry even when they mention "
     "damage, wrong items, shipping or cancellation (\"What happens if a package shows "
-    "up broken?\", \"Is it too late to back out once something has left the warehouse?\").\n"
+    "up broken?\", \"Is it too late to back out once something has left the warehouse?\"). "
+    "This includes first-person questions that ask what the rules or choices are without "
+    "asking us to act on a particular order (\"Say a parcel of mine goes missing, what would "
+    "you do?\", \"What can I do about a faulty gadget, generally speaking?\").\n"
     "  Order Issue        : Anything about the customer's own orders or tickets: listing them "
     "(\"which of my purchases were returned?\"), looking up one order's status, items, total or details, "
     "or a problem with a specific order that needs action (wrong item, "
     "stuck in processing, damaged delivery, duplicate order, etc.). A message that names an "
-    "order number is almost always Order Issue.\n"
+    "order number is almost always Order Issue, and so is a request to do something "
+    "(\"please cancel my order\") or a report of a problem that needs handling (\"my parcel "
+    "came smashed\"), even without an order number.\n"
     "  Refund Request     : Customer is explicitly asking for money back.\n"
     "  Billing            : Payment, charges, invoices, or subscription billing problems.\n"
     "  Technical Support  : App, website, or account access problems.\n\n"
@@ -100,7 +105,7 @@ GROQ_CALL_DELAY_SECONDS = 1.0
 
 # ── RAG retrieval parameters (must match production) ──────────────────
 RAG_TOP_K              = 3
-RAG_SIMILARITY_THRESHOLD = 0.15   # from app/rag.py
+RAG_SIMILARITY_THRESHOLD = 0.30   # from app/rag.py
 
 # ── Evaluation order IDs ───────────────────────────────────────────────
 # These IDs are seeded into supportflow_eval only.

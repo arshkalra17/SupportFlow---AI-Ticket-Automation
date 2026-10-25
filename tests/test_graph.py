@@ -105,6 +105,36 @@ class TestRouteAfterClassify:
         from app.graph import route_after_classify
         assert route_after_classify(self._state("Order Issue", error="fail")) == "error_node"
 
+    @pytest.mark.parametrize("message", [
+        "If a parcel goes missing, what happens next?",
+        "What if the courier damages my order on the way?",
+        "Suppose I change my mind after it ships, can I still back out?",
+    ])
+    def test_hypothetical_order_issue_routes_to_rag(self, message):
+        from app.graph import route_after_classify
+        state = self._state("Order Issue")
+        state["customer_message"] = message
+        assert route_after_classify(state) == "retrieve_knowledge_node"
+
+    @pytest.mark.parametrize("message, active_order_id", [
+        ("If order 7003 hasn't shipped, cancel it", None),   # names an order
+        ("If it hasn't shipped yet, cancel it", 7003),        # order under discussion
+        ("If any of my orders shipped, list them", None),    # list request
+        ("Please cancel my order", None),                     # not a hypothetical
+    ])
+    def test_order_issue_about_a_real_order_stays_on_tools(self, message, active_order_id):
+        from app.graph import route_after_classify
+        state = self._state("Order Issue")
+        state["customer_message"] = message
+        state["active_order_id"] = active_order_id
+        assert route_after_classify(state) == "tool_execution_node"
+
+    def test_do_i_have_any_tickets_routes_to_tools(self):
+        from app.graph import route_after_classify
+        state = self._state("General Inquiry")
+        state["customer_message"] = "Do I have any open tickets?"
+        assert route_after_classify(state) == "tool_execution_node"
+
 
 class TestRouteAfterTool:
     """Tests for route_after_tool — pure routing logic."""

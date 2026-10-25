@@ -56,9 +56,16 @@ KNOWLEDGE_CATEGORIES = {
 # "order 7003", "order #7003", "#7003" — order ids are 3+ digits.
 _ORDER_NUMBER_PATTERN = re.compile(r"(?:\border\s*#?\s*|#)\d{3,}\b")
 
-# "my orders", "my delivered orders", "my open support tickets" — plural, so
-# it doesn't catch hypotheticals like "if my order already shipped".
-_MY_ORDERS_PATTERN = re.compile(r"\bmy\s+(?:\w+\s+){0,2}(?:orders|tickets)\b")
+# "my orders", "my delivered orders", "my open support tickets",
+# "do I have any open tickets" — plural, so it doesn't catch hypotheticals
+# like "if my order already shipped".
+_MY_ORDERS_PATTERN = re.compile(
+    r"\b(?:my|do\s+i\s+have\s+any)\s+(?:\w+\s+){0,2}(?:orders|tickets)\b"
+)
+
+# "If my order already shipped, ...", "What if a parcel ...", "Suppose I ..."
+# — a hypothetical asks what the rules are, not for action on an order.
+_HYPOTHETICAL_PATTERN = re.compile(r"^\s*(?:if|what\s+if|suppose|supposing|say|in\s+case)\b")
 
 # Categories that typically require tool execution
 ACTION_CATEGORIES = {
@@ -690,6 +697,20 @@ def route_after_classify(state: SupportFlowState) -> str:
         if not any(keyword in message_lower for keyword in POLICY_KEYWORDS):
             logger.debug("route_after_classify: ORDER-NUMBER SAFEGUARD → tool_execution_node")
             return "tool_execution_node"
+
+    # ROUTING SAFEGUARD 4: a hypothetical about no particular order is a policy
+    # question, whatever the classifier said (the small classifier often
+    # labels "If my order already shipped, ..." an Order Issue). An order
+    # number or an order under discussion means it is about that order.
+    if (
+        "order issue" in category_lower
+        and not active_order_id
+        and _HYPOTHETICAL_PATTERN.search(message_lower)
+        and not _ORDER_NUMBER_PATTERN.search(message_lower)
+        and not _MY_ORDERS_PATTERN.search(message_lower)
+    ):
+        logger.debug("route_after_classify: HYPOTHETICAL SAFEGUARD → retrieve_knowledge_node")
+        return "retrieve_knowledge_node"
 
     # Standard classification routing
     if any(kc.lower() in category_lower for kc in KNOWLEDGE_CATEGORIES):
