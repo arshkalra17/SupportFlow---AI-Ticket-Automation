@@ -288,9 +288,12 @@ class TestGraphRoutingIntegration:
         resp.choices = [choice]
         return resp
 
-    def test_rag_path_reached_for_policy_question(self, db, seeded_kb):
+    def test_rag_path_reached_for_policy_question(self, db, seeded_kb, monkeypatch):
         """A policy question must route through RAG and produce a final response."""
         from app.graph import run_supportflow
+
+        # rag.py checks for the key before building the (mocked) client
+        monkeypatch.setenv("GROQ_API_KEY", "test-key")
 
         mock_resp = self._make_groq_response(
             "Based on our policy, express shipping takes 1-2 business days."
