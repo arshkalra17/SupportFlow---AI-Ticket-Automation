@@ -4,7 +4,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**328 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
+**346 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
 
 SupportFlow is not a chatbot wrapper. It's a production-style backend system where an LLM classifies customer support requests, retrieves company knowledge via RAG, and requests actions through native tool-calling — but every single action passes through backend-owned validation, authorization, business-rule enforcement, and (for high-risk actions) human approval before anything actually happens.
 
@@ -133,7 +133,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **328 passed** |
+| Deterministic tests | **346 passed** |
 | RAG Hit@1 | **100%** |
 | RAG Hit@3 | **100%** |
 | OOD rejection | **100%** |
@@ -197,6 +197,8 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 </table>
 
 **Flow:** Customer request → LLM proposes `issue_refund` → backend validation and ownership authorization → high-value rule triggers `PENDING_APPROVAL` → admin reviews → approval is persisted → action reaches `COMPLETED`.
+
+Approved actions run through the same executor as automatic refunds (`app/actions.py`), which re-checks ownership, the order total, and prior refunds under a row lock at execution time. If a rule no longer holds (say the order changed while the request waited), the approval is recorded but the action is marked `FAILED` and nothing is executed.
 
 
 ---
@@ -344,7 +346,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (328 passing, deterministic by default)
+├── tests/                     # pytest suite (346 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -403,7 +405,7 @@ Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 ## Testing
 
 ```bash
-pytest              # 328 deterministic tests — no Groq API key required
+pytest              # 346 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark

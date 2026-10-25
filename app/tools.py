@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models import Order, ReplacementRequest, Action, Approval, Ticket
+from app.actions import run_action
 from app.approval import create_approval_request
 from app.observability import traced_span, safe_set_attribute
 
@@ -441,17 +442,28 @@ def issue_refund(
             safe_set_attribute(span, "tool.threshold", REFUND_AUTO_APPROVAL_THRESHOLD)
 
             if not approval_required:
-                # Low-value refund -> Execute automatically
+                # Low-value refund -> Execute automatically, through the same
+                # executor that human approvals use
                 action = Action(
                     action_type="REFUND",
                     reference_id=order_id,
                     customer_id=authenticated_customer_id,
                     amount=amount,
-                    status="COMPLETED",
+                    status="PENDING",
                 )
                 db.add(action)
+                db.flush()
+                execution_error = run_action(action, db)
                 db.commit()
                 db.refresh(action)
+
+                if execution_error:
+                    safe_set_attribute(span, "tool.status", "FAILED")
+                    return {
+                        "error": execution_error,
+                        "order_id": order_id,
+                        "action_id": action.id,
+                    }
 
                 safe_set_attribute(span, "tool.action_id", action.id)
                 safe_set_attribute(span, "tool.status", "COMPLETED")

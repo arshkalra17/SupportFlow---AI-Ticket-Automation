@@ -421,6 +421,7 @@ class ApprovalActionResponse(BaseModel):
     resolved_at: str | None
     reason: str | None
     executed: bool
+    execution_error: str | None = None
 
 
 @app.get("/approvals/pending", response_model=list[PendingApprovalResponse])

@@ -43,8 +43,9 @@ def admin_headers(admin_token):
 
 
 @pytest.fixture()
-def pending_approvals(db, customer):
-    """Creates test approval requests in PENDING state."""
+def pending_approvals(db, customer, orders):
+    """Creates test approval requests in PENDING state (against real orders,
+    since approving re-checks the refund rules before executing)."""
     # Create actions
     action1 = Action(
         action_type="REFUND",
@@ -314,12 +315,12 @@ def test_resolved_by_uses_authenticated_admin_email(client, admin_headers, admin
 
 # ── Test 11: Approve without reason (optional) ────────────────────────
 
-def test_approve_without_reason(client, admin_headers, admin_customer, db, customer):
+def test_approve_without_reason(client, admin_headers, admin_customer, db, customer, orders):
     """Admin can approve without providing a reason."""
     # Create a new pending approval
     action = Action(
         action_type="REFUND",
-        reference_id=3001,
+        reference_id=1003,
         customer_id=customer.id,
         amount=25.00,
         status="PENDING",

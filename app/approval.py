@@ -1,12 +1,13 @@
 """Approval service — create, approve, and reject approval requests.
 
-This module manipulates database state only. It does NOT execute
-the actual business action (replacement, refund, etc.).
+Approving a request executes the linked action through app.actions.run_action,
+which re-checks business rules at execution time.
 """
 from datetime import datetime
 
 from sqlalchemy.orm import Session
 
+from app.actions import run_action
 from app.database import SessionLocal
 from app.models import Action, Approval
 from app.observability import traced_span, safe_set_attribute
@@ -134,10 +135,13 @@ def approve_request(
         approval.resolved_by = resolved_by
         approval.reason = reason
 
-        # Transition linked Action to COMPLETED (execute synthetic action)
+        # Execute the linked action. If its rules no longer hold, the human
+        # decision is still recorded, but the action is marked FAILED.
         action = db.query(Action).filter(Action.id == approval.action_id).first()
         if action:
-            action.status = "COMPLETED"
+            execution_error = run_action(action, db)
+        else:
+            execution_error = f"Action #{approval.action_id} not found"
 
         db.commit()
         db.refresh(approval)
@@ -156,7 +160,8 @@ def approve_request(
             "resolved_by": approval.resolved_by,
             "resolved_at": str(approval.resolved_at),
             "reason": approval.reason,
-            "executed": True,
+            "executed": execution_error is None,
+            "execution_error": execution_error,
         }
     finally:
         if close_db:

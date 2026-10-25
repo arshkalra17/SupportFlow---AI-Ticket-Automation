@@ -398,12 +398,13 @@ class TestRefundExecution:
 @pytest.mark.integration
 class TestApprovalTransitions:
     def _create_pending_refund(self, db, customer):
-        """Helper: create a high-value refund pending approval."""
+        """Helper: create a high-value refund pending approval (above the
+        $1000 threshold, within the $1200 order total)."""
         return create_approval_request(
             action_type="REFUND",
             reference_id=1006,
             customer_id=customer.id,
-            amount=5000.0,
+            amount=1100.0,
             db=db,
         )
 
