@@ -1,5 +1,7 @@
 # SupportFlow
 
+[![CI](https://github.com/arshkalra17/SupportFlow---AI-Ticket-Automation/actions/workflows/ci.yml/badge.svg)](https://github.com/arshkalra17/SupportFlow---AI-Ticket-Automation/actions/workflows/ci.yml)
+
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
 **328 deterministic tests passing · 100% RAG Hit@1/Hit@3 · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**

@@ -73,8 +73,9 @@ def classify_ticket(
         # Enrich system prompt with conversation context
         context_parts = []
         if recent_messages:
-            # Limit to last 3 messages for classification context
-            limited_history = recent_messages[-3:]
+            # recent_messages is newest-first; take the 3 most recent and
+            # show them in chronological order
+            limited_history = list(reversed(recent_messages[:3]))
             history_lines = []
             for msg in limited_history:
                 history_lines.append(f"{msg['role'].capitalize()}: {msg['content']}")

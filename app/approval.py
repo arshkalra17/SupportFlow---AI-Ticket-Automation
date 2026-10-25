@@ -109,7 +109,14 @@ def approve_request(
         close_db = True
 
     try:
-        approval = db.query(Approval).filter(Approval.id == approval_id).first()
+        # Row lock: a concurrent approve/reject waits here, then sees the
+        # updated status and is refused instead of resolving twice.
+        approval = (
+            db.query(Approval)
+            .filter(Approval.id == approval_id)
+            .with_for_update()
+            .first()
+        )
         if not approval:
             return {"error": f"Approval #{approval_id} not found"}
 
@@ -179,7 +186,12 @@ def reject_request(
         close_db = True
 
     try:
-        approval = db.query(Approval).filter(Approval.id == approval_id).first()
+        approval = (
+            db.query(Approval)
+            .filter(Approval.id == approval_id)
+            .with_for_update()
+            .first()
+        )
         if not approval:
             return {"error": f"Approval #{approval_id} not found"}
 

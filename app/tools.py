@@ -363,8 +363,14 @@ def issue_refund(
             close_db = True
 
         try:
-            # 1. Verify order exists
-            order = db.query(Order).filter(Order.id == order_id).first()
+            # 1. Verify order exists. The row lock serialises concurrent refunds
+            # for the same order, so the duplicate check below can't race.
+            order = (
+                db.query(Order)
+                .filter(Order.id == order_id)
+                .with_for_update()
+                .first()
+            )
             if not order:
                 safe_set_attribute(span, "tool.order_found", False)
                 return {"error": f"Order #{order_id} not found"}
@@ -383,7 +389,7 @@ def issue_refund(
 
             safe_set_attribute(span, "tool.authorized", True)
 
-            # 3. Duplicate prevention check
+            # 3. Duplicate prevention check (safe: order row is locked)
             existing_action = (
                 db.query(Action)
                 .filter(

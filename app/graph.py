@@ -286,7 +286,7 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         if conversation_history:
             # Include recent history (most recent first, reverse for chronological)
             history_lines = []
-            for msg in reversed(conversation_history[-10:]):  # Last 10 messages, chronological order
+            for msg in reversed(conversation_history[:10]):  # 10 most recent (list is newest-first), chronological order
                 history_lines.append(f"{msg['role'].capitalize()}: {msg['content']}")
             history_section = "\n\nRecent conversation:\n" + "\n".join(history_lines)
             system_prompt += history_section
