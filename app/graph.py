@@ -13,14 +13,14 @@ from __future__ import annotations
 
 import json
 import logging
-import os
+import re
 import time
 from typing import TypedDict
 
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from groq import Groq
+from app.llm_client import chat_completion
 # pyrefly: ignore [missing-import]
 from langgraph.graph import StateGraph, START, END
 
@@ -36,7 +36,6 @@ logger = logging.getLogger("supportflow.graph")
 
 # ── Configuration ─────────────────────────────────────────────────────
 MAX_TOOL_ITERATIONS = 5
-GROQ_MODEL = "openai/gpt-oss-120b"
 
 # Categories that indicate the customer is asking a knowledge/policy
 # question rather than requesting a specific action on an order.
@@ -48,6 +47,13 @@ KNOWLEDGE_CATEGORIES = {
     "shipping inquiry",
     "policy question",
 }
+
+# "order 7003", "order #7003", "#7003" — order ids are 3+ digits.
+_ORDER_NUMBER_PATTERN = re.compile(r"(?:\border\s*#?\s*|#)\d{3,}\b")
+
+# "my orders", "my delivered orders", "my open support tickets" — plural, so
+# it doesn't catch hypotheticals like "if my order already shipped".
+_MY_ORDERS_PATTERN = re.compile(r"\bmy\s+(?:\w+\s+){0,2}(?:orders|tickets)\b")
 
 # Categories that typically require tool execution
 ACTION_CATEGORIES = {
@@ -232,53 +238,27 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 "execution_log": log,
             }
 
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            log.append("  ERROR: GROQ_API_KEY not set")
-            return {"error": "GROQ_API_KEY not set", "execution_log": log}
-
-        client = Groq(api_key=api_key)
-
         # Build messages from accumulated context
+        # Kept short on purpose: this prompt and the tool schemas are resent
+        # on every tool-loop call and dominate the token budget.
         system_prompt = (
-            "You are a helpful customer support AI assistant for SupportFlow. "
-            "Answer customer questions politely and concisely.\n\n"
-
-            "## TOOL USAGE RULES\n\n"
-
-            "### READ-ONLY TOOLS — describe observed state only, never claim a change happened\n"
-            "- get_order_status: Report the order status exactly as returned.\n"
-            "- get_order_details: Report order details exactly as returned. "
-            "If total or items is null, say that information is not available.\n"
-            "- list_customer_orders: List the orders returned. Never add orders not in the result.\n"
-            "- check_cancellation_eligibility: This tool ONLY checks eligibility. "
-            "It does NOT cancel the order. If eligible=true, say the order CAN be cancelled "
-            "but that you have NOT cancelled it. NEVER say the cancellation was submitted or completed.\n"
-            "- get_delivery_estimate: Report exactly what the tool returns. "
-            "If the message says estimate is not available, say that clearly. "
-            "Never invent a delivery date.\n"
-            "- get_ticket_status: Report the ticket status exactly as returned.\n"
-            "- get_customer_tickets: List the tickets returned. Do not add tickets not in the result.\n\n"
-
-            "### STATE-CHANGING TOOLS — claim completion ONLY if the backend confirms it\n"
-            "- create_replacement_request: If status=PENDING in the result, confirm the request "
-            "was created. If there is an error, report it honestly.\n"
-            "- issue_refund:\n"
-            "  * If status=COMPLETED: say the refund was successfully issued.\n"
-            "  * If status=PENDING_APPROVAL: say the refund request has been submitted for human "
-            "approval and has NOT been issued yet. NEVER claim the refund was completed.\n"
-            "  * If error: report the error honestly.\n"
-            "- cancel_order:\n"
-            "  * If status=COMPLETED: confirm the order has been cancelled.\n"
-            "  * If status=ALREADY_CANCELLED: say the order was already cancelled.\n"
-            "  * If error: report the error. Do not claim cancellation happened.\n\n"
-
-            "## GENERAL RULES\n"
-            "- Do not invent or guess order details, ticket details, or status values.\n"
-            "- Do not fabricate tool results.\n"
-            "- Customer identity is handled by the backend — never ask for or accept a customer ID.\n"
-            "- If authorization fails, say the resource could not be accessed.\n"
-            "- Always use the appropriate tool for the customer's request before responding.\n"
+            "You are SupportFlow's customer support assistant. Be polite and concise. "
+            "Use the right tool before answering, and report tool results exactly.\n\n"
+            "Rules:\n"
+            "- Never invent order, ticket, status, date or item details. If a field is null "
+            "or a delivery estimate is unavailable, say that information is not available.\n"
+            "- Read-only tools never change anything. check_cancellation_eligibility only "
+            "checks: if eligible, say the order CAN be cancelled but has NOT been cancelled.\n"
+            "- Claim a change only when the tool result confirms it: issue_refund status "
+            "COMPLETED = refund issued; PENDING_APPROVAL = submitted for human approval and "
+            "NOT issued yet; cancel_order COMPLETED = cancelled, ALREADY_CANCELLED = was "
+            "already cancelled; create_replacement_request PENDING = request created. On an "
+            "error, report it and do not claim the action happened.\n"
+            "- If authorization fails, say the resource could not be accessed. Identity is "
+            "handled by the backend: never ask for or accept a customer ID.\n"
+            "- No tool returns company policy. Never state policy terms (time windows, fees, "
+            "return labels, eligibility rules) from memory; offer to check a specific order "
+            "instead, or say the policy team can confirm the details.\n"
         )
 
         # Add conversation history context if available
@@ -323,18 +303,21 @@ def tool_execution_node(state: SupportFlowState) -> dict:
                 "content": json.dumps(tc["tool_result"]),
             })
 
-        # Call Groq with tools
+        # Call the LLM with tools (Groq, or the fallback provider)
         try:
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
+            result = chat_completion(
                 messages=messages,
                 tools=AVAILABLE_TOOLS,
                 tool_choice="auto",
                 temperature=0.0,
             )
         except Exception as err:
-            log.append(f"  ERROR: Groq API failed: {err}")
-            return {"error": f"Groq API failed: {err}", "execution_log": log}
+            log.append(f"  ERROR: LLM API failed: {err}")
+            return {"error": f"LLM API failed: {err}", "execution_log": log}
+        response = result.response
+        log.append(f"  LLM provider: {result.provider} ({result.model})")
+        if span:
+            safe_set_attribute(span, "llm.provider", result.provider)
 
         response_message = response.choices[0].message
 
@@ -487,15 +470,6 @@ def generate_response_node(state: SupportFlowState) -> dict:
             return {"execution_log": log}
 
         # Generate from accumulated context
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            return {
-                "final_response": "I'm sorry, I'm unable to process your request at this time.",
-                "execution_log": log,
-            }
-
-        client = Groq(api_key=api_key)
-
         context_parts = [f"Customer message: {state['customer_message']}"]
         if state.get("classification"):
             context_parts.append(f"Classification: {state['classification']}")
@@ -503,8 +477,7 @@ def generate_response_node(state: SupportFlowState) -> dict:
             context_parts.append(f"Error: {state['error']}")
 
         try:
-            response = client.chat.completions.create(
-                model=GROQ_MODEL,
+            response = chat_completion(
                 messages=[
                     {
                         "role": "system",
@@ -517,7 +490,7 @@ def generate_response_node(state: SupportFlowState) -> dict:
                     {"role": "user", "content": "\n".join(context_parts)},
                 ],
                 temperature=0.0,
-            )
+            ).response
             final = response.choices[0].message.content or ""
             log.append("  generated final response via LLM")
             if span:
@@ -626,7 +599,10 @@ def route_after_classify(state: SupportFlowState) -> str:
         is_policy_question = any(keyword in message_lower for keyword in POLICY_KEYWORDS)
 
         if not is_policy_question:
-            is_list_request = any(pattern in message_lower for pattern in CUSTOMER_LIST_PATTERNS)
+            is_list_request = (
+                any(pattern in message_lower for pattern in CUSTOMER_LIST_PATTERNS)
+                or _MY_ORDERS_PATTERN.search(message_lower) is not None
+            )
             logger.debug("route_after_classify: is_list_request=%s", is_list_request)
             if is_list_request:
                 logger.debug("route_after_classify: CUSTOMER-LIST SAFEGUARD → tool_execution_node")
@@ -654,6 +630,14 @@ def route_after_classify(state: SupportFlowState) -> str:
             if has_order_action or is_short_contextual:
                 logger.debug("route_after_classify: STAGE12 SAFEGUARD → tool_execution_node")
                 return "tool_execution_node"
+
+    # ROUTING SAFEGUARD 3: an explicit order number ("order 7003", "#7003")
+    # means the answer depends on that order's data, which RAG cannot see.
+    if "general inquiry" in category_lower and _ORDER_NUMBER_PATTERN.search(message_lower):
+        POLICY_KEYWORDS = ["policy", "policies", "rule", "rules", "guideline", "guidelines"]
+        if not any(keyword in message_lower for keyword in POLICY_KEYWORDS):
+            logger.debug("route_after_classify: ORDER-NUMBER SAFEGUARD → tool_execution_node")
+            return "tool_execution_node"
 
     # Standard classification routing
     if any(kc.lower() in category_lower for kc in KNOWLEDGE_CATEGORIES):

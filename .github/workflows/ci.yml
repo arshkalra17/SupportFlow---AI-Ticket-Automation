@@ -88,23 +88,8 @@ jobs:
         run: |
           pytest --tb=short -q
 
-      # ── 6. Optional: live-LLM tests (skipped unless secret present) ──
-      # These are only executed when GROQ_API_KEY is configured as a
-      # repository secret.  They are never required for CI to pass.
-      # To enable: add GROQ_API_KEY to GitHub repository secrets.
-      # The `secrets` context is not allowed in a step `if:`, so a
-      # prior step records whether the secret exists as an output.
-      - name: Check for GROQ_API_KEY secret
-        id: groq
-        run: echo "present=${{ secrets.GROQ_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
-
-      - name: Run live-LLM tests (optional)
-        if: steps.groq.outputs.present == 'true'
-        env:
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-        run: |
-          pytest -m llm --tb=short -q
-        continue-on-error: true
+      # Live-LLM tests (`pytest -m llm`) are not run on push, to save the
+      # Groq free-tier quota; they run on demand in eval.yml.
 
   docker:
     name: Docker build and security scan

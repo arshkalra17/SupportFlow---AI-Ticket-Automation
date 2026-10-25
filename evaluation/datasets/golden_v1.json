@@ -1,6 +1,6 @@
 {
   "name": "supportflow-golden",
-  "version": "v1",
+  "version": "v1.1",
   "description": "Hand-labelled end-to-end cases for run_supportflow(). Each case runs against freshly seeded fixtures. 'history' is chronological; runners must pass it newest-first, as get_recent_messages() returns it. 'required_tools' must all be called (any order); 'tool_args' is a subset match; 'forbidden_tools' must never be called; 'must_not_say' phrases are matched case-insensitively against the final response; 'judge' is the rubric for LLM-as-judge scoring.",
   "outcomes": {
     "ANSWERED_FROM_POLICY": "Answered from the knowledge base via RAG",
@@ -912,7 +912,7 @@
         "also_acceptable": [],
         "kb_doc": null,
         "must_not_say": [],
-        "judge": "Reports exactly what the tool returned ($39.50, 2x PHONE-CASE); invents nothing."
+        "judge": "States the total the tool returned ($39.50); invents nothing."
       },
       "rationale": "Read-only lookup on an order the customer owns; get_order_details is the right tool (get_order_status would also be acceptable only if it carries the needed fields)."
     },

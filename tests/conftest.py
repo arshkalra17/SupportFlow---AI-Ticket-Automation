@@ -34,6 +34,9 @@ os.environ.setdefault(
     "postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_test",
 )
 os.environ.setdefault("JWT_SECRET", "test_secret_key_stage8_supportflow")
+# Tests mock Groq; pin the provider chain so a GEMINI_API_KEY in .env can
+# never turn a mocked failure into a real fallback call.
+os.environ.setdefault("LLM_PROVIDERS", "groq")
 
 # Now safe to import app modules
 from sqlalchemy import create_engine, text

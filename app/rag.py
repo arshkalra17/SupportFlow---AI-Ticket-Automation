@@ -12,12 +12,11 @@ in a later stage.
 """
 
 import json
-import os
 import time
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from groq import Groq
+from app.llm_client import chat_completion
 
 from app.kb import search_knowledge_base
 from app.observability import traced_span, record_llm_call, hash_sensitive, safe_set_attribute
@@ -27,7 +26,6 @@ load_dotenv()
 # ── Configuration ─────────────────────────────────────────────────────
 RAG_TOP_K = 3
 RAG_SIMILARITY_THRESHOLD = 0.15  # Minimum cosine similarity to consider relevant
-RAG_MODEL = "openai/gpt-oss-120b"
 
 
 def _build_context_block(documents: list[dict]) -> str:
@@ -149,30 +147,26 @@ def answer_with_knowledge_base(
         user_message = f"Customer question: {query}"
 
         # ── Step 5: Call Groq ─────────────────────────────────────────
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            raise ValueError("GROQ_API_KEY environment variable is not set")
-
-        client = Groq(api_key=api_key)
-
         with traced_span("llm.groq.rag_answer") as llm_span:
             start = time.time()
             try:
-                response = client.chat.completions.create(
-                    model=RAG_MODEL,
+                result = chat_completion(
                     messages=[
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_message},
                     ],
                     temperature=0.0,
                 )
+            except ValueError:
+                raise
             except Exception as err:
-                raise RuntimeError(f"Groq RAG API request failed: {err}") from err
+                raise RuntimeError(f"LLM RAG API request failed: {err}") from err
+            response = result.response
 
             latency_ms = (time.time() - start) * 1000
 
             if llm_span:
-                record_llm_call(llm_span, model=RAG_MODEL, prompt_version="rag-v1", latency_ms=latency_ms)
+                record_llm_call(llm_span, model=result.model, prompt_version="rag-v1", latency_ms=latency_ms)
 
         answer_content = response.choices[0].message.content
         if not answer_content:
@@ -186,5 +180,5 @@ def answer_with_knowledge_base(
             "relevant_context": True,
             "retrieved_documents": doc_metadata,
             "answer": answer_content.strip(),
-            "model": RAG_MODEL,
+            "model": result.model,
         }

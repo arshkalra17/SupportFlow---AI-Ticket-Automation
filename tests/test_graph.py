@@ -71,6 +71,36 @@ class TestRouteAfterClassify:
         from app.graph import route_after_classify
         assert route_after_classify(self._state("Some Unknown Category")) == "tool_execution_node"
 
+    def test_general_inquiry_naming_an_order_routes_to_tools(self):
+        from app.graph import route_after_classify
+        for msg in ("What did I buy in order 7003?", "Show me the details of order #7001", "total for #7006"):
+            state = self._state("General Inquiry")
+            state["customer_message"] = msg
+            assert route_after_classify(state) == "tool_execution_node", msg
+
+    def test_policy_question_naming_an_order_stays_on_rag(self):
+        from app.graph import route_after_classify
+        state = self._state("General Inquiry")
+        state["customer_message"] = "What is the refund policy for order 7003?"
+        assert route_after_classify(state) == "retrieve_knowledge_node"
+
+    def test_my_orders_with_adjective_routes_to_tools(self):
+        from app.graph import route_after_classify
+        for msg, expected in (
+            ("List my delivered orders", "tool_execution_node"),
+            ("any of my open support tickets?", "tool_execution_node"),
+            ("If my order already shipped, how do I get out of it?", "retrieve_knowledge_node"),
+        ):
+            state = self._state("General Inquiry")
+            state["customer_message"] = msg
+            assert route_after_classify(state) == expected, msg
+
+    def test_amount_is_not_mistaken_for_order_number(self):
+        from app.graph import route_after_classify
+        state = self._state("General Inquiry")
+        state["customer_message"] = "Do refunds over 1000 dollars need approval?"
+        assert route_after_classify(state) == "retrieve_knowledge_node"
+
     def test_error_routes_to_error_node(self):
         from app.graph import route_after_classify
         assert route_after_classify(self._state("Order Issue", error="fail")) == "error_node"
@@ -292,7 +322,7 @@ class TestGraphRoutingIntegration:
         """A policy question must route through RAG and produce a final response."""
         from app.graph import run_supportflow
 
-        # rag.py checks for the key before building the (mocked) client
+        # the provider chain skips providers without a key
         monkeypatch.setenv("GROQ_API_KEY", "test-key")
 
         mock_resp = self._make_groq_response(
@@ -302,7 +332,7 @@ class TestGraphRoutingIntegration:
             "category": "Shipping Inquiry",
             "priority": "LOW",
             "sentiment": "NEUTRAL",
-        }), patch("app.rag.Groq") as mock_groq_cls:
+        }), patch("app.llm_client.Groq") as mock_groq_cls:
             instance = MagicMock()
             instance.chat.completions.create.return_value = mock_resp
             mock_groq_cls.return_value = instance
@@ -342,7 +372,7 @@ class TestGraphRoutingIntegration:
             "relevant_context": False,
             "retrieved_documents": [],
             "answer": "I could not find relevant policy.",
-        }), patch("app.graph.Groq"):
+        }), patch("app.llm_client.Groq"):
             result = run_supportflow(
                 customer_message="hello",
                 authenticated_customer_id=1,

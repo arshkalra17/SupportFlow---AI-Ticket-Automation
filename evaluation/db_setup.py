@@ -22,6 +22,7 @@ from evaluation.config import (
     EVAL_DATABASE_URL,
     EVAL_ORDER_IDS,
     EVAL_ORDER_STATUS,
+    EVAL_ORDER_TOTAL,
     EVAL_CUSTOMER_IDS,
 )
 
@@ -70,8 +71,8 @@ def setup_eval_db() -> Session:
     for cid in EVAL_CUSTOMER_IDS:
         session.execute(
             text(
-                "INSERT INTO customers (id, email, password_hash, created_at) "
-                "VALUES (:id, :email, :hash, NOW())"
+                "INSERT INTO customers (id, email, password_hash, is_admin, created_at) "
+                "VALUES (:id, :email, :hash, 0, NOW())"
             ),
             {
                 "id":    cid,
@@ -87,10 +88,11 @@ def setup_eval_db() -> Session:
             status = EVAL_ORDER_STATUS[order_id]
             session.execute(
                 text(
-                    "INSERT INTO orders (id, customer_id, status, created_at) "
-                    "VALUES (:id, :cid, :status, NOW())"
+                    "INSERT INTO orders (id, customer_id, status, total, created_at) "
+                    "VALUES (:id, :cid, :status, :total, NOW())"
                 ),
-                {"id": order_id, "cid": customer_id, "status": status},
+                {"id": order_id, "cid": customer_id, "status": status,
+                 "total": EVAL_ORDER_TOTAL},
             )
     session.commit()
 

@@ -32,3 +32,4 @@ postgres_data/
 .pytest_cache/
 .coverage
 htmlcov/
+evaluation/results/golden_progress*.jsonl

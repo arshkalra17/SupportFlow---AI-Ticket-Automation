@@ -35,10 +35,16 @@ _CLASSIFICATION_SYSTEM_PROMPT = (
     "You are an AI customer support ticket classifier. "
     "Analyze the customer message and classify it into exactly these three fields.\n\n"
     "CATEGORY — choose exactly one:\n"
-    "  General Inquiry    : Customer is asking how something works, asking about policy, "
-    "or providing feedback. No specific action is being requested on an order.\n"
-    "  Order Issue        : Customer has a problem with a specific order that needs action "
-    "(wrong item, stuck in processing, damaged delivery, duplicate order, etc.).\n"
+    "  General Inquiry    : Customer is asking how something works in general, asking about "
+    "policy, or providing feedback, and the answer does not depend on their own orders or "
+    "tickets. Hypothetical or general questions are General Inquiry even when they mention "
+    "damage, wrong items, shipping or cancellation (\"What happens if a package shows "
+    "up broken?\", \"Is it too late to back out once something has left the warehouse?\").\n"
+    "  Order Issue        : Anything about the customer's own orders or tickets: listing them "
+    "(\"which of my purchases were returned?\"), looking up one order's status, items, total or details, "
+    "or a problem with a specific order that needs action (wrong item, "
+    "stuck in processing, damaged delivery, duplicate order, etc.). A message that names an "
+    "order number is almost always Order Issue.\n"
     "  Refund Request     : Customer is explicitly asking for money back.\n"
     "  Billing            : Payment, charges, invoices, or subscription billing problems.\n"
     "  Technical Support  : App, website, or account access problems.\n\n"
@@ -118,3 +124,9 @@ EVAL_ORDER_STATUS = {
 
 # ── Evaluation customer IDs ────────────────────────────────────────────
 EVAL_CUSTOMER_IDS = [1, 2, 3]
+
+# Order total seeded for every eval order. issue_refund rejects amounts above
+# the order total and sends orders with no total to human approval, so eval
+# orders need a total at least as large as the biggest amount in
+# approval_routing.json ($10,000) for those cases to test the threshold rule.
+EVAL_ORDER_TOTAL = 10000.0

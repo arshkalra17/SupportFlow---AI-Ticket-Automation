@@ -1,0 +1,117 @@
+name: Golden eval
+
+# Runs the golden set through the live pipeline and fails if any metric
+# regresses against the stored baseline for that provider and tier.
+#
+# Groq's free tier caps tokens per day, so this never runs on push.
+# "smoke" (default, and weekly) is the fixed 26-case set, gated against
+# golden_baseline_smoke.json; it fits well inside one day's quota.
+# "full" runs all cases gated against golden_baseline.json, but may stop
+# at the daily quota (CI can't resume; run full locally with --resume).
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke = fixed 26-case set + gate; full = all cases + gate (may hit the daily quota)"
+        type: choice
+        options: [smoke, full]
+        default: smoke
+      provider:
+        description: "LLM provider for the pipeline (pinned, no fallback). The judge always uses Groq."
+        type: choice
+        options: [groq, gemini]
+        default: groq
+      run_llm_tests:
+        description: "Also run the live-LLM pytest tests (pytest -m llm)"
+        type: boolean
+        default: false
+  schedule:
+    - cron: "0 6 * * 1"  # Mondays 06:00 UTC, smoke run
+
+concurrency:
+  group: golden-eval
+  cancel-in-progress: false
+
+jobs:
+  golden-eval:
+    name: Golden eval (live LLM)
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: supportflow_user
+          POSTGRES_PASSWORD: supportflow_password
+          POSTGRES_DB: supportflow_eval
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U supportflow_user -d supportflow_eval"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      EVAL_DATABASE_URL: postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_eval
+      DATABASE_URL: postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_eval
+      JWT_SECRET: ci_eval_secret_not_used
+      OTEL_SDK_DISABLED: "true"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      # The `secrets` context is not allowed in a step `if:`, so a
+      # prior step records whether the secret exists as an output.
+      - name: Check for GROQ_API_KEY secret
+        id: groq
+        run: echo "present=${{ secrets.GROQ_API_KEY != '' }}" >> "$GITHUB_OUTPUT"
+
+      - name: Run full golden eval with regression gate
+        if: steps.groq.outputs.present == 'true' && inputs.mode == 'full'
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -m evaluation.golden_eval --gate --provider "${{ inputs.provider || 'groq' }}"
+
+      - name: Run smoke golden eval with regression gate
+        if: steps.groq.outputs.present == 'true' && inputs.mode != 'full'
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python -m evaluation.golden_eval --smoke --gate --provider "${{ inputs.provider || 'groq' }}"
+
+      - name: Install test dependencies
+        if: steps.groq.outputs.present == 'true' && inputs.run_llm_tests
+        run: pip install -r requirements-test.txt
+
+      - name: Run live-LLM tests
+        if: steps.groq.outputs.present == 'true' && inputs.run_llm_tests
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          DATABASE_URL: postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_eval
+        run: pytest -m llm --tb=short -q
+
+      - name: Skip notice
+        if: steps.groq.outputs.present != 'true'
+        run: echo "::notice::GROQ_API_KEY secret not set; golden eval skipped."
+
+      - name: Upload report
+        if: always() && steps.groq.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: golden-eval-report
+          path: |
+            evaluation/results/golden_latest.md
+            evaluation/results/golden_latest.json

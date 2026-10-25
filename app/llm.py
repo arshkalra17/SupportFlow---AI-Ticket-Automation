@@ -4,7 +4,7 @@ import time
 # pyrefly: ignore [missing-import]
 from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
-from groq import Groq
+from app.llm_client import chat_completion
 
 # pyrefly: ignore [missing-import]
 from app.tools import (
@@ -62,12 +62,6 @@ def classify_ticket(
         RuntimeError: If the Groq API call fails.
     """
     with traced_span("llm.groq.classify") as span:
-        api_key = os.getenv("GROQ_API_KEY")
-        if not api_key:
-            raise ValueError("GROQ_API_KEY environment variable is not set")
-
-        client = Groq(api_key=api_key)
-
         system_prompt = _CLASSIFICATION_SYSTEM_PROMPT
 
         # Enrich system prompt with conversation context
@@ -98,8 +92,8 @@ def classify_ticket(
 
         start = time.time()
         try:
-            response = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+            result = chat_completion(
+                tier="small",
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": message},
@@ -107,15 +101,18 @@ def classify_ticket(
                 response_format={"type": "json_object"},
                 temperature=0.0,
             )
+        except ValueError:
+            raise
         except Exception as err:
-            raise RuntimeError(f"Groq API request failed: {err}") from err
+            raise RuntimeError(f"LLM API request failed: {err}") from err
+        response = result.response
 
         latency_ms = (time.time() - start) * 1000
 
         if span:
             record_llm_call(
                 span,
-                model="openai/gpt-oss-120b",
+                model=result.model,
                 prompt_version=_CLASSIFICATION_PROMPT_VERSION,
                 latency_ms=latency_ms,
             )
@@ -236,23 +233,19 @@ LIST_CUSTOMER_ORDERS_TOOL_SCHEMA = {
     "function": {
         "name": "list_customer_orders",
         "description": (
-            "Lists/shows all orders belonging to the authenticated customer. "
-            "Use this tool when the customer wants to VIEW, LIST, or SEE their own orders. "
-            "The backend automatically filters to show only the authenticated customer's orders. "
-            "Examples: 'Show me my orders', 'List my orders', 'What orders do I have?', "
-            "'Can I see my orders?', 'Show my recent orders'. "
-            "This is a read-only operation that returns order summaries (order_id, status, total, created_at)."
+            "Lists the customer's own orders (order_id, status, total, created_at). "
+            "Use when they want to see or list their orders, optionally by status."
         ),
         "parameters": {
             "type": "object",
             "properties": {
                 "status_filter": {
                     "type": "string",
-                    "description": "Optional status filter (e.g., 'SHIPPED', 'DELIVERED', 'PROCESSING', 'CANCELLED')"
+                    "description": "SHIPPED, DELIVERED, PROCESSING or CANCELLED"
                 },
                 "limit": {
                     "type": "integer",
-                    "description": "Maximum number of orders to return (1-100, default 10)"
+                    "description": "1-100, default 10"
                 }
             },
             "required": []
@@ -343,14 +336,10 @@ CANCEL_ORDER_TOOL_SCHEMA = {
     "function": {
         "name": "cancel_order",
         "description": (
-            "Cancels an order by updating its status to CANCELLED in the database. "
-            "This is a STATE-CHANGING operation — it actually cancels the order. "
-            "Only use this tool when the customer explicitly asks to CANCEL their order. "
-            "Use check_cancellation_eligibility first if you only need to know whether "
-            "cancellation is possible without actually cancelling. "
-            "Only PROCESSING orders can be cancelled. SHIPPED and DELIVERED orders "
-            "cannot be cancelled (the customer must initiate a return), and CANCELLED "
-            "orders cannot be cancelled again."
+            "Actually cancels an order (state-changing). Use only when the customer "
+            "explicitly asks to cancel; to ask whether they can, use "
+            "check_cancellation_eligibility. Only PROCESSING orders can be cancelled; "
+            "the backend enforces this."
         ),
         "parameters": {
             "type": "object",
@@ -963,12 +952,6 @@ def process_customer_message_with_tools(
         dict: Detailed log with original_message, authenticated_customer_id,
               tool_calls (list), total_iterations, and final_response.
     """
-    api_key = os.getenv("GROQ_API_KEY")
-    if not api_key:
-        raise ValueError("GROQ_API_KEY environment variable is not set")
-
-    client = Groq(api_key=api_key)
-
     system_prompt = (
         "You are a helpful customer support AI assistant for SupportFlow. "
         "Answer customer questions politely and concisely. "
@@ -1002,16 +985,17 @@ def process_customer_message_with_tools(
 
     while iteration < max_tool_iterations:
         try:
-            response = client.chat.completions.create(
-                model="openai/gpt-oss-120b",
+            response = chat_completion(
                 messages=messages,
                 tools=AVAILABLE_TOOLS,
                 tool_choice="auto",
                 temperature=0.0,
-            )
+            ).response
+        except ValueError:
+            raise
         except Exception as err:
             raise RuntimeError(
-                f"Groq API request failed at iteration {iteration}: {err}"
+                f"LLM API request failed at iteration {iteration}: {err}"
             ) from err
 
         response_message = response.choices[0].message

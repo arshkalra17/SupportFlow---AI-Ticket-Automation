@@ -59,7 +59,7 @@ class TestClassifierContextOrdering:
         response = MagicMock()
         response.choices = [MagicMock(message=msg)]
 
-        with patch("app.llm.Groq") as mock_groq_cls:
+        with patch("app.llm_client.Groq") as mock_groq_cls:
             client = MagicMock()
             client.chat.completions.create.return_value = response
             mock_groq_cls.return_value = client
