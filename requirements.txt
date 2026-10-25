@@ -1,6 +1,8 @@
 sqlalchemy>=2.0.0
 python-dotenv>=1.0.0
 psycopg2-binary>=2.9.0
+# SQLAlchemy 2.1+ defaults plain postgresql:// URLs to psycopg 3
+psycopg[binary]>=3.1.0
 fastapi>=0.100.0
 uvicorn>=0.20.0
 pydantic>=2.0.0
