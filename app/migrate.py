@@ -7,7 +7,7 @@ Uses PostgreSQL advisory locks to ensure only one migration runs at a time.
 import os
 import sys
 import logging
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, inspect, text
 from dotenv import load_dotenv
 import time
 
@@ -56,13 +56,27 @@ def run_migrations():
             
             conn.commit()
         
-        # Run Alembic migrations
-        logger.info("Running Alembic migrations...")
         from alembic.config import Config
         from alembic import command
-        
+
         alembic_cfg = Config("alembic.ini")
-        command.upgrade(alembic_cfg, "head")
+
+        with engine.connect() as conn:
+            conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
+            conn.commit()
+
+        if not inspect(engine).has_table("alembic_version"):
+            # Fresh database: the initial revision is empty, so build the
+            # current schema from the models and mark it as up to date.
+            logger.info("No alembic_version table — creating schema from models...")
+            from app.database import Base
+            import app.models  # noqa: F401  (registers tables on Base)
+
+            Base.metadata.create_all(bind=engine)
+            command.stamp(alembic_cfg, "head")
+        else:
+            logger.info("Running Alembic migrations...")
+            command.upgrade(alembic_cfg, "head")
         
         logger.info("✅ Migrations completed successfully.")
         

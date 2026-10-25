@@ -1,20 +1,14 @@
 """Knowledge Base module — seed dataset and document management.
 
-This module initializes the pgvector extension and manages KnowledgeDocument entries.
+This module manages KnowledgeDocument entries. The pgvector extension and
+tables are created by the migrate service (app/migrate.py).
 """
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal, Base, engine
+from app.database import SessionLocal
 from app.models import KnowledgeDocument
 from app.embeddings import generate_embedding, EMBEDDING_DIMENSION
-
-# Ensure pgvector extension and tables exist
-with engine.connect() as conn:
-    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
-    conn.commit()
-
-Base.metadata.create_all(bind=engine)
 
 
 SEED_DOCUMENTS = [

@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 # pyrefly: ignore [missing-import]
 from app.queue import enqueue_ticket_processing
-from app.database import engine, Base, get_db
+from app.database import engine, get_db
 from app.models import Ticket, Customer
 from app.auth import (
     hash_password,
@@ -33,9 +33,6 @@ from app.conversation import (
     update_context,
 )
 from fastapi.middleware.cors import CORSMiddleware
-
-# Ensure tables are created
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Support Flow API")
 

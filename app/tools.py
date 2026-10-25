@@ -2,13 +2,10 @@
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal, Base, engine
+from app.database import SessionLocal
 from app.models import Order, ReplacementRequest, Action, Approval, Ticket
 from app.approval import create_approval_request
 from app.observability import traced_span, safe_set_attribute
-
-# Ensure tables are created
-Base.metadata.create_all(bind=engine)
 
 
 class GetOrderStatusArgs(BaseModel):

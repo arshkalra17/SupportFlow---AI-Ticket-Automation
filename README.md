@@ -366,10 +366,13 @@ cp .env.example .env   # add your GROQ_API_KEY and a JWT secret
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# 4. Run the API
+# 4. Create or migrate the database schema
+python -m app.migrate
+
+# 5. Run the API
 uvicorn app.main:app --reload
 
-# 5. In a separate terminal, run the background worker
+# 6. In a separate terminal, run the background worker
 python -m app.worker
 
 ```

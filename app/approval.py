@@ -7,12 +7,9 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.database import SessionLocal, Base, engine
+from app.database import SessionLocal
 from app.models import Action, Approval
 from app.observability import traced_span, safe_set_attribute
-
-# Ensure tables exist
-Base.metadata.create_all(bind=engine)
 
 # Valid approval status values
 APPROVAL_PENDING = "PENDING"
