@@ -641,3 +641,21 @@ class TestOrderListRequestRouting:
             "error": None,
         }
         assert rac_func(state) == "tool_execution_node"
+
+
+@pytest.mark.unit
+def test_committed_graph_diagram_matches_code():
+    """docs/langgraph.md is generated from the graph; regenerate it with
+    `python scripts/export_graph.py` after changing nodes or edges."""
+    import importlib.util
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parent.parent
+    spec = importlib.util.spec_from_file_location("export_graph", root / "scripts" / "export_graph.py")
+    export_graph = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(export_graph)
+
+    committed = (root / "docs" / "langgraph.md").read_text(encoding="utf-8")
+    assert committed == export_graph.render(), (
+        "docs/langgraph.md is out of date: run `python scripts/export_graph.py`"
+    )

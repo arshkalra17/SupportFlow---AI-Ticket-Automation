@@ -736,20 +736,25 @@ def route_after_approval(state: SupportFlowState) -> str:
 # GRAPH CONSTRUCTION
 # ═══════════════════════════════════════════════════════════════════════
 
-def build_supportflow_graph():
+def build_supportflow_graph(checkpointer=None):
     """Constructs and compiles the SupportFlow LangGraph workflow.
 
-    Graph structure:
+    Graph structure (rendered from the code in docs/langgraph.md, via
+    scripts/export_graph.py):
         START → classify_node
           → [route_after_classify]
-             ├── retrieve_knowledge_node → generate_response_node → END
+             ├── retrieve_knowledge_node → END
              ├── tool_execution_node
              │     → [route_after_tool]
              │        ├── tool_execution_node (loop, max 5)
-             │        ├── approval_check_node → generate_response_node → END
+             │        ├── approval_check_node (pauses until an admin decides)
+             │        │     → generate_response_node → END
              │        ├── error_node → END
              │        └── generate_response_node → END
              └── error_node → END
+
+    checkpointer: required to run (approvals pause with interrupt());
+    None is enough to draw the graph.
     """
     graph = StateGraph(SupportFlowState)
 
@@ -806,7 +811,7 @@ def build_supportflow_graph():
     # error → END
     graph.add_edge("error_node", END)
 
-    return graph.compile(checkpointer=get_checkpointer())
+    return graph.compile(checkpointer=checkpointer)
 
 
 # Compiled graph singleton, rebuilt if the checkpointer was replaced
@@ -817,7 +822,7 @@ def _get_graph():
     """Returns the compiled graph singleton."""
     global _compiled_graph
     if _compiled_graph is None or _compiled_graph.checkpointer is not get_checkpointer():
-        _compiled_graph = build_supportflow_graph()
+        _compiled_graph = build_supportflow_graph(get_checkpointer())
     return _compiled_graph
 
 

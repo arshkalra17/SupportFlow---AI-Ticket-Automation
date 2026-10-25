@@ -82,6 +82,8 @@ flowchart TD
 
 ```
 
+The exact LangGraph workflow (nodes, conditional routes, and the approval interrupt) is in [docs/langgraph.md](docs/langgraph.md), generated from the code by `python scripts/export_graph.py`.
+
 ## A simpler one for understanding
 ![ez-arch](docs/images/mermaid.png)
 
