@@ -319,6 +319,10 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         if active_order_id:
             system_prompt += f"\n\nContext: The customer is currently discussing Order #{active_order_id}. If they refer to 'it', 'that order', or 'this order', they likely mean Order #{active_order_id}."
 
+        active_ticket_id = state.get("active_ticket_id")
+        if active_ticket_id:
+            system_prompt += f"\n\nContext: The customer is currently discussing Ticket #{active_ticket_id}. If they refer to 'my ticket', 'it', or 'that ticket', they likely mean Ticket #{active_ticket_id}."
+
         messages = [
             {"role": "system", "content": system_prompt},
             {"role": "user", "content": state["customer_message"]},

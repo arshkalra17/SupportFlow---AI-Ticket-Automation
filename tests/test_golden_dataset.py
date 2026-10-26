@@ -82,6 +82,16 @@ class TestGoldenStructure:
             assert tool in exp["required_tools"], f"args given for non-required tool {tool}"
             assert set(args) <= TOOL_PARAMS[tool], f"unknown args for {tool}: {args}"
 
+    @pytest.mark.parametrize("case", [_ids(c) for c in CASES if c["expect"].get("tool_alternatives")])
+    def test_alternatives_are_read_only_stand_ins_for_required_tools(self, case):
+        exp = case["expect"]
+        for tool, alts in exp["tool_alternatives"].items():
+            assert tool in exp["required_tools"], f"alternatives for non-required tool {tool}"
+            assert set(alts) <= set(TOOL_PARAMS), alts
+            assert not set(alts) & STATE_CHANGING_TOOLS, "an alternative must never change state"
+            assert not set(alts) & set(exp["forbidden_tools"])
+        assert case["rationale"].count("v1.3:") == 1, "say why the case accepts alternatives"
+
     @pytest.mark.parametrize("case", [_ids(c) for c in CASES])
     def test_references_exist_in_fixtures(self, case):
         for args in case["expect"]["tool_args"].values():

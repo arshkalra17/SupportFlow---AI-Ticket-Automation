@@ -238,3 +238,44 @@ def test_progress_files_are_separate_per_provider_and_tier():
 
     assert progress_path("groq", "full").name == "golden_progress.jsonl"
     assert progress_path("gemini", "smoke").name == "golden_progress_gemini_smoke.jsonl"
+
+
+# ── read-only tool alternatives (dataset v1.3) ────────────────────────
+
+def _alt_case(**expect):
+    base = {"route": "tools", "required_tools": ["get_order_status"],
+            "tool_args": {"get_order_status": {"order_id": 7001}},
+            "tool_alternatives": {"get_order_status": ["get_order_details", "get_delivery_estimate"]},
+            "forbidden_tools": [], "outcome": "INFO_RETURNED", "also_acceptable": [],
+            "kb_doc": None, "must_not_say": [], "judge": "x"}
+    base.update(expect)
+    return {"id": "c", "category": "t", "difficulty": "easy", "expect": base}
+
+
+def _obs(*calls):
+    return {"tool_calls": [{"name": n, "args": a, "result": {"status": "PROCESSING"}} for n, a in calls],
+            "tools_called": [n for n, _ in calls], "route": "tools", "response": "ok",
+            "policy_used": False, "rag_relevant": False}
+
+
+def test_alternative_tool_on_the_same_order_satisfies_the_requirement():
+    score = score_case(_alt_case(), _obs(("get_delivery_estimate", {"order_id": 7001})))
+    assert score["tools_ok"] is True and score["args_ok"] is True
+
+
+def test_alternative_tool_on_another_order_does_not():
+    score = score_case(_alt_case(), _obs(("get_delivery_estimate", {"order_id": 7002})))
+    assert score["tools_ok"] is True  # a lookup happened...
+    assert score["args_ok"] is False  # ...but not for the order asked about
+
+
+def test_a_tool_that_is_not_listed_does_not_satisfy_the_requirement():
+    assert score_case(_alt_case(), _obs(("get_ticket_status", {"ticket_id": 9001})))["tools_ok"] is False
+
+
+def test_alternatives_ignore_the_amount_of_a_refund_requirement():
+    case = _alt_case(required_tools=["issue_refund"],
+                     tool_args={"issue_refund": {"order_id": 7102, "amount": 1500.0}},
+                     tool_alternatives={"issue_refund": ["get_order_details"]})
+    score = score_case(case, _obs(("get_order_details", {"order_id": 7102})))
+    assert score["tools_ok"] is True and score["args_ok"] is True

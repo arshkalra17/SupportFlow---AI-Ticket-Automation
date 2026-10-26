@@ -11,7 +11,8 @@ Checks per case
                   agent calling only search_policy (ROUTING_MODE=agent)
   policy_ok       for cases with expect.needs_policy: policy text was actually
                   retrieved, so the answer could be grounded in it
-  tools_ok        every required tool was called
+  tools_ok        every required tool was called, or one of its listed read-only
+                  alternatives (expect.tool_alternatives)
   args_ok         every expected tool argument appears in some call (subset match)
   outcome_ok      backend outcome derived from tool results is an accepted one
                   (None when the model answered directly; the judge decides)
@@ -136,17 +137,31 @@ def _args_match(expected: dict, actual: dict) -> bool:
     return True
 
 
+def _call_matches(tool: str, expected: dict, alternatives: list[str], call: dict) -> bool:
+    """The required tool with its expected args, or a read-only alternative that
+    looked up the same order or ticket (an alternative has no amount to compare)."""
+    if call["name"] == tool:
+        return _args_match(expected, call["args"])
+    if call["name"] in alternatives:
+        return _args_match({k: v for k, v in expected.items() if k.endswith("_id")}, call["args"])
+    return False
+
+
 def score_case(case: dict, obs: dict, judge: dict | None = None) -> dict:
     exp = case["expect"]
     accepted = {exp["outcome"], *exp["also_acceptable"]}
     called = {c["name"] for c in _ran(obs["tool_calls"])}
 
     route_ok = None if exp["route"] == "any" else obs["route"] == exp["route"]
-    tools_ok = set(exp["required_tools"]) <= called if exp["required_tools"] else None
+    alternatives = exp.get("tool_alternatives", {})
+    tools_ok = (
+        all(tool in called or called & set(alternatives.get(tool, [])) for tool in exp["required_tools"])
+        if exp["required_tools"] else None
+    )
     args_ok = None
     if exp["tool_args"]:
         args_ok = all(
-            any(c["name"] == tool and _args_match(args, c["args"]) for c in obs["tool_calls"])
+            any(_call_matches(tool, args, alternatives.get(tool, []), c) for c in obs["tool_calls"])
             for tool, args in exp["tool_args"].items()
         )
 

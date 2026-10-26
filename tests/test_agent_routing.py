@@ -192,3 +192,21 @@ def test_baselines_are_kept_per_routing_mode():
     assert baseline_path("groq", "smoke").name == "golden_baseline_smoke.json"
     assert baseline_path("groq", "smoke", "agent").name == "golden_baseline_agent_smoke.json"
     assert progress_path("groq", "smoke", "agent").name == "golden_progress_agent_smoke.jsonl"
+
+
+# ── Ticket context reaches the tool prompt ────────────────────────────
+
+@pytest.mark.integration
+def test_active_ticket_is_named_in_the_tool_prompt(db, customer):
+    """'What's the status of my ticket?' needs the ticket from context (golden multi-016)."""
+    from app.graph import run_supportflow
+
+    with patch("app.graph.classify_ticket", return_value={
+        "category": "Order Issue", "priority": "LOW", "sentiment": "NEUTRAL",
+    }), patch("app.graph.chat_completion", side_effect=[_reply(content="Ticket 9001 is pending.")]) as llm:
+        run_supportflow("What's the status of my ticket?", authenticated_customer_id=customer.id,
+                        active_ticket_id=9001)
+
+    system = llm.call_args_list[0].kwargs["messages"][0]["content"]
+    assert "Ticket #9001" in system
+    assert "Order #" not in system
