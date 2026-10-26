@@ -439,12 +439,15 @@ def main() -> int:
               f"cases.{resume_hint}\n{quota_error}", file=sys.stderr)
 
     regressions = None
+    missing_baseline = False
     if args.gate and not quota_error:
-        if not baseline_json.exists():
-            print(f"No baseline at {baseline_json}; run with --update-baseline first.", file=sys.stderr)
-            return 2
-        baseline = json.loads(baseline_json.read_text(encoding="utf-8"))
-        regressions = compare_to_baseline(metrics, baseline["metrics"], args.tolerance)
+        if baseline_json.exists():
+            baseline = json.loads(baseline_json.read_text(encoding="utf-8"))
+            regressions = compare_to_baseline(metrics, baseline["metrics"], args.tolerance)
+        else:
+            # Still write the report below: this run used live-LLM quota, so its
+            # results must not be thrown away just because there is nothing to gate against
+            missing_baseline = True
 
     LATEST_JSON.write_text(
         json.dumps({"meta": meta, "metrics": metrics, "cases": details}, indent=2, default=str) + "\n",
@@ -454,6 +457,15 @@ def main() -> int:
     if quota_error:
         print(f"Partial report: {LATEST_MD}")
         return 3
+    if missing_baseline:
+        candidate = baseline_json.with_suffix(".candidate.json")
+        candidate.write_text(json.dumps({"meta": meta, "metrics": metrics}, indent=2) + "\n",
+                             encoding="utf-8")
+        print(f"No baseline at {baseline_json}, so there is nothing to gate against.\n"
+              f"This run is saved as {candidate}; rename it to {baseline_json.name} and commit it "
+              f"(or rerun with --update-baseline) to enable the gate.\nReport: {LATEST_MD}",
+              file=sys.stderr)
+        return 2
     if args.update_baseline:
         baseline_json.write_text(json.dumps({"meta": meta, "metrics": metrics}, indent=2) + "\n",
                                  encoding="utf-8")

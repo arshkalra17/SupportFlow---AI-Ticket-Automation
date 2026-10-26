@@ -115,3 +115,4 @@ jobs:
           path: |
             evaluation/results/golden_latest.md
             evaluation/results/golden_latest.json
+            evaluation/results/golden_baseline*.candidate.json
