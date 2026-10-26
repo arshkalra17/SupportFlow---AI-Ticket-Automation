@@ -29,10 +29,19 @@ import os
 import pytest
 
 # ── Inject test DATABASE_URL BEFORE any app import ───────────────────
-os.environ.setdefault(
-    "DATABASE_URL",
-    "postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_test",
-)
+def _default_test_db_url() -> str:
+    import socket
+    for port in (5432, 55433):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(0.2)
+                if s.connect_ex(("localhost", port)) == 0:
+                    return f"postgresql://supportflow_user:supportflow_password@localhost:{port}/supportflow_test"
+        except Exception:
+            pass
+    return "postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_test"
+
+os.environ["DATABASE_URL"] = _default_test_db_url()
 os.environ.setdefault("JWT_SECRET", "test_secret_key_stage8_supportflow")
 # Tests mock Groq; pin the provider chain so a GEMINI_API_KEY in .env can
 # never turn a mocked failure into a real fallback call.
@@ -40,11 +49,16 @@ os.environ.setdefault("LLM_PROVIDERS", "groq")
 # The cross-encoder is a ~1 GB download; retrieval tests use vector order and
 # tests/test_retrieval.py covers re-ranking with a stub model.
 os.environ.setdefault("RAG_RERANK", "0")
+# Disable external OTel export during tests so network calls don't timeout
+os.environ["OTEL_SDK_DISABLED"] = "true"
+os.environ["OBSERVABILITY_ENABLED"] = "false"
+os.environ.pop("OTLP_ENDPOINT", None)
 
 # Now safe to import app modules
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
+import app.database
 from app.database import Base
 from app.models import Customer, Order, Conversation, Message, ConversationContext
 from app.auth import hash_password, create_access_token
@@ -54,6 +68,10 @@ TEST_DATABASE_URL = os.environ["DATABASE_URL"]
 
 test_engine = create_engine(TEST_DATABASE_URL)
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+# Ensure app.database uses test_engine during tests
+app.database.engine = test_engine
+app.database.SessionLocal = TestSessionLocal
 
 
 # ── Session-scoped: create all tables once per test run ───────────────

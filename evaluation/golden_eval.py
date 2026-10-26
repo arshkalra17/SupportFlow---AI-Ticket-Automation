@@ -127,6 +127,11 @@ def _prepare_database():
         conn.commit()
     Base.metadata.create_all(bind=engine)
     with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE approvals ADD COLUMN IF NOT EXISTS graph_thread_id VARCHAR;"))
+        conn.execute(text("ALTER TABLE approvals ADD COLUMN IF NOT EXISTS graph_checkpoint_id VARCHAR;"))
+        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS total DOUBLE PRECISION;"))
+        conn.execute(text("ALTER TABLE orders ADD COLUMN IF NOT EXISTS items JSONB;"))
+        conn.execute(text("ALTER TABLE customers ADD COLUMN IF NOT EXISTS is_admin INTEGER DEFAULT 0;"))
         ensure_term_stats(conn)
 
     db = SessionLocal()
