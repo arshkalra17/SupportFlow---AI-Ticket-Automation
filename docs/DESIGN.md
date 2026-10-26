@@ -211,6 +211,26 @@ re-scored here, and the hybrid run was recorded on v1.3.
 - **Failure states.** Tickets end in explicit states (`PROCESSED`,
   `CLASSIFICATION_FAILED`, `QUEUE_FAILED`). Transient errors are retried;
   permanent ones are not retried forever.
+- **Rate limiting.** Two Redis limits, both answering `429` with a `Retry-After`
+  computed from the window arithmetic, not a fixed guess (tests check that a
+  retry at the stated time succeeds and one a moment earlier does not):
+  a per-customer request limit (`RATE_LIMIT_PER_MINUTE`, default 10) and a
+  shared model-token budget sized to the free Groq tier (7,000 per minute and
+  180,000 per day against the 8,000 and 200,000 caps). Real token usage from
+  every response, API and worker alike, feeds the budget through a listener on
+  the LLM client. Once spent, requests are refused before any model call
+  instead of failing at Groq, where each failure costs retries and trips the
+  circuit breaker for everyone. Choices: a sliding-window *counter* (current
+  bucket plus the previous one weighted by overlap) rather than a fixed window,
+  which would allow twice the limit across a boundary, and rather than a
+  sorted-set log, which costs memory per request and needs Lua for atomicity;
+  it assumes traffic is spread evenly inside a bucket. A refused request is
+  taken back out of the counter so hammering does not push the retry time out.
+  The limiter **fails open** if Redis is unreachable, matching the telemetry
+  layer: the cost is no enforcement during an outage. The budget check runs
+  before the call using usage already recorded, so one request can overshoot by
+  one call. Anonymous ticket creation is limited by client address, which is
+  the proxy's address until a proxy is configured to forward the real one.
 - **Provider fallback.** Groq first, Gemini as fallback, with a per-provider
   circuit breaker and a longer cooldown for daily-quota errors than for
   per-minute limits.
@@ -234,8 +254,11 @@ the guard was added.
 
 ## 6. What this does not do yet
 
-- **No rate limiting.** There is no per-customer limit or shared model-token
-  budget; the app is not ready to be internet-facing without one.
+- **Rate limiting has gaps.** Limits are per customer and per shared model
+  budget only: there is no per-customer *token* cap, so one customer can use
+  the whole shared budget until it is spent, and the background worker is not
+  throttled by the budget (queued work is the buffer). When the Groq budget is
+  spent the API answers 429 instead of falling back to Gemini.
 - **Small evaluation samples for the routing comparison.** Twenty-six cases
   cannot separate modes that differ by one case. A full 167-case run per mode
   would cost about 430K to 650K tokens each, so it needs several quota windows.

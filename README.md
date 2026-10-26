@@ -4,7 +4,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**1,243 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
+**1,269 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
 
 Design decisions, the measurements behind them, and what did not work: **[docs/DESIGN.md](docs/DESIGN.md)**.
 
@@ -138,7 +138,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **1,243 passed** |
+| Deterministic tests | **1,269 passed** |
 | RAG Hit@1 (116 questions, 24 articles) | **87.9%** (74.1% whole-document baseline) — [retrieval write-up](evaluation/results/retrieval.md) |
 | RAG Hit@3 | **98.3%** |
 | Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
@@ -302,6 +302,16 @@ and response generation with timing for each span.
 Secrets are never logged: JWTs, Authorization headers, passwords, hashes, the Groq API key, raw idempotency keys, and raw customer messages are all excluded from trace data by default.
 
 ---
+## Rate limiting
+
+Two limits, both in Redis, both returning `429` with a `Retry-After` that is the real time until a retry would succeed:
+
+- **Per customer:** `RATE_LIMIT_PER_MINUTE` (default 10) on `/support/process`; `/tickets` is limited per customer, or per address when anonymous.
+- **Shared model-token budget:** the free Groq tier caps the main model at 8,000 tokens a minute and 200,000 a day for the whole organisation. Every response's real token usage (API and background worker) is added to shared counters. Once the per-minute or per-day budget (`TOKEN_BUDGET_PER_MINUTE` 7,000, `TOKEN_BUDGET_PER_DAY` 180,000, headroom below the caps) is spent, requests are refused before any model call instead of failing at the provider and tripping the circuit breaker for everyone.
+
+Both use a sliding-window counter (two Redis keys, no Lua): no double burst at a bucket boundary, an approximation of true sliding logs. If Redis is down the limiter fails open and logs a warning. Details and trade-offs: [docs/DESIGN.md §4](docs/DESIGN.md). Set `RATE_LIMIT_ENABLED=0` to turn it off.
+
+---
 ## Authorization
 
 <br>
@@ -369,7 +379,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (1,243 passing, deterministic by default)
+├── tests/                     # pytest suite (1,269 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -421,14 +431,14 @@ curl http://localhost:8001/health/ready   # {"status":"ready","checks":{"postgre
 
 Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 
-**This is a staging/controlled-environment deployment, not yet hardened for internet-facing production.** Missing for that: TLS/reverse proxy, rate limiting, automated backups, and container resource limits.
+**This is a staging/controlled-environment deployment, not yet hardened for internet-facing production.** Missing for that: TLS/reverse proxy, automated backups, and container resource limits. (Rate limiting is built, see [Rate limiting](#rate-limiting).)
 
 ---
 
 ## Testing
 
 ```bash
-pytest              # 1,243 deterministic tests — no Groq API key required
+pytest              # 1,269 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark
@@ -457,7 +467,8 @@ CI runs the deterministic suite against real PostgreSQL/pgvector and Redis servi
 - [x] Stage 14 — 167-case golden agent eval, LLM judge, resumable runs, CI regression gate
 - [x] Stage 15 — RAG at scale: section chunks, re-ranking, out-of-scope refusal, HNSW scale test
 - [x] Stage 16 — Action guard and routing-mode comparison (router / agent / hybrid)
-- [ ] Next — per-customer rate limiting and a shared model-token budget; latency p95 and response caching; resilience tests that kill the LLM mid-request
+- [x] Stage 17 — Rate limiting: per-customer request limits and a shared model-token budget (Redis)
+- [ ] Next — latency p95 and response caching; resilience tests that kill the LLM mid-request
 
 **Stage 11 scope note:** multi-stage Dockerfile, 5-service Compose stack (postgres, redis, migrate, api, worker) with health checks, non-root container execution, graceful shutdown handling (API and worker), Alembic migration infrastructure (currently deferred in favor of `Base.metadata.create_all` until fully validated), and CI-verified image builds with security scanning. **Not yet configured for internet-facing production:** no TLS/reverse proxy, rate limiting, or container resource limits. Full deployment details in `DEPLOYMENT.md`.
 

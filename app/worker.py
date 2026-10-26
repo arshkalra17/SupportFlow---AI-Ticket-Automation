@@ -148,6 +148,12 @@ def run_worker(stop_after_empty: bool = False):
     # Initialize observability
     init_observability()
 
+    # The worker spends from the same Groq quota as the API, so it feeds the
+    # shared token budget too.
+    from app import llm_client
+    from app.rate_limit import record_token_usage
+    llm_client.add_usage_listener(record_token_usage)
+
     jobs_processed = 0
     try:
         while not shutdown_requested:

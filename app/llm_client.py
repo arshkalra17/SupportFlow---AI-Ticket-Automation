@@ -103,15 +103,33 @@ class LLMResult:
 _usage: dict[str, dict[str, int]] = {}
 
 
+# Called with (model, total_tokens) after every successful call; the API
+# registers the shared token budget here. A listener must not raise into the
+# request, so failures are logged and swallowed.
+_usage_listeners: list = []
+
+
+def add_usage_listener(listener) -> None:
+    if listener not in _usage_listeners:
+        _usage_listeners.append(listener)
+
+
 def _record_usage(model: str, response: Any) -> None:
     usage = getattr(response, "usage", None)
     if usage is None:
         return
+    prompt = getattr(usage, "prompt_tokens", 0) or 0
+    completion = getattr(usage, "completion_tokens", 0) or 0
     with _lock:
         totals = _usage.setdefault(model, {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0})
         totals["calls"] += 1
-        totals["prompt_tokens"] += getattr(usage, "prompt_tokens", 0) or 0
-        totals["completion_tokens"] += getattr(usage, "completion_tokens", 0) or 0
+        totals["prompt_tokens"] += prompt
+        totals["completion_tokens"] += completion
+    for listener in _usage_listeners:
+        try:
+            listener(model, prompt + completion)
+        except Exception:
+            logger.warning("LLM usage listener failed", exc_info=True)
 
 
 def get_usage() -> dict[str, dict[str, int]]:

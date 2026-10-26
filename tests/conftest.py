@@ -49,6 +49,9 @@ os.environ.setdefault("LLM_PROVIDERS", "groq")
 # The cross-encoder is a ~1 GB download; retrieval tests use vector order and
 # tests/test_retrieval.py covers re-ranking with a stub model.
 os.environ.setdefault("RAG_RERANK", "0")
+# Rate limiting shares Redis counters across tests (and CI has a real Redis), so it
+# is off unless a test turns it on; tests/test_rate_limit.py does that with fakeredis.
+os.environ.setdefault("RATE_LIMIT_ENABLED", "0")
 # Disable external OTel export during tests so network calls don't timeout
 os.environ["OTEL_SDK_DISABLED"] = "true"
 os.environ["OBSERVABILITY_ENABLED"] = "false"

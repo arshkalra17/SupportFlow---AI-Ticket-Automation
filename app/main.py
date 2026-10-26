@@ -24,6 +24,8 @@ from app.idempotency import execute_with_idempotency
 from app.observability import init_observability, traced_span, get_customer_identifier
 from app.middleware import TraceMiddleware
 from app.health import router as health_router
+from app.rate_limit import enforce_support_limits, enforce_ticket_limit, record_token_usage
+from app import llm_client
 from app.approval import approve_request, reject_request
 from app.models import Approval, Action
 from app.conversation import (
@@ -52,8 +54,9 @@ app.include_router(health_router)
 
 @app.on_event("startup")
 def startup_event():
-    """Initialize observability on application startup."""
+    """Initialize observability and the shared token budget on application startup."""
     init_observability()
+    llm_client.add_usage_listener(record_token_usage)
 
 
 @app.on_event("shutdown")
@@ -176,9 +179,13 @@ def process_support_message(
     data: SupportProcessRequest,
     idempotency_key: str | None = Header(None, alias="Idempotency-Key"),
     current_customer: Customer = Depends(get_current_customer),
+    _limits: None = Depends(enforce_support_limits),
     db: Session = Depends(get_db),
 ):
     """Processes a customer message through the LangGraph AI workflow with idempotency support.
+
+    Rate limited per customer, and refused with 429 while the shared model-token
+    budget is spent (see app/rate_limit.py).
 
     Identity is derived strictly from the verified JWT token via `get_current_customer()`.
     Supports optional `Idempotency-Key` header for safe request retries.
@@ -295,6 +302,7 @@ def create_ticket(
     ticket_data: TicketCreate,
     db: Session = Depends(get_db),
     authorization: str | None = Header(None),
+    _limit: None = Depends(enforce_ticket_limit),
 ):
     """Creates a support ticket and enqueues it for background processing.
 
