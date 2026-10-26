@@ -105,6 +105,10 @@ class TestGoldenStructure:
             assert STATE_CHANGING_TOOLS <= set(exp["forbidden_tools"]) | set(exp["required_tools"]), \
                 "read-only case must forbid state-changing tools"
 
+    @pytest.mark.parametrize("case", [_ids(c) for c in CASES if c["expect"].get("needs_policy")])
+    def test_mixed_cases_name_the_policy_they_need(self, case):
+        assert case["expect"]["kb_doc"] in KB_TITLES
+
     def test_history_is_converted_newest_first(self):
         case = next(c for c in CASES if len(c["history"]) >= 2)
         converted = history_newest_first(case)

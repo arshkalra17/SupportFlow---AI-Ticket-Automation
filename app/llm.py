@@ -354,6 +354,28 @@ CANCEL_ORDER_TOOL_SCHEMA = {
     }
 }
 
+SEARCH_POLICY_TOOL_SCHEMA = {
+    "type": "function",
+    "function": {
+        "name": "search_policy",
+        "description": (
+            "Searches the company policy knowledge base (returns, refunds, shipping, "
+            "cancellation, payments, warranty, account and more). Read-only. Use it for "
+            "any question about rules, time windows, fees or eligibility."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {
+                    "type": "string",
+                    "description": "What to look up, in plain words."
+                }
+            },
+            "required": ["query"]
+        }
+    }
+}
+
 AVAILABLE_TOOLS = [
     ORDER_STATUS_TOOL_SCHEMA,
     CREATE_REPLACEMENT_TOOL_SCHEMA,
@@ -366,6 +388,15 @@ AVAILABLE_TOOLS = [
     GET_TICKET_STATUS_TOOL_SCHEMA,
     GET_CUSTOMER_TICKETS_TOOL_SCHEMA,
 ]
+
+# ROUTING_MODE=agent (app/graph.py): no classify-then-route step; the
+# tool-calling model reads policy itself through search_policy.
+AGENT_TOOLS = AVAILABLE_TOOLS + [SEARCH_POLICY_TOOL_SCHEMA]
+
+SEARCH_POLICY_MAX_QUERY_CHARS = 500
+POLICY_NOT_FOUND_MESSAGE = (
+    "I could not find any relevant company policy to answer your question."
+)
 
 MAX_TOOL_ITERATIONS = 5
 
@@ -916,6 +947,49 @@ def _execute_tool_call(
                 safe_set_attribute(span, "backend_executed", executed)
                 safe_set_attribute(span, "tool.cancel_status", result_data.get("status", ""))
             return result
+
+        elif tool_name == "search_policy":
+            # Read-only and returns no customer data, so there is nothing to authorize
+            query = (tool_args or {}).get("query")
+            if not isinstance(query, str) or not query.strip() or len(query) > SEARCH_POLICY_MAX_QUERY_CHARS:
+                return {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": {
+                        "error": "Backend Validation Error: query must be a non-empty string "
+                                 f"of at most {SEARCH_POLICY_MAX_QUERY_CHARS} characters"
+                    },
+                }
+            from app.kb import search_knowledge_base
+            from app.rag import RAG_SIMILARITY_THRESHOLD, RAG_TOP_K
+
+            sections = search_knowledge_base(
+                query=query.strip(),
+                top_k=RAG_TOP_K,
+                similarity_threshold=RAG_SIMILARITY_THRESHOLD,
+            )
+            if span:
+                safe_set_attribute(span, "validation_passed", True)
+                safe_set_attribute(span, "documents_retrieved", len(sections))
+            tool_result = (
+                {
+                    "found": True,
+                    "sections": [
+                        {"title": s["title"], "heading": s["heading"], "content": s["content"]}
+                        for s in sections
+                    ],
+                }
+                if sections
+                else {"found": False, "message": POLICY_NOT_FOUND_MESSAGE}
+            )
+            return {
+                "validation_passed": True,
+                "authorization_passed": None,
+                "backend_executed": True,
+                "tool_result": tool_result,
+                "documents": sections,
+            }
 
         else:
             result = {

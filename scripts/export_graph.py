@@ -20,14 +20,17 @@ OUTPUT = ROOT / "docs" / "langgraph.md"
 INTERRUPT_NODES = ["approval_check_node"]
 
 
-def render() -> str:
+def _mermaid(mode: str) -> str:
     from app.graph import build_supportflow_graph
 
-    mermaid = build_supportflow_graph().get_graph().draw_mermaid().rstrip()
+    mermaid = build_supportflow_graph(mode=mode).get_graph().draw_mermaid().rstrip()
     mermaid += "\n\tclassDef interrupt fill:#ffe3c2,stroke:#c46a00,stroke-width:2px"
     for node in INTERRUPT_NODES:
         mermaid += f"\n\tclass {node} interrupt"
+    return mermaid
 
+
+def render() -> str:
     return (
         "# SupportFlow LangGraph workflow\n\n"
         "Generated from `app/graph.py` by `python scripts/export_graph.py`; "
@@ -37,7 +40,13 @@ def render() -> str:
         "- Orange nodes pause the run with `interrupt()`. State is "
         "checkpointed in Postgres (thread = conversation), and an admin's "
         "approve/reject resumes it.\n\n"
-        f"```mermaid\n{mermaid}\n```\n"
+        "## Router mode (default, `ROUTING_MODE=router`)\n\n"
+        "A classifier labels the message and the router sends it to RAG or the tool loop.\n\n"
+        f"```mermaid\n{_mermaid('router')}\n```\n\n"
+        "## Agent mode (`ROUTING_MODE=agent`)\n\n"
+        "No classify step: the tool loop has a read-only `search_policy` tool and "
+        "decides whether to read policy, call order tools, or both.\n\n"
+        f"```mermaid\n{_mermaid('agent')}\n```\n"
     )
 
 

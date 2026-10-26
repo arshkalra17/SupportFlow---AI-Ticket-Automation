@@ -14,6 +14,7 @@ Usage:
     python -m evaluation.golden_eval --gate               # exit 1 on regression vs baseline
     python -m evaluation.golden_eval --resume             # continue a run stopped by the daily quota
     python -m evaluation.golden_eval --provider gemini    # run the whole set on one provider
+    python -m evaluation.golden_eval --smoke --routing-mode agent   # search_policy agent instead of classify→route
 
 Requires the chosen provider's API key (GROQ_API_KEY or GEMINI_API_KEY;
 the judge always uses GROQ_API_KEY) and the eval database (EVAL_DATABASE_URL).
@@ -56,25 +57,27 @@ LATEST_MD = RESULTS_DIR / "golden_latest.md"
 SMOKE_SIZE = 26
 
 
-def baseline_path(provider: str, tier: str = "full"):
-    """Each provider and tier has its own baseline: comparing Gemini against
-    a Groq baseline, or the smoke set against the full set, would flag
-    differences in what was measured as regressions."""
+def baseline_path(provider: str, tier: str = "full", mode: str = "router"):
+    """Each provider, tier and routing mode has its own baseline: comparing
+    Gemini against a Groq baseline, or the smoke set against the full set,
+    would flag differences in what was measured as regressions."""
     name = "golden_baseline"
     if provider != "groq":
         name += f"_{provider}"
+    if mode != "router":
+        name += f"_{mode}"
     if tier != "full":
         name += f"_{tier}"
     return RESULTS_DIR / f"{name}.json"
 
 
 
-def progress_path(provider: str, tier: str):
+def progress_path(provider: str, tier: str, mode: str = "router"):
     """One line per finished case, so a run cut short by the daily token
     quota can continue later with --resume instead of starting over. One
     file per provider and tier, so starting one run never wipes another's
     progress."""
-    return RESULTS_DIR / baseline_path(provider, tier).name.replace(
+    return RESULTS_DIR / baseline_path(provider, tier, mode).name.replace(
         "golden_baseline", "golden_progress").replace(".json", ".jsonl")
 
 MAX_ATTEMPTS = 4
@@ -169,6 +172,7 @@ def _run_case(case: dict, fixtures: dict, db, use_judge: bool) -> tuple[dict, di
     for attempt in range(1, MAX_ATTEMPTS + 1):
         seed_fixtures(db, fixtures)
         ctx = case["context"]
+        started = time.perf_counter()
         state = run_supportflow(
             customer_message=case["message"],
             authenticated_customer_id=case["customer_id"],
@@ -185,7 +189,10 @@ def _run_case(case: dict, fixtures: dict, db, use_judge: bool) -> tuple[dict, di
         break
 
     obs = observe(state)
-    # Pipeline tokens only (the judge calls Groq directly, outside the chain)
+    # Pipeline wall time of the attempt that counted (includes any wait on a
+    # per-minute rate limit) and tokens (the judge calls Groq directly,
+    # outside the chain)
+    obs["pipeline_ms"] = round((time.perf_counter() - started) * 1000)
     obs["usage"] = get_usage()
     judge = None
     # Only spend a judge call when the deterministic checks passed; a case
@@ -216,10 +223,12 @@ def _token_summary(details: list[dict]) -> dict:
             for k in t:
                 t[k] += u.get(k, 0)
     total = sum(t["prompt_tokens"] + t["completion_tokens"] for t in by_model.values())
+    latencies = sorted(d["observation"]["pipeline_ms"] for d in details if d["observation"].get("pipeline_ms"))
     return {
         "total": total,
         "per_case_mean": round(total / len(details)) if details else None,
         "by_model": by_model,
+        "pipeline_p50_ms": latencies[len(latencies) // 2] if latencies else None,
     }
 
 
@@ -231,7 +240,8 @@ def _write_report(meta: dict, metrics: dict, scores: list[dict], regressions: li
     lines = [
         "# Golden-set evaluation",
         "",
-        f"Run: {meta['timestamp']} · {meta['provider']} `{meta['model']}` · dataset `{meta['dataset_version']}`"
+        f"Run: {meta['timestamp']} · {meta['provider']} `{meta['model']}` · routing `{meta.get('routing_mode', 'router')}`"
+        f" · dataset `{meta['dataset_version']}`"
         f" · commit `{meta['git_sha']}` · judge `{meta['judge_model'] or 'off'}`",
         "",
         *(["**INCOMPLETE: the daily quota ran out before every case ran.**", ""]
@@ -247,10 +257,14 @@ def _write_report(meta: dict, metrics: dict, scores: list[dict], regressions: li
         f"| Tool recall | {pct(o['tool_recall'])} |",
         f"| Argument accuracy | {pct(o['args_accuracy'])} |",
         f"| Outcome accuracy | {pct(o['outcome_accuracy'])} |",
+        f"| Policy retrieved when needed (mixed cases) | {pct(o.get('policy_accuracy'))} |",
         f"| Judge pass rate | {pct(o['judge_pass_rate'])} |",
         f"| Forbidden-tool violations | {o['forbidden_tool_violations']} |",
         f"| Unsafe-phrase violations | {o['unsafe_phrase_violations']} |",
         f"| Tokens per case (mean) | {meta['tokens']['per_case_mean']} |",
+        *[f"| `{model}` tokens per case | {round((u['prompt_tokens'] + u['completion_tokens']) / o['cases'])} |"
+          for model, u in sorted(meta['tokens']['by_model'].items()) if o['cases']],
+        f"| Pipeline p50 latency | {meta['tokens'].get('pipeline_p50_ms') or '—'} ms |",
         "",
         "## By category",
         "",
@@ -303,6 +317,9 @@ def main() -> int:
     parser.add_argument("--tolerance", type=float, default=0.03, help="Allowed drop in rate metrics")
     parser.add_argument("--provider", default="groq", choices=["groq", "gemini"],
                         help="LLM provider for the pipeline, pinned for the whole run (default groq)")
+    parser.add_argument("--routing-mode", default="router", choices=["router", "agent"],
+                        help="router: classify then route to RAG or tools (default); "
+                             "agent: one tool loop with a search_policy tool")
     parser.add_argument("--resume", action="store_true",
                         help="Skip cases already finished in golden_progress.jsonl (same dataset and judge setting)")
     args = parser.parse_args()
@@ -319,6 +336,7 @@ def main() -> int:
     # app module is imported.
     os.environ["DATABASE_URL"] = EVAL_DATABASE_URL
     os.environ["LLM_PROVIDERS"] = args.provider
+    os.environ["ROUTING_MODE"] = args.routing_mode
 
     from app.llm_client import model_for
 
@@ -344,9 +362,12 @@ def main() -> int:
 
     use_judge = not args.no_judge
     run_key = {"dataset_version": golden["version"], "judge": use_judge, "provider": args.provider}
+    if args.routing_mode != "router":
+        # Router runs keep the old key, so progress saved before this flag still resumes
+        run_key["routing_mode"] = args.routing_mode
     done: dict[str, dict] = {}
-    baseline_json = baseline_path(args.provider, tier or "full")
-    progress = progress_path(args.provider, tier) if tier else None
+    baseline_json = baseline_path(args.provider, tier or "full", args.routing_mode)
+    progress = progress_path(args.provider, tier, args.routing_mode) if tier else None
     if args.resume and not progress:
         print("--resume only applies to full or --smoke runs.", file=sys.stderr)
         return 2
@@ -394,6 +415,7 @@ def main() -> int:
     meta = {
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "provider": args.provider,
+        "routing_mode": args.routing_mode,
         "model": model_for(args.provider),
         "dataset_version": golden["version"],
         "git_sha": _git_sha(),

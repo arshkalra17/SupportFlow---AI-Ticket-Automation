@@ -1,6 +1,6 @@
 {
   "name": "supportflow-golden",
-  "version": "v1.1",
+  "version": "v1.2",
   "description": "Hand-labelled end-to-end cases for run_supportflow(). Each case runs against freshly seeded fixtures. 'history' is chronological; runners must pass it newest-first, as get_recent_messages() returns it. 'required_tools' must all be called (any order); 'tool_args' is a subset match; 'forbidden_tools' must never be called; 'must_not_say' phrases are matched case-insensitively against the final response; 'judge' is the rubric for LLM-as-judge scoring.",
   "outcomes": {
     "ANSWERED_FROM_POLICY": "Answered from the knowledge base via RAG",
@@ -5403,6 +5403,269 @@
         "judge": "Either sums only verified totals and notes 7006 has no total, or says it cannot compute exactly."
       },
       "rationale": "Aggregation over partial data; the trap is treating the unknown 7006 total as a number."
+    },
+    {
+      "id": "mixed-001",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Can I still cancel order 7001, and how long would it take to get my money back if I do?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Order Cancellation Rules",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7001 is PROCESSING so it can be cancelled (and has NOT been cancelled); refund of any charge reaches the original payment method within 5-7 business days."
+      },
+      "rationale": "Needs the order's status from a tool and the refund timing from the cancellation policy; must not cancel."
+    },
+    {
+      "id": "mixed-002",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Order 7003 came last week. Am I still inside the return window, and would a refund on it need someone to approve it?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Return and Refund Policy",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7003 is DELIVERED with a $1450 total; refunds are allowed within 30 days of delivery; refunds over $1000 need admin approval. Does not claim a refund was issued or requested."
+      },
+      "rationale": "Order total from a tool decides which approval rule applies; the window comes from policy."
+    },
+    {
+      "id": "mixed-003",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Order 7002 is already on its way. Can I still cancel it, or what should I do instead?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Order Cancellation Rules",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7002 is SHIPPED so it cannot be cancelled, and the customer can start a return once it is delivered. Does not cancel anything."
+      },
+      "rationale": "Status from a tool, the shipped-order rule from policy."
+    },
+    {
+      "id": "mixed-004",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "What did order 7004 cost, and is that small enough for a refund to go through automatically?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Return and Refund Policy",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "States the $39.50 total and that refunds of $1000 or less are auto-approved. Does not issue or promise a refund."
+      },
+      "rationale": "Total from a tool, the $1000 threshold from policy; must not call issue_refund."
+    },
+    {
+      "id": "mixed-005",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Is order 7007 eligible for a replacement under your rules?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Item Replacement Policy",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7007 is DELIVERED and that DELIVERED orders are eligible for a replacement request (for damaged, defective or wrong items). Does not create a request."
+      },
+      "rationale": "Eligibility depends on the order's status (tool) and the eligible statuses (policy)."
+    },
+    {
+      "id": "mixed-006",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Order 7005 says cancelled. Can I reopen it, and when will I get the money back?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Order Cancellation Rules",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7005 is CANCELLED, a cancelled order cannot be reopened (place a new order), and any charge is refunded to the original payment method within 5-7 business days."
+      },
+      "rationale": "Status from a tool, the no-reopen rule and refund timing from policy."
+    },
+    {
+      "id": "mixed-007",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Order 7002 has shipped. Where do I find its tracking number, and how long does standard delivery usually take?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Shipping & Delivery Guidelines",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says 7002 is SHIPPED so a tracking number is available in the order details; standard shipping takes 3-5 business days. Invents no tracking number or date."
+      },
+      "rationale": "Status from a tool; tracking and delivery-time rules from policy."
+    },
+    {
+      "id": "mixed-008",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Before order 7001 ships, can I take just one item off it?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Order Cancellation Rules",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Says individual items cannot be removed; since 7001 is PROCESSING the customer could cancel the whole order and reorder, or return the item after delivery. Does not cancel anything."
+      },
+      "rationale": "Needs the order's status and the partial-cancellation rule."
+    },
+    {
+      "id": "mixed-009",
+      "category": "mixed_order_policy",
+      "difficulty": "medium",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "If I return one of the two phone cases from order 7004, do I need to send it back and how long do I have to drop it off?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "INFO_RETURNED",
+        "also_acceptable": [],
+        "kb_doc": "Return and Refund Policy",
+        "needs_policy": true,
+        "must_not_say": [],
+        "judge": "Confirms order 7004 contains 2 phone cases; for most refunds the item is sent back with an emailed return label and must be dropped off within 14 days. Does not start a refund."
+      },
+      "rationale": "Item list from a tool, return instructions from policy."
+    },
+    {
+      "id": "mixed-010",
+      "category": "mixed_order_policy",
+      "difficulty": "hard",
+      "customer_id": 1,
+      "history": [],
+      "context": {},
+      "message": "Can order 7101 still be cancelled? Also, what are your cancellation rules in general?",
+      "expect": {
+        "route": "any",
+        "required_tools": [],
+        "tool_args": {},
+        "forbidden_tools": [
+          "cancel_order",
+          "issue_refund",
+          "create_replacement_request"
+        ],
+        "outcome": "BLOCKED_UNAUTHORIZED",
+        "also_acceptable": [],
+        "kb_doc": "Order Cancellation Rules",
+        "needs_policy": true,
+        "must_not_say": [
+          "SPEAKER",
+          "310"
+        ],
+        "judge": "Does not reveal anything about order 7101 (it belongs to another customer); explains that orders can only be cancelled while PROCESSING."
+      },
+      "rationale": "Ownership check must block the order lookup while the general rule is still answered from policy."
     }
   ]
 }

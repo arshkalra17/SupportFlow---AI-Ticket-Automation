@@ -5,7 +5,12 @@ Pipeline per case:
     run_supportflow() final state ──► observe() ──► score_case() ──► aggregate()
 
 Checks per case
-  route_ok        RAG vs tools matches expect.route (skipped when route == "any")
+  route_ok        RAG vs tools matches expect.route (skipped when route == "any").
+                  Mode-neutral: "rag" means policy was read and no order/ticket
+                  tool was called, whether by the router's RAG branch or by the
+                  agent calling only search_policy (ROUTING_MODE=agent)
+  policy_ok       for cases with expect.needs_policy: policy text was actually
+                  retrieved, so the answer could be grounded in it
   tools_ok        every required tool was called
   args_ok         every expected tool argument appears in some call (subset match)
   outcome_ok      backend outcome derived from tool results is an accepted one
@@ -40,7 +45,11 @@ _OUTCOME_PRIORITY = [
 _CONVERSATIONAL_OUTCOMES = {"CLARIFICATION", "REFUSED_OUT_OF_SCOPE", "INFO_RETURNED"}
 
 RATE_METRICS = ["pass_rate", "route_accuracy", "tool_recall", "args_accuracy",
-                "outcome_accuracy", "judge_pass_rate"]
+                "outcome_accuracy", "policy_accuracy", "judge_pass_rate"]
+
+# Read-only policy lookup (agent mode); its result is policy text, not a
+# backend outcome, so it never decides a case's outcome.
+POLICY_TOOL = "search_policy"
 SAFETY_METRICS = ["forbidden_tool_violations", "unsafe_phrase_violations"]
 
 
@@ -56,9 +65,11 @@ def observe(state: dict) -> dict:
     ]
     retrieved = state.get("retrieved_documents")
     response = state.get("final_response") or ""
-    if retrieved is not None:
+    data_calls = [tc for tc in tool_calls if tc["name"] != POLICY_TOOL]
+    ran = (state.get("classification") or state.get("tool_iterations")) and not state.get("error")
+    if retrieved is not None and not data_calls:
         route = "rag"
-    elif tool_calls or (state.get("classification") and not state.get("error")):
+    elif data_calls or ran:
         route = "tools"
     else:
         route = "none"
@@ -73,6 +84,7 @@ def observe(state: dict) -> dict:
             for d in retrieved or []
         ],
         "rag_relevant": route == "rag" and RAG_REFUSAL_MARKER not in response.lower(),
+        "policy_used": bool(retrieved),
         "response": response,
         "error": state.get("error"),
         "classification": state.get("classification"),
@@ -85,7 +97,7 @@ def derive_outcome(obs: dict) -> str | None:
     Returns None when the model answered without tools or retrieval, since
     clarifications and refusals can only be judged from the wording.
     """
-    calls = obs["tool_calls"]
+    calls = [c for c in obs["tool_calls"] if c["name"] != POLICY_TOOL]
     if calls:
         changing = [c for c in calls if c["name"] in STATE_CHANGING_TOOLS]
         outcomes = {outcome_of_tool_result(c["name"], c["result"]) for c in (changing or calls)}
@@ -123,6 +135,8 @@ def score_case(case: dict, obs: dict, judge: dict | None = None) -> dict:
             for tool, args in exp["tool_args"].items()
         )
 
+    policy_ok = obs.get("policy_used", False) if exp.get("needs_policy") else None
+
     actual_outcome = derive_outcome(obs)
     if actual_outcome is not None:
         outcome_ok = actual_outcome in accepted
@@ -136,7 +150,7 @@ def score_case(case: dict, obs: dict, judge: dict | None = None) -> dict:
     said = [p for p in exp["must_not_say"] if p.lower() in response]
 
     judge_pass = judge.get("pass") if judge else None
-    checks = [route_ok, tools_ok, args_ok, outcome_ok, judge_pass]
+    checks = [route_ok, tools_ok, args_ok, outcome_ok, policy_ok, judge_pass]
     passed = all(c is not False for c in checks) and not forbidden and not said
 
     return {
@@ -148,6 +162,7 @@ def score_case(case: dict, obs: dict, judge: dict | None = None) -> dict:
         "tools_ok": tools_ok,
         "args_ok": args_ok,
         "outcome_ok": outcome_ok,
+        "policy_ok": policy_ok,
         "expected_outcome": exp["outcome"],
         "actual_outcome": actual_outcome,
         "forbidden_called": forbidden,
@@ -159,7 +174,7 @@ def score_case(case: dict, obs: dict, judge: dict | None = None) -> dict:
 
 
 def _rate(scores: list[dict], key: str) -> float | None:
-    values = [s[key] for s in scores if s[key] is not None]
+    values = [s.get(key) for s in scores if s.get(key) is not None]
     return round(sum(values) / len(values), 4) if values else None
 
 
@@ -171,6 +186,7 @@ def _summarise(scores: list[dict]) -> dict:
         "tool_recall": _rate(scores, "tools_ok"),
         "args_accuracy": _rate(scores, "args_ok"),
         "outcome_accuracy": _rate(scores, "outcome_ok"),
+        "policy_accuracy": _rate(scores, "policy_ok"),
         "judge_pass_rate": _rate(scores, "judge_pass"),
         "forbidden_tool_violations": sum(1 for s in scores if s["forbidden_called"]),
         "unsafe_phrase_violations": sum(1 for s in scores if s["unsafe_phrases"]),

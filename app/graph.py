@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import time
 import uuid
@@ -27,7 +28,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import Command, interrupt
 
 # Reuse existing SupportFlow capabilities — NO duplication
-from app.llm import classify_ticket, _execute_tool_call, AVAILABLE_TOOLS
+from app.llm import classify_ticket, _execute_tool_call, AVAILABLE_TOOLS, AGENT_TOOLS, POLICY_NOT_FOUND_MESSAGE
 from app.kb import search_knowledge_base
 from app.rag import answer_with_knowledge_base, RAG_SIMILARITY_THRESHOLD
 from app.observability import traced_span, safe_set_attribute
@@ -41,6 +42,20 @@ logger = logging.getLogger("supportflow.graph")
 
 # ── Configuration ─────────────────────────────────────────────────────
 MAX_TOOL_ITERATIONS = 5
+
+# router (default): classify_node labels the message and route_after_classify
+#   sends it to either RAG or the tool loop.
+# agent: no classification on the request path; the tool loop gets a
+#   search_policy tool and decides for itself whether to read policy, call
+#   order tools, or both. evaluation/golden_eval.py --routing-mode compares them.
+ROUTING_MODES = ("router", "agent")
+
+
+def routing_mode() -> str:
+    mode = os.getenv("ROUTING_MODE", "router").strip().lower()
+    if mode not in ROUTING_MODES:
+        raise ValueError(f"ROUTING_MODE must be one of {ROUTING_MODES}, got {mode!r}")
+    return mode
 
 # Categories that indicate the customer is asking a knowledge/policy
 # question rather than requesting a specific action on an order.
@@ -268,10 +283,23 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "error, report it and do not claim the action happened.\n"
             "- If authorization fails, say the resource could not be accessed. Identity is "
             "handled by the backend: never ask for or accept a customer ID.\n"
-            "- No tool returns company policy. Never state policy terms (time windows, fees, "
-            "return labels, eligibility rules) from memory; offer to check a specific order "
-            "instead, or say the policy team can confirm the details.\n"
         )
+        agent = routing_mode() == "agent"
+        if agent:
+            system_prompt += (
+                "- For any question about company rules (time windows, fees, eligibility, how "
+                "something works) call search_policy and answer only from the sections it "
+                "returns; never state policy from memory. If it finds nothing, reply: "
+                f"\"{POLICY_NOT_FOUND_MESSAGE}\" and offer a human agent. A question about one "
+                "order can need both: order tools for its data, search_policy for the rule.\n"
+                "- Politely decline requests unrelated to shopping with SupportFlow.\n"
+            )
+        else:
+            system_prompt += (
+                "- No tool returns company policy. Never state policy terms (time windows, fees, "
+                "return labels, eligibility rules) from memory; offer to check a specific order "
+                "instead, or say the policy team can confirm the details.\n"
+            )
 
         # Add conversation history context if available
         conversation_history = state.get("conversation_history", [])
@@ -319,7 +347,7 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         try:
             result = chat_completion(
                 messages=messages,
-                tools=AVAILABLE_TOOLS,
+                tools=AGENT_TOOLS if agent else AVAILABLE_TOOLS,
                 tool_choice="auto",
                 temperature=0.0,
             )
@@ -346,6 +374,7 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         # ── Process tool calls ────────────────────────────────────────
         approval_status = state.get("approval_status")
         final_response = None
+        retrieved_documents = state.get("retrieved_documents")
         updated_active_order_id = state.get("active_order_id")
         updated_last_action = state.get("last_action")
 
@@ -369,6 +398,10 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             log.append(f"    executed: {'✅' if execution['backend_executed'] else '❌'}")
 
             tool_result = execution["tool_result"]
+
+            # Policy the agent read: kept for the reply's audit trail and the eval judge
+            if tool_name == "search_policy" and execution["backend_executed"]:
+                retrieved_documents = list(retrieved_documents or []) + execution.get("documents", [])
 
             # Check for approval-required status
             if isinstance(tool_result, dict) and tool_result.get("status") == "PENDING_APPROVAL":
@@ -427,6 +460,8 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "approval_status": approval_status,
             "execution_log": log,
         }
+        if retrieved_documents is not state.get("retrieved_documents"):
+            result["retrieved_documents"] = retrieved_documents
 
         # Update active order and last action in state
         if updated_active_order_id != state.get("active_order_id"):
@@ -757,7 +792,7 @@ def route_after_approval(state: SupportFlowState) -> str:
 # GRAPH CONSTRUCTION
 # ═══════════════════════════════════════════════════════════════════════
 
-def build_supportflow_graph(checkpointer=None):
+def build_supportflow_graph(checkpointer=None, mode: str | None = None):
     """Constructs and compiles the SupportFlow LangGraph workflow.
 
     Graph structure (rendered from the code in docs/langgraph.md, via
@@ -776,34 +811,39 @@ def build_supportflow_graph(checkpointer=None):
 
     checkpointer: required to run (approvals pause with interrupt());
     None is enough to draw the graph.
+    mode: "router" (default, drawn above) or "agent", where START goes
+    straight to tool_execution_node; None reads ROUTING_MODE.
     """
+    mode = mode or routing_mode()
     graph = StateGraph(SupportFlowState)
 
     # ── Add nodes ─────────────────────────────────────────────────
-    graph.add_node("classify_node", classify_node)
-    graph.add_node("retrieve_knowledge_node", retrieve_knowledge_node)
+    if mode == "router":
+        graph.add_node("classify_node", classify_node)
+        graph.add_node("retrieve_knowledge_node", retrieve_knowledge_node)
     graph.add_node("tool_execution_node", tool_execution_node)
     graph.add_node("approval_check_node", approval_check_node)
     graph.add_node("generate_response_node", generate_response_node)
     graph.add_node("error_node", error_node)
 
     # ── Add edges ─────────────────────────────────────────────────
-    # START → classify
-    graph.add_edge(START, "classify_node")
-
-    # classify → conditional routing
-    graph.add_conditional_edges(
-        "classify_node",
-        route_after_classify,
-        {
-            "retrieve_knowledge_node": "retrieve_knowledge_node",
-            "tool_execution_node": "tool_execution_node",
-            "error_node": "error_node",
-        },
-    )
-
-    # knowledge retrieval → END (no need for generate_response_node)
-    graph.add_edge("retrieve_knowledge_node", END)
+    if mode == "router":
+        # START → classify → RAG or tools
+        graph.add_edge(START, "classify_node")
+        graph.add_conditional_edges(
+            "classify_node",
+            route_after_classify,
+            {
+                "retrieve_knowledge_node": "retrieve_knowledge_node",
+                "tool_execution_node": "tool_execution_node",
+                "error_node": "error_node",
+            },
+        )
+        # knowledge retrieval → END (no need for generate_response_node)
+        graph.add_edge("retrieve_knowledge_node", END)
+    else:
+        # START → tool loop, which reads policy through search_policy when needed
+        graph.add_edge(START, "tool_execution_node")
 
     # tool execution → conditional routing
     graph.add_conditional_edges(
@@ -835,15 +875,22 @@ def build_supportflow_graph(checkpointer=None):
     return graph.compile(checkpointer=checkpointer)
 
 
-# Compiled graph singleton, rebuilt if the checkpointer was replaced
+# Compiled graph singleton, rebuilt if the checkpointer or routing mode changed
 _compiled_graph = None
+_compiled_mode = None
 
 
 def _get_graph():
     """Returns the compiled graph singleton."""
-    global _compiled_graph
-    if _compiled_graph is None or _compiled_graph.checkpointer is not get_checkpointer():
-        _compiled_graph = build_supportflow_graph(get_checkpointer())
+    global _compiled_graph, _compiled_mode
+    mode = routing_mode()
+    if (
+        _compiled_graph is None
+        or _compiled_graph.checkpointer is not get_checkpointer()
+        or _compiled_mode != mode
+    ):
+        _compiled_graph = build_supportflow_graph(get_checkpointer(), mode)
+        _compiled_mode = mode
     return _compiled_graph
 
 
