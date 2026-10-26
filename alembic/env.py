@@ -31,7 +31,7 @@ from app.models import (
     ReplacementRequest,
     Action,
     Approval,
-    KnowledgeDocument,
+    KnowledgeChunk,
     Customer,
     IdempotencyRecord,
 )
