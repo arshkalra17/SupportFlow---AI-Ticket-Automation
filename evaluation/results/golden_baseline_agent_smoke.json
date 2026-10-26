@@ -1,0 +1,430 @@
+{
+  "meta": {
+    "timestamp": "2026-10-26T15:17:01+00:00",
+    "provider": "groq",
+    "routing_mode": "agent",
+    "model": "openai/gpt-oss-120b",
+    "dataset_version": "v1.2",
+    "git_sha": "311e476",
+    "judge": true,
+    "judge_model": "qwen/qwen3.8-27b",
+    "partial": true,
+    "tier": "smoke",
+    "resumed_cases": 18,
+    "duration_s": 41.1,
+    "tokens": {
+      "total": 69884,
+      "per_case_mean": 2688,
+      "by_model": {
+        "openai/gpt-oss-120b": {
+          "calls": 56,
+          "prompt_tokens": 64858,
+          "completion_tokens": 5026
+        }
+      },
+      "pipeline_p50_ms": 7467
+    }
+  },
+  "metrics": {
+    "overall": {
+      "cases": 26,
+      "rate_counts": {
+        "pass_rate": 26,
+        "route_accuracy": 21,
+        "tool_recall": 18,
+        "args_accuracy": 16,
+        "outcome_accuracy": 24,
+        "policy_accuracy": 1,
+        "judge_pass_rate": 23
+      },
+      "pass_rate": 0.8846,
+      "route_accuracy": 1.0,
+      "tool_recall": 0.8889,
+      "args_accuracy": 0.875,
+      "outcome_accuracy": 0.875,
+      "policy_accuracy": 1.0,
+      "judge_pass_rate": 1.0,
+      "forbidden_tool_violations": 0,
+      "unsafe_phrase_violations": 0,
+      "guard_blocked_actions": 0
+    },
+    "by_category": {
+      "authorization": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "cancellation": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "delivery_estimate": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "hallucination_trap": {
+        "cases": 1,
+        "rate_counts": {
+          "pass_rate": 1,
+          "route_accuracy": 1,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 1,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 1
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "list_resources": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 0,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": null,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "mixed_order_policy": {
+        "cases": 1,
+        "rate_counts": {
+          "pass_rate": 1,
+          "route_accuracy": 0,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 1,
+          "policy_accuracy": 1,
+          "judge_pass_rate": 1
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": null,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": 1.0,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "multi_turn": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "order_lookup": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "out_of_scope": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 0,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 0,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": null,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": null,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "policy_rag": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "prompt_injection": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 0,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 1
+        },
+        "pass_rate": 0.5,
+        "route_accuracy": null,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": 0.5,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "refund": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 0
+        },
+        "pass_rate": 0.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 0.0,
+        "args_accuracy": 0.0,
+        "outcome_accuracy": 0.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": null,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "replacement": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "ticket_status": {
+        "cases": 2,
+        "rate_counts": {
+          "pass_rate": 2,
+          "route_accuracy": 2,
+          "tool_recall": 2,
+          "args_accuracy": 2,
+          "outcome_accuracy": 2,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 1.0,
+        "route_accuracy": 1.0,
+        "tool_recall": 1.0,
+        "args_accuracy": 1.0,
+        "outcome_accuracy": 1.0,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      }
+    },
+    "by_difficulty": {
+      "easy": {
+        "cases": 18,
+        "rate_counts": {
+          "pass_rate": 18,
+          "route_accuracy": 16,
+          "tool_recall": 14,
+          "args_accuracy": 12,
+          "outcome_accuracy": 16,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 17
+        },
+        "pass_rate": 0.9444,
+        "route_accuracy": 1.0,
+        "tool_recall": 0.9286,
+        "args_accuracy": 0.9167,
+        "outcome_accuracy": 0.9375,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "hard": {
+        "cases": 3,
+        "rate_counts": {
+          "pass_rate": 3,
+          "route_accuracy": 1,
+          "tool_recall": 0,
+          "args_accuracy": 0,
+          "outcome_accuracy": 3,
+          "policy_accuracy": 0,
+          "judge_pass_rate": 2
+        },
+        "pass_rate": 0.6667,
+        "route_accuracy": 1.0,
+        "tool_recall": null,
+        "args_accuracy": null,
+        "outcome_accuracy": 0.6667,
+        "policy_accuracy": null,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      },
+      "medium": {
+        "cases": 5,
+        "rate_counts": {
+          "pass_rate": 5,
+          "route_accuracy": 4,
+          "tool_recall": 4,
+          "args_accuracy": 4,
+          "outcome_accuracy": 5,
+          "policy_accuracy": 1,
+          "judge_pass_rate": 4
+        },
+        "pass_rate": 0.8,
+        "route_accuracy": 1.0,
+        "tool_recall": 0.75,
+        "args_accuracy": 0.75,
+        "outcome_accuracy": 0.8,
+        "policy_accuracy": 1.0,
+        "judge_pass_rate": 1.0,
+        "forbidden_tool_violations": 0,
+        "unsafe_phrase_violations": 0,
+        "guard_blocked_actions": 0
+      }
+    }
+  }
+}
