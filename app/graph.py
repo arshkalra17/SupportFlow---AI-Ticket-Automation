@@ -29,7 +29,7 @@ from langgraph.types import Command, interrupt
 
 # Reuse existing SupportFlow capabilities — NO duplication
 from app.llm import classify_ticket, _execute_tool_call, AVAILABLE_TOOLS, AGENT_TOOLS, POLICY_NOT_FOUND_MESSAGE
-from app.action_guard import check_action
+from app.action_guard import check_action, executed_state_changes
 from app.kb import search_knowledge_base
 from app.rag import answer_with_knowledge_base, RAG_SIMILARITY_THRESHOLD
 from app.observability import traced_span, safe_set_attribute
@@ -615,9 +615,45 @@ def generate_response_node(state: SupportFlowState) -> dict:
         except Exception as err:
             log.append(f"  ERROR generating response: {err}")
             return {
-                "final_response": "I apologize, but I encountered an issue processing your request.",
+                "final_response": _failure_response(state),
                 "execution_log": log,
             }
+
+
+def _completed_actions(state: SupportFlowState) -> list[str]:
+    """What state-changing tools already did in this run, in plain words.
+
+    Built from the backend's own results, not from the model, so it stays true
+    when the model is the thing that failed.
+    """
+    done = []
+    for tc in executed_state_changes(state.get("tool_calls")):
+        result = tc["tool_result"]
+        if tc["tool_name"] == "create_replacement_request" and result.get("replacement_id"):
+            done.append(f"A replacement request (#{result['replacement_id']}) was created for order #{result.get('order_id')}.")
+        elif result.get("status") == "COMPLETED" and result.get("message"):
+            done.append(result["message"])
+    return done
+
+
+_APOLOGY = (
+    "I apologize, but I encountered an issue processing your request. "
+    "Please try again or contact a human support agent."
+)
+
+
+def _failure_response(state: SupportFlowState) -> str:
+    """The reply when the run failed: the generic apology, unless an action
+    already went through. Telling a customer 'something went wrong' after their
+    refund was issued invites a retry, and a retry can pay out twice."""
+    done = _completed_actions(state)
+    if not done:
+        return _APOLOGY
+    return (
+        " ".join(done)
+        + " I ran into a problem finishing the rest of my reply, so please check your order"
+        " before asking again; repeating the request could duplicate it."
+    )
 
 
 def error_node(state: SupportFlowState) -> dict:
@@ -626,10 +662,7 @@ def error_node(state: SupportFlowState) -> dict:
     log.append(f"→ ENTERED: error_node (error: {state.get('error')})")
 
     return {
-        "final_response": (
-            "I apologize, but I encountered an issue processing your request. "
-            "Please try again or contact a human support agent."
-        ),
+        "final_response": _failure_response(state),
         "execution_log": log,
     }
 

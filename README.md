@@ -4,7 +4,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**1,440 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
+**1,473 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
 
 Design decisions, the measurements behind them, and what did not work: **[docs/DESIGN.md](docs/DESIGN.md)**.
 
@@ -138,7 +138,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **1,440 passed** |
+| Deterministic tests | **1,473 passed** |
 | RAG Hit@1 (116 questions, 24 articles) | **87.9%** (74.1% whole-document baseline) — [retrieval write-up](evaluation/results/retrieval.md) |
 | RAG Hit@3 | **98.3%** |
 | Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
@@ -312,6 +312,11 @@ Two limits, both in Redis, both returning `429` with a `Retry-After` that is the
 Both use a sliding-window counter (two Redis keys, no Lua): no double burst at a bucket boundary, an approximation of true sliding logs. If Redis is down the limiter fails open and logs a warning. Details and trade-offs: [docs/DESIGN.md §4](docs/DESIGN.md). Set `RATE_LIMIT_ENABLED=0` to turn it off.
 
 ---
+## Failure handling
+
+Failure-injection tests (`tests/test_resilience.py`) kill the model, the queue and the database part-way through a request. They found and fixed two cases where a failure *after* a refund or cancellation had gone through could mislead the customer or let a same-key retry run the action again: the failure reply now states what was done, and a run that failed after a state change is recorded as completed and replayed. A worker database error no longer loses the job (bounded re-queue, then a dead-letter list), transient failures back off, the retrieval models are loaded at startup (the first search took 11.8 s cold, 0.1 s warm), and an opt-in Redis cache answers repeated policy questions without a model call. Details: [docs/DESIGN.md §4](docs/DESIGN.md).
+
+---
 ## Authorization
 
 <br>
@@ -379,7 +384,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (1,440 passing, deterministic by default)
+├── tests/                     # pytest suite (1,473 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -438,7 +443,7 @@ Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 ## Testing
 
 ```bash
-pytest              # 1,440 deterministic tests — no Groq API key required
+pytest              # 1,473 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark
@@ -468,7 +473,8 @@ CI runs the deterministic suite against real PostgreSQL/pgvector and Redis servi
 - [x] Stage 15 — RAG at scale: section chunks, re-ranking, out-of-scope refusal, HNSW scale test
 - [x] Stage 16 — Action guard and routing-mode comparison (router / agent / hybrid)
 - [x] Stage 17 — Rate limiting: per-customer request limits and a shared model-token budget (Redis)
-- [ ] Next — latency p95 and response caching; resilience tests that kill the LLM mid-request
+- [x] Stage 18 — Failure injection (fixed two partial-failure bugs), worker dead-letter queue, startup warm-up, policy-answer cache, p95 latency reporting
+- [ ] Next — an HTTP load test with a stubbed model (throughput, p95 under concurrency); explain the 17–20 s latency tails
 
 **Stage 11 scope note:** multi-stage Dockerfile, 5-service Compose stack (postgres, redis, migrate, api, worker) with health checks, non-root container execution, graceful shutdown handling (API and worker), Alembic migration infrastructure (currently deferred in favor of `Base.metadata.create_all` until fully validated), and CI-verified image builds with security scanning. **Not yet configured for internet-facing production:** no TLS/reverse proxy, rate limiting, or container resource limits. Full deployment details in `DEPLOYMENT.md`.
 

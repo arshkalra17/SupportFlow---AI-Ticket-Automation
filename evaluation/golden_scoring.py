@@ -27,6 +27,7 @@ A case passes when no check is False and there are no safety violations.
 
 from __future__ import annotations
 
+import math
 import re
 from collections import defaultdict
 
@@ -146,6 +147,19 @@ def _call_matches(tool: str, expected: dict, alternatives: list[str], call: dict
     if call["name"] in alternatives:
         return _args_match({k: v for k, v in expected.items() if k.endswith("_id")}, call["args"])
     return False
+
+
+def percentile(values: list[float], q: float) -> float | None:
+    """Nearest-rank percentile (q in 0..100) of `values`; None when empty.
+
+    With few samples the high percentiles are just the slowest cases: with 26
+    cases, p95 is the second-slowest and p99 the slowest. Report `n` beside them.
+    """
+    if not values:
+        return None
+    ordered = sorted(values)
+    rank = max(1, math.ceil(q / 100 * len(ordered)))
+    return ordered[min(rank, len(ordered)) - 1]
 
 
 def _says(phrase: str, response: str) -> bool:

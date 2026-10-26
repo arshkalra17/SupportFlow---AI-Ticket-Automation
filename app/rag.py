@@ -18,6 +18,7 @@ from dotenv import load_dotenv
 # pyrefly: ignore [missing-import]
 from app.llm_client import chat_completion
 
+from app import answer_cache
 from app.kb import search_knowledge_base
 from app.observability import traced_span, record_llm_call, hash_sensitive, safe_set_attribute
 
@@ -29,6 +30,8 @@ RAG_TOP_K = 3
 # of out-of-scope questions while answering 99% of in-scope ones in
 # evaluation/retrieval_eval.py; the old 0.15 refused almost none.
 RAG_SIMILARITY_THRESHOLD = 0.30
+# Part of the answer-cache key: change it when the answer prompt changes.
+RAG_PROMPT_VERSION = "rag-v1"
 
 
 def _build_context_block(documents: list[dict]) -> str:
@@ -153,6 +156,23 @@ def answer_with_knowledge_base(
 
         user_message = f"Customer question: {query}"
 
+        # ── Step 4b: An identical question over identical policy text is
+        # answered from the cache, without a model call ──────────────────
+        cache_key = answer_cache.make_key(query, context_block, RAG_PROMPT_VERSION)
+        cached = answer_cache.get(cache_key)
+        if cached:
+            if span:
+                safe_set_attribute(span, "relevant_context", True)
+                safe_set_attribute(span, "answer_cache_hit", True)
+            return {
+                "query": query,
+                "relevant_context": True,
+                "retrieved_documents": doc_metadata,
+                "answer": cached["answer"],
+                "model": cached["model"],
+                "cache_hit": True,
+            }
+
         # ── Step 5: Call Groq ─────────────────────────────────────────
         with traced_span("llm.groq.rag_answer") as llm_span:
             start = time.time()
@@ -173,7 +193,7 @@ def answer_with_knowledge_base(
             latency_ms = (time.time() - start) * 1000
 
             if llm_span:
-                record_llm_call(llm_span, model=result.model, prompt_version="rag-v1", latency_ms=latency_ms)
+                record_llm_call(llm_span, model=result.model, prompt_version=RAG_PROMPT_VERSION, latency_ms=latency_ms)
 
         answer_content = response.choices[0].message.content
         if not answer_content:
@@ -182,10 +202,13 @@ def answer_with_knowledge_base(
         if span:
             safe_set_attribute(span, "relevant_context", True)
 
+        answer_cache.put(cache_key, answer_content.strip(), result.model)
+
         return {
             "query": query,
             "relevant_context": True,
             "retrieved_documents": doc_metadata,
             "answer": answer_content.strip(),
             "model": result.model,
+            "cache_hit": False,
         }

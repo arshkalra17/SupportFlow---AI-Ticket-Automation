@@ -180,6 +180,7 @@ observations (no new model calls):
 | `gpt-oss-120b` tokens per case | 1,908 | 2,690 | 2,905 |
 | `gpt-oss-20b` tokens per case | 887 | 0 | 948 |
 | p50 latency | 4.2 s | 6.9 s | 2.5 s |
+| p95 latency (second-slowest of 26) | 20.3 s | 18.4 s | 17.0 s |
 | Forbidden-tool violations | 0 | 0 | 0 |
 
 **What this showed.** On single-intent questions the three modes are within one
@@ -244,6 +245,38 @@ highest on this set is not evidence of anything.
   before the call using usage already recorded, so one request can overshoot by
   one call. Anonymous ticket creation is limited by client address, which is
   the proxy's address until a proxy is configured to forward the real one.
+- **A failure after a side effect.** Failure injection (`tests/test_resilience.py`)
+  found two holes where the model dies *after* a refund, cancellation or
+  replacement already went through. (1) The customer got a bare "something
+  went wrong" about an action that had happened, which invites a retry. The
+  failure reply is now built from the backend's own results ("Refund of $50.00
+  issued... check your order before asking again"). (2) The idempotency layer
+  read the error in the result as transient and marked the key retryable, so a
+  retry with the same key re-ran the whole pipeline, which for a refund under
+  the approval threshold could pay out a second time. A run that failed after
+  a state change is now recorded as completed and replayed; a run that failed
+  before any change stays retryable. Approvals were already safe: the
+  "submitted for approval" reply is built without a second model call.
+- **Worker job loss.** A database error while processing a ticket returned
+  without re-queueing, so the job was gone and the ticket stayed `PENDING`
+  forever. The job is now re-queued up to three times, then parked on a
+  dead-letter list (`supportflow:ticket_queue:dead`) for inspection. Transient
+  model failures back off (1 s, 2 s, 4 s, capped at 30 s) instead of using all
+  three retries within milliseconds of each other.
+- **Cold start.** The embedding and re-ranking models load on first use: the
+  first retrieval in a process took 11.8 s against about 0.1 s afterwards. The
+  API now runs one throwaway search at startup (`WARM_UP_MODELS`).
+- **Policy-answer cache** (`ANSWER_CACHE_ENABLED=1`, off by default so evals
+  measure the model). A repeated question over the same retrieved policy text
+  is answered from Redis without a model call, saving about 450 `gpt-oss-120b`
+  tokens and a round trip per hit. The key hashes the normalised question, the
+  retrieved context and the prompt version, so editing a policy article or the
+  prompt changes the key and stale policy cannot be served; there is no
+  invalidation step to forget. Exact repeats only: semantic matching was left
+  out because a near-duplicate question can have a different right answer.
+  Retrieval still runs every time, so out-of-scope questions are still refused
+  and never cached. The effect on a real workload is not measured here, only
+  the mechanism.
 - **Provider fallback.** Groq first, Gemini as fallback, with a per-provider
   circuit breaker and a longer cooldown for daily-quota errors than for
   per-minute limits.
@@ -282,7 +315,15 @@ the guard was added.
   is for (the backend rule is also covered by unit tests), not a model fix.
   The 8,423 tokens `halluc-001` used in hybrid mode were four model calls with a
   large prompt, not a runaway loop.
-- **Latency is p50 only.** There are no p95 numbers and no response caching yet.
+- **Latency tails are unexplained.** The p95 of the 26-case runs is 17 to 20 s
+  in every mode, about five times the median, and p95 of 26 samples is just the
+  second-slowest case. The cold start accounts for only part of it (router p95
+  falls from 20.3 s to 16.1 s without the first request, and the agent and hybrid
+  tails do not move). A two-call policy case that took 20 s used the same calls
+  and tokens as ones that took under 3 s, so the time was spent waiting, not
+  working. The likely cause is free-tier rate-limit waits, since the eval sends
+  cases back to back, but that was not isolated. There is also no load test, so
+  no throughput number.
 - **Order lookup skipped on mixed questions.** In agent and hybrid mode the
   model sometimes answers an order-plus-policy question from policy alone
   (`mixed-008`, `mixed-009`, and `mixed-003` in agent mode).

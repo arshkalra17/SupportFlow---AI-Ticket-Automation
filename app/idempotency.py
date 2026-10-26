@@ -17,6 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models import IdempotencyRecord, Approval, Action
+from app.action_guard import executed_state_changes
 from app.observability import traced_span, hash_sensitive, safe_set_attribute
 
 logging.basicConfig(
@@ -371,7 +372,10 @@ def execute_with_idempotency(
                 logger.info(f"Operation key='{idempotency_key}' transitioned to PENDING_APPROVAL")
                 return result, False
 
-            if result.get("error"):
+            # A run that failed *after* a refund, cancellation or replacement went
+            # through is finished as far as the key is concerned: retrying it would
+            # run the action again. It is recorded as COMPLETED and replayed.
+            if result.get("error") and not executed_state_changes(result.get("tool_calls")):
                 err_msg = str(result["error"])
                 safe_set_attribute(span, "idempotency.result_has_error", True)
                 if is_permanent_error(ValueError(err_msg)) or "Unauthorized" in err_msg or "Permission" in err_msg:
@@ -593,7 +597,7 @@ def retry_idempotent_operation(
                     db.commit()
                     return result, True
 
-                if result.get("error"):
+                if result.get("error") and not executed_state_changes(result.get("tool_calls")):
                     err_msg = str(result["error"])
                     safe_set_attribute(span, "idempotency.result_has_error", True)
                     if is_permanent_error(ValueError(err_msg)) or "Unauthorized" in err_msg or "Permission" in err_msg:

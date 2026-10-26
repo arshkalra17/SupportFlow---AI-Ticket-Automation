@@ -222,6 +222,8 @@ def _run_case(case: dict, fixtures: dict, db, use_judge: bool) -> tuple[dict, di
 def _token_summary(details: list[dict]) -> dict:
     """Pipeline token use per model, plus the per-case mean, so quota and
     cost changes show up next to the quality metrics."""
+    from evaluation.golden_scoring import percentile
+
     by_model: dict[str, dict[str, int]] = {}
     for d in details:
         for model, u in (d["observation"].get("usage") or {}).items():
@@ -235,6 +237,9 @@ def _token_summary(details: list[dict]) -> dict:
         "per_case_mean": round(total / len(details)) if details else None,
         "by_model": by_model,
         "pipeline_p50_ms": latencies[len(latencies) // 2] if latencies else None,
+        "pipeline_p95_ms": percentile(latencies, 95),
+        "pipeline_p99_ms": percentile(latencies, 99),
+        "pipeline_latency_n": len(latencies),
     }
 
 
@@ -272,6 +277,7 @@ def _write_report(meta: dict, metrics: dict, scores: list[dict], regressions: li
         *[f"| `{model}` tokens per case | {round((u['prompt_tokens'] + u['completion_tokens']) / o['cases'])} |"
           for model, u in sorted(meta['tokens']['by_model'].items()) if o['cases']],
         f"| Pipeline p50 latency | {meta['tokens'].get('pipeline_p50_ms') or '—'} ms |",
+        f"| Pipeline p95 / p99 latency | {meta['tokens'].get('pipeline_p95_ms') or '—'} / {meta['tokens'].get('pipeline_p99_ms') or '—'} ms (n={meta['tokens'].get('pipeline_latency_n') or 0}) |",
         "",
         "## By category",
         "",

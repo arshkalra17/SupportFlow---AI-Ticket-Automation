@@ -36,6 +36,20 @@ signal.signal(signal.SIGTERM, handle_shutdown_signal)
 signal.signal(signal.SIGINT, handle_shutdown_signal)
 
 MAX_JOB_RETRIES = 3
+# Jobs that keep failing for a reason the worker cannot record on the ticket
+# (the database itself is failing) are parked here instead of being dropped,
+# so they can be inspected and re-queued by hand.
+DEAD_LETTER_QUEUE = f"{QUEUE_NAME}:dead"
+
+
+def _retry_delay(retry_count: int) -> float:
+    """Pause before re-queueing a transient failure: 1s, 2s, 4s... capped at 30s.
+
+    Without it the three retries run back to back and an outage that lasts a
+    few seconds uses them all up. WORKER_RETRY_BACKOFF_SECONDS=0 disables it.
+    """
+    base = float(os.getenv("WORKER_RETRY_BACKOFF_SECONDS", "1"))
+    return min(base * (2 ** retry_count), 30.0)
 
 
 @traced_span("worker.process_single_job")
@@ -105,6 +119,7 @@ def process_single_job(payload_json: str, classify_fn=None) -> bool:
                 safe_set_attribute(span, "worker.requeued", True)
                 data["retry_count"] = retry_count + 1
                 new_payload = json.dumps(data)
+                time.sleep(_retry_delay(retry_count))
                 redis_client.rpush(QUEUE_NAME, new_payload)
                 logger.warning(
                     f"Transient failure for ticket_id={ticket_id} (attempt {retry_count + 1}/{MAX_JOB_RETRIES}): "
@@ -125,7 +140,21 @@ def process_single_job(payload_json: str, classify_fn=None) -> bool:
         safe_set_attribute(span, "worker.db_error", True)
         safe_set_attribute(span, "error.type", type(db_err).__name__)
         logger.error(f"Database error while processing ticket_id={ticket_id}: {db_err}")
-        db.rollback()
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        # The job was already popped from the queue, so returning here would
+        # lose it and leave the ticket PENDING for good. Retry a bounded number
+        # of times, then park it on the dead-letter list.
+        data["retry_count"] = retry_count + 1
+        target = QUEUE_NAME if retry_count < MAX_JOB_RETRIES else DEAD_LETTER_QUEUE
+        try:
+            time.sleep(_retry_delay(retry_count))
+            redis_client.rpush(target, json.dumps(data))
+            logger.warning(f"Job for ticket_id={ticket_id} sent to '{target}' after a database error.")
+        except Exception as queue_err:
+            logger.error(f"Could not re-queue job for ticket_id={ticket_id}: {queue_err}")
         return False
     finally:
         db.close()

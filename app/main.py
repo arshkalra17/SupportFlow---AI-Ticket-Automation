@@ -26,6 +26,7 @@ from app.middleware import TraceMiddleware
 from app.health import router as health_router
 from app.rate_limit import enforce_support_limits, enforce_ticket_limit, record_token_usage
 from app import llm_client
+from app.warmup import warm_up_models
 from app.approval import approve_request, reject_request
 from app.models import Approval, Action
 from app.conversation import (
@@ -57,6 +58,7 @@ def startup_event():
     """Initialize observability and the shared token budget on application startup."""
     init_observability()
     llm_client.add_usage_listener(record_token_usage)
+    warm_up_models()
 
 
 @app.on_event("shutdown")

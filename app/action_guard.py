@@ -21,6 +21,26 @@ import re
 
 STATE_CHANGING_TOOLS = {"cancel_order", "issue_refund", "create_replacement_request"}
 
+def executed_state_changes(tool_calls) -> list[dict]:
+    """The tool calls in a run that really changed state (refund, cancellation,
+    replacement) and succeeded: backend-executed, no error, not a guard block,
+    not parked for approval. Read from the backend's own results.
+    """
+    done = []
+    for tc in tool_calls or []:
+        result = tc.get("tool_result")
+        if (
+            tc.get("tool_name") in STATE_CHANGING_TOOLS
+            and tc.get("backend_executed")
+            and isinstance(result, dict)
+            and "error" not in result
+            and GUARD_KEY not in result
+            and result.get("status") != "PENDING_APPROVAL"
+        ):
+            done.append(tc)
+    return done
+
+
 # Marker on a tool result the guard produced, so callers and the eval can tell
 # a blocked attempt from a backend outcome.
 GUARD_KEY = "guard"

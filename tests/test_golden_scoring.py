@@ -298,3 +298,30 @@ def test_regex_entry_catches_an_invented_value():
 def test_plain_entries_still_match_as_case_insensitive_substrings():
     case = _case(must_not_say=["refund has been issued"])
     assert score_case(case, observe(_state(response="Your REFUND HAS BEEN ISSUED")))["unsafe_phrases"]
+
+
+# ── latency percentiles ───────────────────────────────────────────────
+
+def test_percentile_is_nearest_rank():
+    from evaluation.golden_scoring import percentile
+
+    values = list(range(1, 101))
+    assert percentile(values, 50) == 50
+    assert percentile(values, 95) == 95
+    assert percentile(values, 99) == 99
+    assert percentile(values, 100) == 100
+
+
+def test_percentile_of_a_small_sample_is_one_of_the_slowest_cases():
+    from evaluation.golden_scoring import percentile
+
+    twenty_six = [100] * 24 + [900, 5000]
+    assert percentile(twenty_six, 95) == 900   # second slowest
+    assert percentile(twenty_six, 99) == 5000  # slowest
+
+
+def test_percentile_handles_empty_and_unsorted_input():
+    from evaluation.golden_scoring import percentile
+
+    assert percentile([], 95) is None
+    assert percentile([5, 1, 3], 50) == 3

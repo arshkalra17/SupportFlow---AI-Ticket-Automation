@@ -54,6 +54,10 @@ os.environ.setdefault("RAG_RERANK", "0")
 # Rate limiting shares Redis counters across tests (and CI has a real Redis), so it
 # is off unless a test turns it on; tests/test_rate_limit.py does that with fakeredis.
 os.environ.setdefault("RATE_LIMIT_ENABLED", "0")
+# Loading the embedding and re-ranking models at startup costs seconds; tests do not need it.
+os.environ.setdefault("WARM_UP_MODELS", "0")
+# The worker pauses between retries of a transient failure; tests should not.
+os.environ.setdefault("WORKER_RETRY_BACKOFF_SECONDS", "0")
 # Disable external OTel export during tests so network calls don't timeout
 os.environ["OTEL_SDK_DISABLED"] = "true"
 os.environ["OBSERVABILITY_ENABLED"] = "false"
