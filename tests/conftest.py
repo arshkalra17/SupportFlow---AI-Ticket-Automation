@@ -68,6 +68,16 @@ def create_test_tables():
 
     with test_engine.begin() as conn:
         ensure_term_stats(conn)
+
+    # Create the LangGraph checkpoint tables now, while no test session is open.
+    # PostgresSaver.setup() runs CREATE INDEX CONCURRENTLY, which waits for every
+    # open transaction in the database: called lazily from inside a test, it
+    # waits for that test's own `db` session and hangs on a fresh database
+    # (CI runs #36 and #37). migrate.py does the same at startup in production.
+    from app.checkpoint import close_checkpointer, get_checkpointer
+
+    get_checkpointer()
+    close_checkpointer()
     yield
 
 
