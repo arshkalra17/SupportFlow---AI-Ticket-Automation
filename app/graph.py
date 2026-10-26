@@ -49,7 +49,10 @@ MAX_TOOL_ITERATIONS = 5
 # agent: no classification on the request path; the tool loop gets a
 #   search_policy tool and decides for itself whether to read policy, call
 #   order tools, or both. evaluation/golden_eval.py --routing-mode compares them.
-ROUTING_MODES = ("router", "agent")
+# hybrid: the router's flow (so pure policy questions keep the cheap RAG path),
+#   but the tool loop also gets search_policy, so a question that needs an
+#   order and a rule can read both.
+ROUTING_MODES = ("router", "agent", "hybrid")
 
 
 def routing_mode() -> str:
@@ -287,8 +290,8 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "- If authorization fails, say the resource could not be accessed. Identity is "
             "handled by the backend: never ask for or accept a customer ID.\n"
         )
-        agent = routing_mode() == "agent"
-        if agent:
+        policy_tool = routing_mode() in ("agent", "hybrid")
+        if policy_tool:
             system_prompt += (
                 "- For any question about company rules (time windows, fees, eligibility, how "
                 "something works) call search_policy and answer only from the sections it "
@@ -354,7 +357,7 @@ def tool_execution_node(state: SupportFlowState) -> dict:
         try:
             result = chat_completion(
                 messages=messages,
-                tools=AGENT_TOOLS if agent else AVAILABLE_TOOLS,
+                tools=AGENT_TOOLS if policy_tool else AVAILABLE_TOOLS,
                 tool_choice="auto",
                 temperature=0.0,
             )
@@ -829,14 +832,17 @@ def build_supportflow_graph(checkpointer=None, mode: str | None = None):
 
     checkpointer: required to run (approvals pause with interrupt());
     None is enough to draw the graph.
-    mode: "router" (default, drawn above) or "agent", where START goes
-    straight to tool_execution_node; None reads ROUTING_MODE.
+    mode: "router" (default, drawn above), "hybrid" (the same graph; only the
+    tool loop's tools differ) or "agent", where START goes straight to
+    tool_execution_node; None reads ROUTING_MODE.
     """
     mode = mode or routing_mode()
+    if mode not in ROUTING_MODES:
+        raise ValueError(f"mode must be one of {ROUTING_MODES}, got {mode!r}")
     graph = StateGraph(SupportFlowState)
 
     # ── Add nodes ─────────────────────────────────────────────────
-    if mode == "router":
+    if mode != "agent":
         graph.add_node("classify_node", classify_node)
         graph.add_node("retrieve_knowledge_node", retrieve_knowledge_node)
     graph.add_node("tool_execution_node", tool_execution_node)
@@ -845,7 +851,7 @@ def build_supportflow_graph(checkpointer=None, mode: str | None = None):
     graph.add_node("error_node", error_node)
 
     # ── Add edges ─────────────────────────────────────────────────
-    if mode == "router":
+    if mode != "agent":
         # START → classify → RAG or tools
         graph.add_edge(START, "classify_node")
         graph.add_conditional_edges(

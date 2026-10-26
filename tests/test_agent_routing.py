@@ -210,3 +210,75 @@ def test_active_ticket_is_named_in_the_tool_prompt(db, customer):
     system = llm.call_args_list[0].kwargs["messages"][0]["content"]
     assert "Ticket #9001" in system
     assert "Order #" not in system
+
+
+# ── Hybrid mode: the router's graph, with search_policy on the tools path ──
+
+def test_routing_mode_accepts_hybrid(monkeypatch):
+    from app.graph import routing_mode
+
+    monkeypatch.setenv("ROUTING_MODE", "hybrid")
+    assert routing_mode() == "hybrid"
+
+
+def test_build_rejects_an_unknown_mode():
+    from app.graph import build_supportflow_graph
+
+    with pytest.raises(ValueError):
+        build_supportflow_graph(mode="magic")
+
+
+def test_hybrid_graph_is_the_router_graph():
+    from app.graph import build_supportflow_graph
+
+    def shape(mode):
+        graph = build_supportflow_graph(mode=mode).get_graph()
+        return set(graph.nodes), {(e.source, e.target) for e in graph.edges}
+
+    assert shape("hybrid") == shape("router")
+
+
+@pytest.mark.integration
+def test_hybrid_classifies_then_gives_the_tool_loop_search_policy(db, seeded_kb, customer, orders, monkeypatch):
+    """A mixed question: classified once, then the order tool and search_policy in one run."""
+    from app.graph import run_supportflow
+
+    monkeypatch.setenv("ROUTING_MODE", "hybrid")
+    replies = [
+        _reply(("get_order_status", {"order_id": 1003}), ("search_policy", {"query": "refund after cancelling"})),
+        _reply(content="Order 1003 is PROCESSING, so it can be cancelled; refunds take 5-7 business days."),
+    ]
+    with patch("app.graph.classify_ticket", return_value={
+        "category": "Order Issue", "priority": "LOW", "sentiment": "NEUTRAL",
+    }) as classify, patch("app.graph.chat_completion", side_effect=replies) as llm:
+        state = run_supportflow("Can I cancel order 1003 and when is the refund?", authenticated_customer_id=customer.id)
+
+    classify.assert_called_once()
+    assert _tool_names(llm.call_args_list[0].kwargs["tools"]) == _tool_names(AGENT_TOOLS)
+    assert "search_policy" in llm.call_args_list[0].kwargs["messages"][0]["content"]
+    assert [tc["tool_name"] for tc in state["tool_calls"]] == ["get_order_status", "search_policy"]
+    assert state["retrieved_documents"] and state["error"] is None
+    assert observe(state)["route"] == "tools"
+
+
+@pytest.mark.integration
+def test_hybrid_keeps_the_cheap_rag_path_for_pure_policy(db, customer, monkeypatch):
+    """A general policy question never enters the tool loop, so no tool-call tokens are spent."""
+    from app.graph import run_supportflow
+
+    monkeypatch.setenv("ROUTING_MODE", "hybrid")
+    section = {"title": "Shipping & Delivery Guidelines", "heading": "Express", "content": "1-2 days",
+               "cosine_similarity": 0.9}
+    rag = {"answer": "Express shipping takes 1-2 business days.", "retrieved_documents": [section],
+           "relevant_context": True}
+    with patch("app.graph.classify_ticket", return_value={
+        "category": "General Inquiry", "priority": "LOW", "sentiment": "NEUTRAL",
+    }), patch("app.graph.answer_with_knowledge_base", return_value=rag) as answer, \
+            patch("app.graph.chat_completion") as llm:
+        state = run_supportflow("How long does express shipping take?", authenticated_customer_id=customer.id)
+
+    answer.assert_called_once()
+    llm.assert_not_called()  # the tool loop (the only chat_completion caller in the graph) never ran
+    assert state["tool_calls"] in (None, [])
+    assert state["final_response"] == rag["answer"]
+    assert observe(state)["route"] == "rag"

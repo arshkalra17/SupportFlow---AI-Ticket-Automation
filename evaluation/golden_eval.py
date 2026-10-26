@@ -15,6 +15,7 @@ Usage:
     python -m evaluation.golden_eval --resume             # continue a run stopped by the daily quota
     python -m evaluation.golden_eval --provider gemini    # run the whole set on one provider
     python -m evaluation.golden_eval --smoke --routing-mode agent   # search_policy agent instead of classify→route
+    python -m evaluation.golden_eval --smoke --routing-mode hybrid  # router + search_policy on the tools path
 
 Requires the chosen provider's API key (GROQ_API_KEY or GEMINI_API_KEY;
 the judge always uses GROQ_API_KEY) and the eval database (EVAL_DATABASE_URL).
@@ -320,9 +321,10 @@ def main() -> int:
     parser.add_argument("--tolerance", type=float, default=0.03, help="Allowed drop in rate metrics")
     parser.add_argument("--provider", default="groq", choices=["groq", "gemini"],
                         help="LLM provider for the pipeline, pinned for the whole run (default groq)")
-    parser.add_argument("--routing-mode", default="router", choices=["router", "agent"],
+    parser.add_argument("--routing-mode", default="router", choices=["router", "agent", "hybrid"],
                         help="router: classify then route to RAG or tools (default); "
-                             "agent: one tool loop with a search_policy tool")
+                             "agent: one tool loop with a search_policy tool; "
+                             "hybrid: router, with search_policy also on the tools path")
     parser.add_argument("--resume", action="store_true",
                         help="Skip cases already finished in golden_progress.jsonl (same dataset and judge setting)")
     args = parser.parse_args()
