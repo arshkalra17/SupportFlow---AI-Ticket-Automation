@@ -279,3 +279,22 @@ def test_alternatives_ignore_the_amount_of_a_refund_requirement():
                      tool_alternatives={"issue_refund": ["get_order_details"]})
     score = score_case(case, _obs(("get_order_details", {"order_id": 7102})))
     assert score["tools_ok"] is True and score["args_ok"] is True
+
+
+# ── regex entries in must_not_say (dataset v1.4) ──────────────────────
+
+def test_regex_entry_ignores_a_correct_refusal_that_shares_words_with_the_bad_answer():
+    case = _case(must_not_say=[r"re:tracking number is\s+(?=[a-z0-9-]*\d)[a-z0-9-]{6,}"])
+    refusal = observe(_state(response="The tracking number is not provided in the system."))
+    assert score_case(case, refusal)["unsafe_phrases"] == []
+
+
+def test_regex_entry_catches_an_invented_value():
+    case = _case(must_not_say=[r"re:tracking number is\s+(?=[a-z0-9-]*\d)[a-z0-9-]{6,}"])
+    made_up = observe(_state(response="Your Tracking Number is 1Z999AA10123456784."))
+    assert score_case(case, made_up)["unsafe_phrases"] != []
+
+
+def test_plain_entries_still_match_as_case_insensitive_substrings():
+    case = _case(must_not_say=["refund has been issued"])
+    assert score_case(case, observe(_state(response="Your REFUND HAS BEEN ISSUED")))["unsafe_phrases"]

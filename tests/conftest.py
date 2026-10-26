@@ -41,7 +41,9 @@ def _default_test_db_url() -> str:
             pass
     return "postgresql://supportflow_user:supportflow_password@localhost:5432/supportflow_test"
 
-os.environ["DATABASE_URL"] = _default_test_db_url()
+# setdefault, not assignment: a DATABASE_URL from the environment (a private test
+# database, CI) must win over the port probe.
+os.environ.setdefault("DATABASE_URL", _default_test_db_url())
 os.environ.setdefault("JWT_SECRET", "test_secret_key_stage8_supportflow")
 # Tests mock Groq; pin the provider chain so a GEMINI_API_KEY in .env can
 # never turn a mocked failure into a real fallback call.

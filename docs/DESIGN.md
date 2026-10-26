@@ -146,7 +146,11 @@ quality of cases that already passed the deterministic checks.
 - **Dataset changes are versioned.** Eight cases were loosened in v1.3 to accept
   read-only tools that give an equivalent answer, and refusals that move no
   money. Each carries a written reason, and any before-and-after is quoted with
-  the dataset version beside it.
+  the dataset version beside it. v1.4 fixed a scoring false positive rather
+  than a case: `halluc-001` banned the phrase "tracking number is", which also
+  appears in the *correct* answer "the tracking number is not provided", so two
+  modes were failed for answering correctly. Banned phrases can now be regexes
+  (`re:` prefix), and this one matches only a tracking-number-shaped code.
 
 First full run (router mode, dataset v1.2): **82.6%** (138/167), route accuracy
 100%, tool recall 94.4%, 10 mixed order-and-policy cases all failing because the
@@ -165,20 +169,22 @@ policy. Two alternatives were built and compared (`ROUTING_MODE`):
   tool loop. The hypothesis was that it would keep the router's cheap path for
   pure policy questions and still handle mixed ones.
 
-Same 26-case smoke set, all three scored on dataset v1.3 from saved
-observations:
+Same 26-case smoke set, all three scored on dataset v1.4 from saved
+observations (no new model calls):
 
 | | Router | Agent | Hybrid |
 |---|---:|---:|---:|
-| Smoke pass rate | 24/26 | 24/26 | 24/26 |
+| Smoke pass rate | 25/26 | 24/26 | 25/26 |
+| Failed case(s) | mixed-001 | refund-001, refund-002 | refund-001 |
 | Mixed order-and-policy (10 cases) | 0/10 | 8/10 | 8/10 |
 | `gpt-oss-120b` tokens per case | 1,908 | 2,690 | 2,905 |
 | `gpt-oss-20b` tokens per case | 887 | 0 | 948 |
 | p50 latency | 4.2 s | 6.9 s | 2.5 s |
 | Forbidden-tool violations | 0 | 0 | 0 |
 
-**What this showed.** Accuracy on single-intent questions is a three-way tie, so
-the extra machinery buys nothing there. Only mixed questions separate the
+**What this showed.** On single-intent questions the three modes are within one
+case of each other, and the router's only failure is a mixed question it
+cannot answer by design, so the extra machinery buys nothing there. Only mixed questions separate the
 modes, and agent and hybrid both reach 8/10. **The hypothesis was wrong:**
 hybrid is not cheaper than agent, it spends the most on the model whose daily
 quota is the limit. The likely cause is the larger tool list sent on its tools
@@ -190,11 +196,18 @@ keys, so it is noisy.
 accuracy on everything except mixed questions. If mixed questions matter,
 `agent` is the cheaper way to cover them. `hybrid` stays in the repository as a
 measured negative result. Its two mixed failures (`mixed-008`, `mixed-009`) are
-the classifier sending an order-plus-policy question down the policy-only path.
+not routing errors: the classifier labelled both "Order Issue" and the tool
+loop ran, but the model called only `search_policy` and answered from policy
+without looking up the order the customer named. Agent mode fails the same way
+on `mixed-009`. The likely fix is a prompt rule to look up any order the
+customer names before answering; it is untested, because checking it needs live
+model calls.
 
 Caveats: 26 and 10 cases are small samples, so differences of one case are not
 significant; the router and agent baselines were recorded on dataset v1.2 and
-re-scored here, and the hybrid run was recorded on v1.3.
+re-scored here, and the hybrid run was recorded on v1.3. The v1.4 change moved
+the router and hybrid by one case each (`halluc-001`), so which mode scores
+highest on this set is not evidence of anything.
 
 ## 4. Reliability
 
@@ -262,14 +275,17 @@ the guard was added.
 - **Small evaluation samples for the routing comparison.** Twenty-six cases
   cannot separate modes that differ by one case. A full 167-case run per mode
   would cost about 430K to 650K tokens each, so it needs several quota windows.
-- **Open failures.** `halluc-001` fails in both router and hybrid mode (and used
-  8,423 tokens in hybrid, which may mean a tool loop that does not stop early;
-  not yet investigated),
-  and `refund-001` fails in hybrid and agent. The latter is a dataset artifact
-  that needs a decision, not a model fix.
+- **Open failures.** `refund-001` ("Refund $50 for order 7004", total $39.50)
+  fails in hybrid and agent mode. The case expects the model to call
+  `issue_refund` so the backend rejects it; these modes read the order first and
+  decline in words, which moves no money. That is a decision about what the test
+  is for (the backend rule is also covered by unit tests), not a model fix.
+  The 8,423 tokens `halluc-001` used in hybrid mode were four model calls with a
+  large prompt, not a runaway loop.
 - **Latency is p50 only.** There are no p95 numbers and no response caching yet.
-- **Mixed-question routing.** The classifier misroutes some order-plus-policy
-  questions to the policy-only path.
+- **Order lookup skipped on mixed questions.** In agent and hybrid mode the
+  model sometimes answers an order-plus-policy question from policy alone
+  (`mixed-008`, `mixed-009`, and `mixed-003` in agent mode).
 - **Test infrastructure.** The test suite runs on one shared database name, so
   two concurrent test runs on one machine can block each other.
 

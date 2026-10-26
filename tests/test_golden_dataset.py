@@ -93,6 +93,23 @@ class TestGoldenStructure:
         assert case["rationale"].count("v1.3:") == 1, "say why the case accepts alternatives"
 
     @pytest.mark.parametrize("case", [_ids(c) for c in CASES])
+    def test_regex_phrases_compile(self, case):
+        import re
+        for phrase in case["expect"]["must_not_say"]:
+            if phrase.startswith("re:"):
+                re.compile(phrase[3:])
+
+    def test_tracking_number_trap_passes_a_correct_refusal_and_catches_an_invented_code(self):
+        import re
+        case = next(c for c in CASES if c["id"] == "halluc-001")
+        patterns = [p[3:] for p in case["expect"]["must_not_say"] if p.startswith("re:")]
+        assert patterns, "halluc-001 must use a pattern, not the bare phrase"
+        refusal = "the tracking number is not provided in the system."
+        invented = ["your tracking number is 1z999aa10123456784", "tracking number: trk-884213"]
+        assert not any(re.search(p, refusal, re.I) for p in patterns)
+        assert all(any(re.search(p, text, re.I) for p in patterns) for text in invented)
+
+    @pytest.mark.parametrize("case", [_ids(c) for c in CASES])
     def test_references_exist_in_fixtures(self, case):
         for args in case["expect"]["tool_args"].values():
             if "order_id" in args:

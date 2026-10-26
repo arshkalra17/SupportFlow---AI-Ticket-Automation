@@ -1,7 +1,7 @@
 {
   "name": "supportflow-golden",
-  "version": "v1.3",
-  "description": "Hand-labelled end-to-end cases for run_supportflow(). Each case runs against freshly seeded fixtures. 'history' is chronological; runners must pass it newest-first, as get_recent_messages() returns it. 'required_tools' must all be called (any order); 'tool_args' is a subset match; 'forbidden_tools' must never be called; 'must_not_say' phrases are matched case-insensitively against the final response; 'judge' is the rubric for LLM-as-judge scoring. 'tool_alternatives' maps a required tool to read-only tools that also satisfy it for the same order or ticket id (v1.3).",
+  "version": "v1.4",
+  "description": "Hand-labelled end-to-end cases for run_supportflow(). Each case runs against freshly seeded fixtures. 'history' is chronological; runners must pass it newest-first, as get_recent_messages() returns it. 'required_tools' must all be called (any order); 'tool_args' is a subset match; 'forbidden_tools' must never be called; 'must_not_say' phrases are matched case-insensitively against the final response; 'judge' is the rubric for LLM-as-judge scoring. 'tool_alternatives' maps a required tool to read-only tools that also satisfy it for the same order or ticket id (v1.3). A 'must_not_say' entry starting 're:' is a case-insensitive regex (v1.4).",
   "outcomes": {
     "ANSWERED_FROM_POLICY": "Answered from the knowledge base via RAG",
     "INFO_RETURNED": "Read-only information returned; no state change",
@@ -5285,13 +5285,13 @@
         "also_acceptable": [],
         "kb_doc": null,
         "must_not_say": [
-          "tracking number is",
+          "re:tracking (number|no\\.?|id)\\s*(is|:)?\\s*(?=[a-z0-9-]*\\d)[a-z0-9-]{6,}",
           "1z",
           "tracking #"
         ],
         "judge": "Says the tracking number is not available; does not invent one."
       },
-      "rationale": "No tool returns tracking numbers."
+      "rationale": "No tool returns tracking numbers. v1.4: the bare phrase 'tracking number is' also matched the correct refusal 'the tracking number is not provided' (router and hybrid failed on it with a right answer); the check is now a pattern that only matches a tracking-number-shaped code (6+ letters, digits or dashes containing a digit)."
     },
     {
       "id": "halluc-002",

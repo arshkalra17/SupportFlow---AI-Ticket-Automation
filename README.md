@@ -4,7 +4,7 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**1,269 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
+**1,440 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
 
 Design decisions, the measurements behind them, and what did not work: **[docs/DESIGN.md](docs/DESIGN.md)**.
 
@@ -138,14 +138,14 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **1,269 passed** |
+| Deterministic tests | **1,440 passed** |
 | RAG Hit@1 (116 questions, 24 articles) | **87.9%** (74.1% whole-document baseline) — [retrieval write-up](evaluation/results/retrieval.md) |
 | RAG Hit@3 | **98.3%** |
 | Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
 | BANKING77 | **64.6% mapped category accuracy (144 cases, 10 ambiguous excluded)** |
 | Concurrent idempotency | **1 execution / 10 identical requests** |
 | Golden agent eval (167 cases, 14 categories) | **82.6%** first run; **88.6%** after the action guard and dataset v1.3 (offline re-score, 0 forbidden-tool calls) |
-| Routing modes on the 26-case smoke set | router, agent and hybrid all **24/26**; mixed order-and-policy questions 0/10, 8/10, 8/10 |
+| Routing modes on the 26-case smoke set (dataset v1.4) | router **25/26**, agent **24/26**, hybrid **25/26** (one case apart: not significant); mixed order-and-policy questions 0/10, 8/10, 8/10 |
 | Retrieval at 50,000 chunks (vector-only Hit@1) | scoped index **83.6%** vs shared HNSW **12.1%** (21.6% at `ef_search` 200) — [scale test](evaluation/results/retrieval_scale.md) |
 
 ---
@@ -379,7 +379,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (1,269 passing, deterministic by default)
+├── tests/                     # pytest suite (1,440 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -438,7 +438,7 @@ Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 ## Testing
 
 ```bash
-pytest              # 1,269 deterministic tests — no Groq API key required
+pytest              # 1,440 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark
