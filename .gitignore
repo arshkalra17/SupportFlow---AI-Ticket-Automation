@@ -33,3 +33,6 @@ postgres_data/
 .coverage
 htmlcov/
 evaluation/results/golden_progress*.jsonl
+
+# Eval run logs
+*.log
