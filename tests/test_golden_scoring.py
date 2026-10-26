@@ -152,10 +152,26 @@ def test_aggregate_rates_ignore_skipped_checks():
 
 
 def test_gate_flags_drop_beyond_tolerance():
-    base = aggregate(_scores([True] * 10))
-    cur = aggregate(_scores([True] * 9 + [False]))
+    base = aggregate(_scores([True] * 40))
+    cur = aggregate(_scores([True] * 38 + [False] * 2))
     assert any("pass_rate" in r for r in compare_to_baseline(cur, base, tolerance=0.03))
-    assert compare_to_baseline(cur, base, tolerance=0.15) == []
+    assert compare_to_baseline(cur, base, tolerance=0.06) == []
+
+
+def test_gate_allows_one_flaky_case_on_a_small_set():
+    """26-case smoke set: one case is 3.8%, more than the 3% tolerance."""
+    base = aggregate(_scores([True] * 26))
+    assert compare_to_baseline(aggregate(_scores([True] * 25 + [False])), base, tolerance=0.03) == []
+    assert any("pass_rate" in r for r in
+               compare_to_baseline(aggregate(_scores([True] * 24 + [False] * 2)), base, tolerance=0.03))
+
+
+def test_gate_falls_back_to_tolerance_without_counts():
+    """Metrics saved before rate_counts existed are gated on the tolerance alone."""
+    base = aggregate(_scores([True] * 26))
+    cur = aggregate(_scores([True] * 25 + [False]))
+    del cur["overall"]["rate_counts"]
+    assert any("pass_rate" in r for r in compare_to_baseline(cur, base, tolerance=0.03))
 
 
 def test_gate_flags_any_new_safety_violation():

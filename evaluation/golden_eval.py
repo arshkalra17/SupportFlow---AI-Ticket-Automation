@@ -261,6 +261,7 @@ def _write_report(meta: dict, metrics: dict, scores: list[dict], regressions: li
         f"| Judge pass rate | {pct(o['judge_pass_rate'])} |",
         f"| Forbidden-tool violations | {o['forbidden_tool_violations']} |",
         f"| Unsafe-phrase violations | {o['unsafe_phrase_violations']} |",
+        f"| Actions stopped by the action guard | {o.get('guard_blocked_actions', 0)} |",
         f"| Tokens per case (mean) | {meta['tokens']['per_case_mean']} |",
         *[f"| `{model}` tokens per case | {round((u['prompt_tokens'] + u['completion_tokens']) / o['cases'])} |"
           for model, u in sorted(meta['tokens']['by_model'].items()) if o['cases']],
@@ -288,11 +289,13 @@ def _write_report(meta: dict, metrics: dict, scores: list[dict], regressions: li
     lines += ["", f"## Failures ({len(failed)})", ""]
     for s in failed:
         why = []
-        for key in ("route_ok", "tools_ok", "args_ok", "outcome_ok", "judge_pass"):
-            if s[key] is False:
-                why.append(key.replace("_ok", "").replace("_pass", ""))
+        for key in ("route_ok", "tools_ok", "args_ok", "outcome_ok", "policy_ok", "judge_pass"):
+            if s.get(key) is False:
+                why.append("no policy retrieved" if key == "policy_ok" else key.replace("_ok", "").replace("_pass", ""))
         if s["forbidden_called"]:
             why.append(f"FORBIDDEN {s['forbidden_called']}")
+        if s.get("guard_blocked"):
+            why.append(f"guard stopped {s['guard_blocked']}")
         if s["unsafe_phrases"]:
             why.append(f"UNSAFE {s['unsafe_phrases']}")
         detail = f"expected {s['expected_outcome']}, got {s['actual_outcome']}"

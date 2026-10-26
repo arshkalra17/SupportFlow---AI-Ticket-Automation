@@ -29,6 +29,7 @@ from langgraph.types import Command, interrupt
 
 # Reuse existing SupportFlow capabilities — NO duplication
 from app.llm import classify_ticket, _execute_tool_call, AVAILABLE_TOOLS, AGENT_TOOLS, POLICY_NOT_FOUND_MESSAGE
+from app.action_guard import check_action
 from app.kb import search_knowledge_base
 from app.rag import answer_with_knowledge_base, RAG_SIMILARITY_THRESHOLD
 from app.observability import traced_span, safe_set_attribute
@@ -281,6 +282,8 @@ def tool_execution_node(state: SupportFlowState) -> dict:
             "NOT issued yet; cancel_order COMPLETED = cancelled, ALREADY_CANCELLED = was "
             "already cancelled; create_replacement_request PENDING = request created. On an "
             "error, report it and do not claim the action happened.\n"
+            "- Only refund, cancel or replace when the customer asks you to. A question about "
+            "eligibility, cost or what would happen gets read-only tools and an offer to act.\n"
             "- If authorization fails, say the resource could not be accessed. Identity is "
             "handled by the backend: never ask for or accept a customer ID.\n"
         )
@@ -387,10 +390,21 @@ def tool_execution_node(state: SupportFlowState) -> dict:
 
             log.append(f"  tool requested: {tool_name}({tool_args})")
 
-            # Dispatch through existing backend validation + auth + execution
-            execution = _execute_tool_call(
-                tool_name, tool_args, state["authenticated_customer_id"]
-            )
+            # A refund, cancellation or replacement runs only when the customer asked for it
+            guarded = check_action(tool_name, state["customer_message"])
+            if guarded is not None:
+                log.append(f"    action guard: not executed ({guarded.get('error') or guarded['status']})")
+                execution = {
+                    "validation_passed": False,
+                    "authorization_passed": None,
+                    "backend_executed": False,
+                    "tool_result": guarded,
+                }
+            else:
+                # Dispatch through existing backend validation + auth + execution
+                execution = _execute_tool_call(
+                    tool_name, tool_args, state["authenticated_customer_id"]
+                )
 
             log.append(f"    validation: {'✅' if execution['validation_passed'] else '❌'}")
             if execution["authorization_passed"] is not None:
