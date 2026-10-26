@@ -4,7 +4,9 @@
 
 **An AI-powered customer support backend where the LLM proposes actions and the backend decides.**
 
-**346 deterministic tests passing · RAG Hit@1 87.9% on 116 labelled questions over 24 articles · 154-case BANKING77 benchmark (64.6% accuracy) · exactly-once execution verified across 10 concurrent requests**
+**1,243 deterministic tests · 167-case golden agent eval with a CI regression gate · RAG Hit@1 87.9% on 116 labelled questions (unchanged with 50,000 distractor chunks when the query is scoped; a shared HNSW index falls to 12–22% vector-only) · exactly-once execution verified across 10 concurrent requests**
+
+Design decisions, the measurements behind them, and what did not work: **[docs/DESIGN.md](docs/DESIGN.md)**.
 
 SupportFlow is not a chatbot wrapper. It's a production-style backend system where an LLM classifies customer support requests, retrieves company knowledge via RAG, and requests actions through native tool-calling — but every single action passes through backend-owned validation, authorization, business-rule enforcement, and (for high-risk actions) human approval before anything actually happens.
 
@@ -136,12 +138,15 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 
 | Area | Result |
 |---|---:|
-| Deterministic tests | **346 passed** |
+| Deterministic tests | **1,243 passed** |
 | RAG Hit@1 (116 questions, 24 articles) | **87.9%** (74.1% whole-document baseline) — [retrieval write-up](evaluation/results/retrieval.md) |
 | RAG Hit@3 | **98.3%** |
 | Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
 | BANKING77 | **64.6% mapped category accuracy (144 cases, 10 ambiguous excluded)** |
 | Concurrent idempotency | **1 execution / 10 identical requests** |
+| Golden agent eval (167 cases, 14 categories) | **82.6%** first run; **88.6%** after the action guard and dataset v1.3 (offline re-score, 0 forbidden-tool calls) |
+| Routing modes on the 26-case smoke set | router, agent and hybrid all **24/26**; mixed order-and-policy questions 0/10, 8/10, 8/10 |
+| Retrieval at 50,000 chunks (vector-only Hit@1) | scoped index **83.6%** vs shared HNSW **12.1%** (21.6% at `ef_search` 200) — [scale test](evaluation/results/retrieval_scale.md) |
 
 ---
 
@@ -314,6 +319,21 @@ Same question, two different customers — the backend's authorization layer (no
 
 ## AI Evaluation
 
+### Agent behaviour: the golden set
+
+The classifier benchmarks below say nothing about whether the *agent* does the right thing. `evaluation/golden_eval.py` runs 167 hand-written cases (14 categories: refunds, cancellations, authorization, prompt injection, multi-turn, out-of-scope, hallucination traps, mixed order-and-policy and more) through the live pipeline and scores them deterministically first: route, tools, arguments, outcome, forbidden tools, and phrases the answer must never contain. An LLM judge only grades the wording of cases that already passed.
+
+- **CI gate.** A fixed, stratified 26-case smoke set is compared against a committed baseline; any new forbidden-tool call fails the build (`.github/workflows/eval.yml`, manual and weekly).
+- **Found by this eval:** the model sometimes executed a refund or cancellation when the customer only *asked* about it, and accepted a negative refund amount. `app/action_guard.py` now blocks both before execution.
+- **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same cases; the cheapest mode on the binding token quota (`router`) stays the default. The hybrid mode I built to get the best of both was **not** cheaper than agent mode, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
+
+```bash
+python -m evaluation.golden_eval --smoke --routing-mode router --resume
+python -m evaluation.golden_eval --category mixed_order_policy --routing-mode agent --no-judge
+```
+
+### Classifier benchmarks
+
 SupportFlow's classifier is evaluated on two independent tiers, deliberately kept separate:
 
 **Tier 1 — SupportFlow-specific benchmark (20 hand-labeled cases).** Fast regression/smoke suite covering all six capabilities: classification (category, priority, sentiment, exact-match), tool selection, RAG retrieval, unauthorized-action blocking, and approval routing.
@@ -349,7 +369,7 @@ supportflow/
 │   ├── metrics/               # Accuracy computation
 │   ├── cache.py               # Prompt-version-aware LLM response cache
 │   └── run.py                 # CLI entry point (--metric classification|banking77|...)
-├── tests/                     # pytest suite (346 passing, deterministic by default)
+├── tests/                     # pytest suite (1,243 passing, deterministic by default)
 │   ├── test_conversation.py   # Conversation state + context tests
 │   ├── test_context_aware_classification.py   # Context-aware routing tests
 │   └── ...                    # (additional test files)
@@ -408,7 +428,7 @@ Full setup, troubleshooting, and monitoring guidance is in `DEPLOYMENT.md`.
 ## Testing
 
 ```bash
-pytest              # 346 deterministic tests — no Groq API key required
+pytest              # 1,243 deterministic tests — no Groq API key required
 pytest -m llm        # includes the LLM-dependent tests (requires GROQ_API_KEY)
 python -m evaluation.run --metric classification   # Tier 1 benchmark
 python -m evaluation.run --metric banking77          # Tier 2 external benchmark
@@ -433,6 +453,11 @@ CI runs the deterministic suite against real PostgreSQL/pgvector and Redis servi
 - [x] Stage 10 — OpenTelemetry observability
 - [x] Stage 11 — Production-oriented Docker packaging *(staging/controlled environments — see note below)*
 - [x] Stage 12 — Persistent conversation context (multi-turn support)
+- [x] Stage 13 — Approvals execute on approve; approvals are LangGraph interrupts checkpointed in Postgres
+- [x] Stage 14 — 167-case golden agent eval, LLM judge, resumable runs, CI regression gate
+- [x] Stage 15 — RAG at scale: section chunks, re-ranking, out-of-scope refusal, HNSW scale test
+- [x] Stage 16 — Action guard and routing-mode comparison (router / agent / hybrid)
+- [ ] Next — per-customer rate limiting and a shared model-token budget; latency p95 and response caching; resilience tests that kill the LLM mid-request
 
 **Stage 11 scope note:** multi-stage Dockerfile, 5-service Compose stack (postgres, redis, migrate, api, worker) with health checks, non-root container execution, graceful shutdown handling (API and worker), Alembic migration infrastructure (currently deferred in favor of `Base.metadata.create_all` until fully validated), and CI-verified image builds with security scanning. **Not yet configured for internet-facing production:** no TLS/reverse proxy, rate limiting, or container resource limits. Full deployment details in `DEPLOYMENT.md`.
 
