@@ -144,8 +144,8 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 | Out-of-scope refusal | **95% refused, 99% of in-scope answered** |
 | BANKING77 | **64.6% mapped category accuracy (144 cases, 10 ambiguous excluded)** |
 | Concurrent idempotency | **1 execution / 10 identical requests** |
-| Golden agent eval (167 cases, 14 categories) | **82.6%** first run; **88.6%** after the action guard and dataset v1.3 (offline re-score, 0 forbidden-tool calls) |
-| Routing modes on the 26-case smoke set (dataset v1.4) | router **96.2%** (25/26), agent **92.3%** (24/26), hybrid **92.3%** (24/26); mixed order-and-policy questions: router **0.0%** (0/10) vs agent/hybrid **80.0%** (8/10) |
+| Golden agent eval (167 cases, 14 categories, dataset v1.4) | router **89.8%** (150/167), agent **92.2%** (154/167), hybrid **89.8%** (150/167); 0 forbidden-tool calls and 0 unsafe phrases in every mode. The first run, on dataset v1.2, scored 82.6% |
+| Routing modes by category (full set) | router **100%** on refund, replacement and authorization, **0/10** on mixed order-and-policy questions; agent **7/10** on mixed and **100%** on policy and out-of-scope, but **77.8%** on refund |
 | Retrieval at 50,000 chunks (vector-only Hit@1) | scoped index **83.6%** vs shared HNSW **12.1%** (21.6% at `ef_search` 200) — [scale test](evaluation/results/retrieval_scale.md) |
 
 ---
@@ -338,11 +338,12 @@ Same question, two different customers — the backend's authorization layer (no
 
 The classifier benchmarks below say nothing about whether the *agent* does the right thing. `evaluation/golden_eval.py` runs 167 hand-written cases (14 categories: refunds, cancellations, authorization, prompt injection, multi-turn, out-of-scope, hallucination traps, mixed order-and-policy and more) through the live pipeline and scores them deterministically first: route, tools, arguments, outcome, forbidden tools, and phrases the answer must never contain. An LLM judge only grades the wording of cases that already passed.
 
-- **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same cases; the cheapest mode on the binding token quota (`router`) stays the default:
-  - **Smoke eval (26 cases, dataset v1.4):** router **96.2%** (25/26), agent **92.3%** (24/26), hybrid **92.3%** (24/26) — within 1 case of each other.
-  - **Mixed order-and-policy (10 cases):** router **0.0%** (0/10) vs agent **80.0%** (8/10) and hybrid **80.0%** (8/10) with 100% policy retrieval.
-  - The hybrid mode I built to get the best of both was **not** cheaper than agent mode, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
-- **Evaluation throughput & multi-key pool.** Free-tier Groq daily token quotas (TPD: 200,000) cap a single run to ~25–30 cases per day on large models (`gpt-oss-120b`). For local testing and complete evaluation sweeps across routing modes, the evaluation pipeline supports a multi-key pool with round-robin rotation and automatic failover on 429 quota exhaustion, allowing continuous evaluations to complete uninterrupted across pooled API keys.
+- **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same 167 cases, one live run each. The router stays the default: it is the cheapest on the binding token quota and the most reliable on actions that move money or state.
+  - **Full set (dataset v1.4):** router **89.8%** (150/167), agent **92.2%** (154/167), hybrid **89.8%** (150/167). Agent's four-case lead is within one-run noise.
+  - **The trade:** the router scores 100% on refund, replacement and authorization but cannot answer mixed order-and-policy questions (0/10). Agent answers 7/10 of those and 100% of policy and out-of-scope cases, but misses actions more often (refund 77.8%), and uses about 63% more `gpt-oss-120b` tokens per case (2,912 vs 1,784).
+  - **Safety:** 0 forbidden-tool calls and 0 unsafe phrases in all three modes.
+  - The hybrid mode I built to get the best of both was **not** cheaper than agent mode and was weaker on actions, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
+  - Method: a full run needs more tokens than one free key allows per day, so these runs used a local multi-key setup that is not part of this repository; see DESIGN §7. A single key needs several days with `--resume`.
 
 ```bash
 python -m evaluation.golden_eval --smoke --routing-mode router --resume

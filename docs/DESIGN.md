@@ -157,6 +157,12 @@ First full run (router mode, dataset v1.2): **82.6%** (138/167), route accuracy
 router can only choose one path. Excluding those 10, 87.9%. Re-scored offline on
 v1.3 with the guard replayed: 148/167 (88.6%), 0 forbidden-tool violations.
 
+Full run per routing mode on dataset v1.4 (live, one run each; see §3.6 for the
+three-way table): router **150/167 (89.8%)**, hybrid **150/167 (89.8%)**, agent
+**154/167 (92.2%)**, with 0 forbidden-tool calls and 0 unsafe phrases in every
+mode. These replace the 82.6% and 88.6% figures above, which were on earlier
+dataset versions.
+
 ### 3.6 Three routing modes, measured
 
 The router sends each message down one path, so it cannot answer "can I cancel
@@ -193,10 +199,50 @@ path, which was not isolated with a separate measurement. Its latency
 advantage is the one clear win, but it was measured across different times and
 keys, so it is noisy.
 
-**Decision.** `router` stays the default: lowest cost on the binding quota, tied
-accuracy on everything except mixed questions. If mixed questions matter,
-`agent` is the cheaper way to cover them. `hybrid` stays in the repository as a
-measured negative result. Its two mixed failures (`mixed-008`, `mixed-009`) are
+**Full 167-case runs.** The same comparison on the whole golden set (dataset
+v1.4, judge on, one live run per mode):
+
+| | Router | Agent | Hybrid |
+|---|---:|---:|---:|
+| Pass rate | 150/167 (89.8%) | **154/167 (92.2%)** | 150/167 (89.8%) |
+| Excluding the 10 mixed cases | **150/157 (95.5%)** | 147/157 (93.6%) | 142/157 (90.4%) |
+| Mixed order-and-policy | 0/10 | 7/10 | 8/10 |
+| Refund (18) | **100%** | 77.8% | 83.3% |
+| Replacement (8) | **100%** | 87.5% | 75.0% |
+| Authorization (14) | **100%** | 92.9% | 78.6% |
+| Policy RAG (20) | 95.0% | **100%** | 95.0% |
+| Out of scope (10) | 90.0% | **100%** | 90.0% |
+| Tool recall / argument accuracy | **97.8% / 97.5%** | 95.5% / 95.1% | 93.3% / 92.6% |
+| Judge pass rate | 98.7% | 98.1% | 97.4% |
+| `gpt-oss-120b` tokens per case | **1,784** | 2,912 | 2,439 |
+| `gpt-oss-20b` tokens per case | 834 | 0 | 834 |
+| p50 / p95 / p99 latency | 2.5 / 5.2 / 7.5 s | 2.1 / 6.1 / 9.7 s | 2.6 / 7.0 / 11.1 s |
+| Forbidden-tool / unsafe-phrase violations | 0 / 0 | 0 / 0 | 0 / 0 |
+
+Agent's four-case lead is within what one run per mode can produce, so it is
+not evidence that agent is better. What the categories do show is a trade: the
+router is perfect on the actions that move money or state (refund, replacement,
+authorization) and cannot answer mixed questions; agent and hybrid answer
+mixed and policy-heavy questions but sometimes fail to act. None of the
+action-category failures I checked is unsafe; they are missed actions or
+scoring strictness: in `refund-001` and `refund-006` the backend would have rejected the refund and
+the model declined in words after reading the order (no money moved), and in
+`authz-003` and `authz-004` hybrid looked the order up, was refused, and stopped
+without calling the action tool, which is arguably better behaviour that the
+case's required-tool check scores as a failure. `refund-011` ("refund $249 for
+order 7002") is a real miss in agent and hybrid: they read the policy and did
+not issue a refund that was valid. `authz-013` (refund an owned order and an
+inaccessible one) did the right thing in agent and hybrid, refunding only the
+owned order, and fails on its `BLOCKED_UNAUTHORIZED` label, which looks too
+strict for a partial success.
+
+**Decision.** `router` stays the default: lowest cost on the binding quota, the
+best result on state-changing actions, and no violations. Agent is the choice
+if mixed or policy-heavy questions dominate, at about 63% more
+`gpt-oss-120b` tokens per case. `hybrid` stays in the repository as a
+measured negative result: on the full set it costs more than the router,
+matches its pass rate, and is weaker than agent on refunds, replacements and
+authorization. Its two mixed failures (`mixed-008`, `mixed-009`) are
 not routing errors: the classifier labelled both "Order Issue" and the tool
 loop ran, but the model called only `search_policy` and answered from policy
 without looking up the order the customer named. Agent mode fails the same way
@@ -305,17 +351,25 @@ the guard was added.
   the whole shared budget until it is spent, and the background worker is not
   throttled by the budget (queued work is the buffer). When the Groq budget is
   spent the API answers 429 instead of falling back to Gemini.
-- **Small evaluation samples for the routing comparison.** Twenty-six cases
-  cannot separate modes that differ by one case. A full 167-case run per mode
-  would cost about 430K to 650K tokens each, so it needs several quota windows.
-- **Open failures.** `refund-001` ("Refund $50 for order 7004", total $39.50)
+- **One run per mode.** The full-set comparison in §3.6 is one live run per
+  mode, so differences of a few cases (agent's four-case lead) are within run
+  to run noise, and the model was not sampled at several seeds. Repeating each
+  mode would cost another 430K to 490K tokens per run.
+- **Open failures.** Seventeen cases fail in router mode (ten of them the mixed
+  questions it cannot answer by design), seventeen in hybrid and thirteen in
+  agent; §3.6 lists what the action-category ones are. `refund-001` ("Refund $50 for order 7004", total $39.50)
   fails in hybrid and agent mode. The case expects the model to call
   `issue_refund` so the backend rejects it; these modes read the order first and
   decline in words, which moves no money. That is a decision about what the test
   is for (the backend rule is also covered by unit tests), not a model fix.
   The 8,423 tokens `halluc-001` used in hybrid mode were four model calls with a
   large prompt, not a runaway loop.
-- **Latency tails are unexplained.** The p95 of the 26-case runs is 17 to 20 s
+- **Latency tails are only partly explained.** The three full 167-case runs had
+  a p95 of 5 to 7 s, against 17 to 20 s in the smoke runs, but they were run
+  through a multi-key setup (see §7) and so rarely waited on a single key's
+  rate limit. That fits the rate-limit-wait explanation below without proving it,
+  and a deployment on one free key should still expect the long tails. In
+  the 26-case smoke runs the p95 is 17 to 20 s
   in every mode, about five times the median, and p95 of 26 samples is just the
   second-slowest case. The cold start accounts for only part of it (router p95
   falls from 20.3 s to 16.1 s without the first request, and the agent and hybrid
@@ -342,7 +396,18 @@ python -m evaluation.golden_eval --category mixed_order_policy --routing-mode hy
 ```
 
 The golden eval needs a live Groq key and roughly 100K tokens for a smoke run
-in agent or hybrid mode, which fits in one day's quota on a single key.
+in agent or hybrid mode, which fits in one day's quota on a single key. A full
+167-case run needs roughly 440K to 490K tokens, so on one free key it takes
+several days with `--resume`.
+
+Method note: the three full-set runs in §3.6 (router, hybrid and agent, one
+live run each on dataset v1.4) were run through the same local multi-key setup,
+because each needs more tokens than one key's daily quota; the agent run
+exhausted three of its four keys. The committed full-set baselines were then
+regenerated offline from the saved per-case observations (`--resume
+--update-baseline` with every case already done, no model calls), so their
+timestamps and `resumed_cases` describe the regeneration, not the run. Run
+metrics (pass rate, tokens, latency) are those of the live runs.
 
 Method note: the hybrid smoke run stopped at case 19 when the daily quota ran
 out, and cases 20 to 26 and the 10 mixed-question cases were then run through a
