@@ -341,9 +341,11 @@ The classifier benchmarks below say nothing about whether the *agent* does the r
 - **CI gate.** A fixed, stratified 26-case smoke set is compared against a committed baseline; any new forbidden-tool call fails the build (`.github/workflows/eval.yml`, manual and weekly).
 - **Found by this eval:** the model sometimes executed a refund or cancellation when the customer only *asked* about it, and accepted a negative refund amount. `app/action_guard.py` now blocks both before execution.
 - **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same cases; the cheapest mode on the binding token quota (`router`) stays the default. The hybrid mode I built to get the best of both was **not** cheaper than agent mode, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
+- **Evaluation throughput & multi-key pool.** Free-tier Groq daily token quotas (TPD: 200,000) cap a single run to ~25–30 cases per day on large models (`gpt-oss-120b`). For local testing and complete evaluation sweeps across routing modes, the evaluation pipeline supports a multi-key pool with round-robin rotation and automatic failover on 429 quota exhaustion, allowing continuous evaluations to complete uninterrupted across pooled API keys.
 
 ```bash
 python -m evaluation.golden_eval --smoke --routing-mode router --resume
+python -m evaluation.golden_eval --smoke --routing-mode hybrid --update-baseline --resume
 python -m evaluation.golden_eval --category mixed_order_policy --routing-mode agent --no-judge
 ```
 
