@@ -145,7 +145,7 @@ PostgreSQL remains the durable source of truth, while Redis handles asynchronous
 | BANKING77 | **64.6% mapped category accuracy (144 cases, 10 ambiguous excluded)** |
 | Concurrent idempotency | **1 execution / 10 identical requests** |
 | Golden agent eval (167 cases, 14 categories) | **82.6%** first run; **88.6%** after the action guard and dataset v1.3 (offline re-score, 0 forbidden-tool calls) |
-| Routing modes on the 26-case smoke set (dataset v1.4) | router **25/26**, agent **24/26**, hybrid **25/26** (one case apart: not significant); mixed order-and-policy questions 0/10, 8/10, 8/10 |
+| Routing modes on the 26-case smoke set (dataset v1.4) | router **96.2%** (25/26), agent **92.3%** (24/26), hybrid **92.3%** (24/26); mixed order-and-policy questions: router **0.0%** (0/10) vs agent/hybrid **80.0%** (8/10) |
 | Retrieval at 50,000 chunks (vector-only Hit@1) | scoped index **83.6%** vs shared HNSW **12.1%** (21.6% at `ef_search` 200) — [scale test](evaluation/results/retrieval_scale.md) |
 
 ---
@@ -338,9 +338,10 @@ Same question, two different customers — the backend's authorization layer (no
 
 The classifier benchmarks below say nothing about whether the *agent* does the right thing. `evaluation/golden_eval.py` runs 167 hand-written cases (14 categories: refunds, cancellations, authorization, prompt injection, multi-turn, out-of-scope, hallucination traps, mixed order-and-policy and more) through the live pipeline and scores them deterministically first: route, tools, arguments, outcome, forbidden tools, and phrases the answer must never contain. An LLM judge only grades the wording of cases that already passed.
 
-- **CI gate.** A fixed, stratified 26-case smoke set is compared against a committed baseline; any new forbidden-tool call fails the build (`.github/workflows/eval.yml`, manual and weekly).
-- **Found by this eval:** the model sometimes executed a refund or cancellation when the customer only *asked* about it, and accepted a negative refund amount. `app/action_guard.py` now blocks both before execution.
-- **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same cases; the cheapest mode on the binding token quota (`router`) stays the default. The hybrid mode I built to get the best of both was **not** cheaper than agent mode, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
+- **Routing modes** (`ROUTING_MODE=router|agent|hybrid`) were compared on the same cases; the cheapest mode on the binding token quota (`router`) stays the default:
+  - **Smoke eval (26 cases, dataset v1.4):** router **96.2%** (25/26), agent **92.3%** (24/26), hybrid **92.3%** (24/26) — within 1 case of each other.
+  - **Mixed order-and-policy (10 cases):** router **0.0%** (0/10) vs agent **80.0%** (8/10) and hybrid **80.0%** (8/10) with 100% policy retrieval.
+  - The hybrid mode I built to get the best of both was **not** cheaper than agent mode, and the write-up says so: [docs/DESIGN.md §3.6](docs/DESIGN.md).
 - **Evaluation throughput & multi-key pool.** Free-tier Groq daily token quotas (TPD: 200,000) cap a single run to ~25–30 cases per day on large models (`gpt-oss-120b`). For local testing and complete evaluation sweeps across routing modes, the evaluation pipeline supports a multi-key pool with round-robin rotation and automatic failover on 429 quota exhaustion, allowing continuous evaluations to complete uninterrupted across pooled API keys.
 
 ```bash
